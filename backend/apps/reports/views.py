@@ -1,34 +1,36 @@
+# apps/reports/views.py
+
 from datetime import date
-from django.db.models import Sum, Count
+from django.db.models import Sum, F, Count
 from django.db.models.functions import TruncDate, TruncMonth
 from rest_framework import permissions
-from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from apps.billing.models import Bill, BillItem
+from apps.products.models import Product
+from .serializers import (
+    DailyReportSerializer,
+    MonthlyReportSerializer,
+    MostSoldItemSerializer,
+    ProfitReportSerializer,
+    StockStatementSerializer,
+    MarginReportSerializer,
+    ManufacturerStockSerializer,
+)
 
-from apps.billing.models import Bill
-from .serializers import DailyReportSerializer, MonthlyReportSerializer
-
-
+# ✅ Daily Report
 class DailyReportView(APIView):
-    """
-    GET /api/reports/daily/?start_date=2025-10-01&end_date=2025-10-29
-    Returns total sales and bill count per day
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        start_date = request.query_params.get("start_date")
+        start_date = request.query_params.get("start_date", date.today().replace(day=1))
         end_date = request.query_params.get("end_date", date.today())
-
-        # fallback: default to current month
-        if not start_date:
-            start_date = date.today().replace(day=1)
 
         qs = (
             Bill.objects.filter(created_at__date__range=[start_date, end_date])
             .annotate(date=TruncDate("created_at"))
             .values("date")
-            .annotate(total_sales=Sum("total_amount"), bill_count=Count("id"))
+            .annotate(total_sales=Sum("total"), bill_count=Count("id"))
             .order_by("date")
         )
 
@@ -36,11 +38,8 @@ class DailyReportView(APIView):
         return Response(serializer.data)
 
 
+# ✅ Monthly Report
 class MonthlyReportView(APIView):
-    """
-    GET /api/reports/monthly/?year=2025
-    Returns total sales and bill count per month for the given year
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -50,12 +49,11 @@ class MonthlyReportView(APIView):
             Bill.objects.filter(created_at__year=year)
             .annotate(month=TruncMonth("created_at"))
             .values("month")
-            .annotate(total_sales=Sum("total_amount"), bill_count=Count("id"))
+            .annotate(total_sales=Sum("total"), bill_count=Count("id"))
             .order_by("month")
         )
 
-        # format month as "YYYY-MM"
-        formatted_qs = [
+        formatted = [
             {
                 "month": item["month"].strftime("%Y-%m"),
                 "total_sales": item["total_sales"],
@@ -63,6 +61,99 @@ class MonthlyReportView(APIView):
             }
             for item in qs
         ]
+        serializer = MonthlyReportSerializer(formatted, many=True)
+        return Response(serializer.data)
 
-        serializer = MonthlyReportSerializer(formatted_qs, many=True)
+
+# ✅ Most Sold Items Report
+class MostSoldItemsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = (
+            BillItem.objects.values("product__name")
+            .annotate(
+                total_qty=Sum("qty"),
+                total_sales=Sum(F("qty") * F("price")),
+            )
+            .order_by("-total_qty")[:10]
+        )
+        serializer = MostSoldItemSerializer(
+            [{"product": q["product__name"], "total_qty": q["total_qty"], "total_sales": q["total_sales"]} for q in qs],
+            many=True,
+        )
+        return Response(serializer.data)
+
+
+# ✅ Profit Tracking Report
+class ProfitTrackingView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = (
+            BillItem.objects.values("product__name", "product__cost_price", "price")
+            .annotate(total_qty_sold=Sum("qty"))
+        )
+        data = []
+        for item in qs:
+            total_profit = (item["price"] - item["product__cost_price"]) * item["total_qty_sold"]
+            data.append({
+                "product": item["product__name"],
+                "cost_price": item["product__cost_price"],
+                "selling_price": item["price"],
+                "total_qty_sold": item["total_qty_sold"],
+                "total_profit": total_profit,
+            })
+        serializer = ProfitReportSerializer(data, many=True)
+        return Response(serializer.data)
+
+
+# ✅ Stock Statement Report
+class StockStatementReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        data = []
+        for p in Product.objects.all():
+            total_sold = BillItem.objects.filter(product=p).aggregate(Sum("qty"))["qty__sum"] or 0
+            opening_stock = p.quantity + total_sold
+            closing_stock = p.quantity
+            data.append({
+                "product": p.name,
+                "opening_stock": opening_stock,
+                "closing_stock": closing_stock,
+                "total_sold": total_sold,
+            })
+        serializer = StockStatementSerializer(data, many=True)
+        return Response(serializer.data)
+
+
+# ✅ Margin Report
+class MarginReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        data = []
+        for p in Product.objects.all():
+            if p.cost_price > 0:
+                margin_percent = ((p.price - p.cost_price) / p.cost_price) * 100
+                data.append({"product": p.name, "margin_percent": round(margin_percent, 2)})
+        serializer = MarginReportSerializer(data, many=True)
+        return Response(serializer.data)
+
+
+# ✅ Stock Manufacturer Report
+class ManufacturerStockReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = (
+            Product.objects.values("manufacturer")
+            .annotate(
+                total_products=Count("id"),
+                total_stock_value=Sum(F("quantity") * F("price")),
+            )
+            .order_by("manufacturer")
+        )
+        serializer = ManufacturerStockSerializer(qs, many=True)
         return Response(serializer.data)
