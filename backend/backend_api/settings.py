@@ -26,7 +26,12 @@ SECRET_KEY = 'django-insecure-)v4x85-)!k=@qrg=l_dbe@w37u#gm99#-tjk1#kh=73_htg%=0
 DEBUG = True
 
 ALLOWED_HOSTS = []
+# CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+            "http://localhost:3000", # Example for Create React App
+            "http://localhost:5173", # Example for Vite
 
+        ]
 
 # Application definition
 

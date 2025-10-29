@@ -23,7 +23,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # Create user object
         user = CustomUser(**validated_data)
-
+        print("validated_data==>",validated_data)
         # Validate and set password
         validate_password(password, user)
         user.set_password(password)
