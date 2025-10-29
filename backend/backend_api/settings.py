@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+      'rest_framework_simplejwt',
+    "corsheaders",
     'apps.accounts',
     'apps.products',
     'apps.customers',
@@ -45,6 +48,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -116,6 +120,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+REST_FRAMEWORK = {
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+   
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -127,6 +140,14 @@ USE_I18N = True
 
 USE_TZ = True
 
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    # Access token lifetime (used for API requests)
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # ⏱️ expires in 30 minutes
+
+    # Refresh token lifetime (used to get a new access token)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7)} # 🔁 expires in 7 days
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

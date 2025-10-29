@@ -1,10 +1,11 @@
-
-
 from rest_framework import serializers
 from . models import Bill,BillItem
 from apps.products.serializers import ProductSerializer
 from apps.products.models import Product
 from datetime import timezone
+
+
+
 class BillItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
     product_id = serializers.PrimaryKeyRelatedField(write_only=True, source="product", queryset=Product.objects.all())
@@ -39,4 +40,3 @@ class BillSerializer(serializers.ModelSerializer):
             product.save()
         return bill
 
-c
