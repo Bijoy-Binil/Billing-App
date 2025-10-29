@@ -34,24 +34,36 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_("Superuser must have is_superuser=True."))
         return self.create_user(email, password, **extra_fields)
 
-class User(AbstractUser):
-    username = None
+class CustomUser(AbstractUser):
+    username = None  # disable username field
     email = models.EmailField(_("email address"), unique=True)
+    first_name = models.CharField(max_length=50, blank=True)
+    last_name = models.CharField(max_length=50, blank=True)
+
     ROLE_MANAGER = "manager"
     ROLE_CASHIER = "cashier"
+    ROLE_ADMIN = "admin"
+
     ROLE_CHOICES = [
         (ROLE_MANAGER, "Manager"),
         (ROLE_CASHIER, "Cashier"),
+        (ROLE_ADMIN, "Admin"),
     ]
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_CASHIER)
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_CASHIER,
+    )
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS: list[str] = []  # no additional required fields for createsuperuser
 
     objects = CustomUserManager()
 
-    def __str__(self):
-        return self.username
-    
+    def __str__(self) -> str:
+        return f"{self.email} ({self.role})"
+
     def is_manager(self) -> bool:
         return self.role == self.ROLE_MANAGER
 

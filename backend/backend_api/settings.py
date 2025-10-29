@@ -83,11 +83,11 @@ WSGI_APPLICATION = 'backend_api.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'accounts.CustomUser'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'billing_app',
+        'NAME': 'billing_db',
         'USER': 'postgres',
         'PASSWORD': '8520',
         'HOST': 'localhost',
