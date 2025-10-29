@@ -1,21 +1,33 @@
-from django.shortcuts import render
-
-# Create your views here.
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Product
-from .serializers import ProductSerializer
+from .models import Product,StockEntry
+from .serializers import ProductSerializer,StockEntrySerializer
+from django.db.models import Sum, F
 from .permissions import IsManagerOrReadOnly
 
 
 class ProductList(generics.ListCreateAPIView):
-    queryset = Product.objects.all().order_by("-created_at")
+    """
+    GET  /api/products/        -> list all (search/order supported)
+    POST /api/products/        -> add new product (manager only)
+    """
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, IsManagerOrReadOnly]
 
+    # enable search and ordering
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "item_id", "category"]
+    ordering_fields = ["price", "quantity", "created_at"]
 
-class ProductDetailList(generics.RetrieveUpdateDestroyAPIView):
+
+class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /api/products/<id>/ -> get product details
+    PUT    /api/products/<id>/ -> update product (manager only)
+    DELETE /api/products/<id>/ -> delete product (manager only)
+    """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, IsManagerOrReadOnly]
@@ -38,3 +50,42 @@ class LowStockProductsView(APIView):
         products = Product.objects.filter(quantity__lte=threshold).order_by("quantity")
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
+
+
+class StockEntryListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /api/stocks/      -> list all stock entries
+    POST /api/stocks/      -> add stock (manager only)
+    """
+    queryset = StockEntry.objects.all().select_related("product", "added_by").order_by("-created_at")
+    serializer_class = StockEntrySerializer
+    permission_classes = [permissions.IsAuthenticated, IsManagerOrReadOnly]
+
+
+class StockReportView(APIView):
+    """
+    GET /api/stocks/report/
+    Shows total products, total stock quantity, and total inventory value.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        products = Product.objects.all().annotate(total_value=F("quantity") * F("price"))
+
+        data = {
+            "total_products": products.count(),
+            "total_quantity": products.aggregate(Sum("quantity"))["quantity__sum"] or 0,
+            "total_value": products.aggregate(Sum("total_value"))["total_value__sum"] or 0,
+            "products": [
+                {
+                    "item_id": p.item_id,
+                    "name": p.name,
+                    "category": p.category,
+                    "quantity": p.quantity,
+                    "price": float(p.price),
+                    "total_value": float(p.quantity * p.price),
+                }
+                for p in products
+            ],
+        }
+        return Response(data)
