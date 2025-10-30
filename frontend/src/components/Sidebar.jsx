@@ -7,7 +7,8 @@ import {
   BarChart3,
   LogOut,
 } from "lucide-react";
-import { AuthContext } from "../../AuthProvider";
+import { AuthContext } from "../../../AuthProvider";
+
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/" },

@@ -10,7 +10,8 @@ import Sidebar from "./components/Sidebar";
 import TopNav from "./components/TopNav";
 import Footer from "./components/Footer";
 import Stock from "./pages/Stock";
-import AuthProvider from "../AuthProvider";
+import AuthProvider from "../../AuthProvider";
+
 
 const App = () => {
   return (

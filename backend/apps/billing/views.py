@@ -21,16 +21,12 @@ class BillDetail(generics.RetrieveAPIView):
 
 
 class BillInvoicePDFView(APIView):
-    """
-    GET /api/billing/<int:pk>/invoice/
-    Generates a PDF invoice for a specific Bill.
-    """
-    permission_classes = [permissions.AllowAny]
+    permission_classes = []
 
     def get(self, request, pk: int):
         bill = Bill.objects.prefetch_related("items__product", "customer").get(pk=pk)
-        html_string = render_to_string("billing/invoice.html", {"bill": bill})
-        pdf = HTML(string=html_string).write_pdf()
+        html = render_to_string("billing/invoice.html", {"bill": bill})
+        pdf = HTML(string=html, base_url=request.build_absolute_uri()).write_pdf()
 
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="invoice_{bill.bill_id}.pdf"'
