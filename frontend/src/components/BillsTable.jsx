@@ -1,4 +1,3 @@
-// src/components/BillsTable.jsx
 import React from "react";
 
 const BillsTable = ({ bills = [] }) => {
@@ -6,7 +5,7 @@ const BillsTable = ({ bills = [] }) => {
     <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-2xl">
       <div className="text-white font-semibold mb-3">Today's Bills</div>
       <div className="overflow-x-auto">
-        <table className="min-w-full text-left">
+        <table className="min-w-[640px] text-left">
           <thead className="text-gray-400 text-sm">
             <tr>
               <th className="py-2">Bill ID</th>

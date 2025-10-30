@@ -45,7 +45,7 @@ const fetchAll = async () => {
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100">
       <div className="max-w-[1400px] mx-auto">
         {/* header */}
-        <header className="flex items-center justify-between mb-6">
+        {/* <header className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white">Dashboard</h2>
             <p className="text-gray-400 text-sm">Overview of sales, billing & stock</p>
@@ -54,7 +54,7 @@ const fetchAll = async () => {
             <div className="text-sm text-gray-400">Welcome, {localStorage.getItem("username") || "Cashier"}</div>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00FF88]/30 to-[#00BFFF]/20 flex items-center justify-center text-black font-bold">U</div>
           </div>
-        </header>
+        </header> */}
 
         {/* summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
