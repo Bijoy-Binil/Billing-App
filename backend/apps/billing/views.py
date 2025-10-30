@@ -1,6 +1,6 @@
 from rest_framework import generics, permissions
 from .models import Bill
-from .serializers import BillSerializer
+from .serializers import BillingSerializer
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
@@ -9,22 +9,15 @@ from .models import Bill
 from rest_framework import permissions
 
 class BillList(generics.ListCreateAPIView):
-    queryset = Bill.objects.all().order_by("-created_at")
-    serializer_class = BillSerializer
+    queryset = Bill.objects.all().order_by('-created_at')
+    serializer_class = BillingSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == "cashier":
-            return self.queryset.filter(cashier=user)
-        return self.queryset
 
 
 class BillDetail(generics.RetrieveAPIView):
     queryset = Bill.objects.all()
-    serializer_class = BillSerializer
+    serializer_class = BillingSerializer
     permission_classes = [permissions.IsAuthenticated]
-
 
 
 class BillInvoicePDFView(APIView):
