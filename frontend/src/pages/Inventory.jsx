@@ -5,16 +5,30 @@ const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
 
 const Inventory = () => {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: "", category: "", price: "", quantity: "" });
+  const [form, setForm] = useState({ name: "", category: "",manufacturer:"",cost_price:"", price: "", quantity: "" });
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
+    fetchCategories();
     fetchProducts();
   }, []);
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.get("http://127.0.0.1:8000/api/categories/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCategories(res.data.results || res.data);
+      console.log((res.data.results))
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
   const fetchProducts = async () => {
     try {
-      const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken");
       setLoading(true);
       const res = await axios.get(API_PRODUCTS, {
         headers: {
@@ -23,7 +37,7 @@ const Inventory = () => {
         },
       });
       setProducts(res.data.results);
-      console.log("products==>",res.data.results)
+      console.log("products==>", res.data.results);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -41,17 +55,19 @@ const Inventory = () => {
     }
 
     try {
-      const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken");
       setLoading(true);
       if (editingId) {
-        await axios.put(`${API_PRODUCTS}${editingId}/`, form);
+        await axios.put(`${API_PRODUCTS}${editingId}/`, form, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       } else {
         await axios.post(API_PRODUCTS, form, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
       }
       setForm({ name: "", category: "", price: "", quantity: "" });
       setEditingId(null);
@@ -63,20 +79,25 @@ const Inventory = () => {
     }
   };
 
-  const handleEdit = (product) => {
-    setForm({
-      name: product.name,
-      category: product.category || "",
-      price: product.price,
-      quantity: product.quantity,
-    });
-    setEditingId(product.id);
-  };
+const handleEdit = (product) => {
+  setForm({
+    name: product.name,
+    category: product.category || "",
+    manufacturer: product.manufacturer || "",
+    cost_price: product.cost_price || "",
+    price: product.price || "",
+    quantity: product.quantity || "",
+  });
+  setEditingId(product.id);
+};
 
   const handleDelete = async (id) => {
+    const token = localStorage.getItem("accessToken")
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`${API_PRODUCTS}${id}/`);
+      await axios.delete(`${API_PRODUCTS}${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       fetchProducts();
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -97,71 +118,106 @@ const Inventory = () => {
             {editingId ? "✏️ Edit Product" : "➕ Add New Product"}
           </h2>
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
-          >
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Enter product name"
-                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
-                required
-              />
-            </div>
+  <form
+  onSubmit={handleSubmit}
+  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
+>
+  {/* Name */}
+  <div>
+    <label className="block text-sm text-gray-400 mb-1">Name</label>
+    <input
+      type="text"
+      name="name"
+      value={form.name}
+      onChange={handleChange}
+      placeholder="Enter product name"
+      className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+      required
+    />
+  </div>
 
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Category</label>
-              <input
-                type="text"
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                placeholder="Enter category"
-                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
-              />
-            </div>
+  {/* Category */}
+<div>
+  <label className="block text-sm text-gray-400 mb-1">Category</label>
+  <select
+    name="category"
+    value={form.category}
+    onChange={handleChange}
+    className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+  >
+    <option value="">Select category</option>
+    {categories.map((cat) => (
+      <option key={cat.id} value={cat.id}>
+        {cat.name}
+      </option>
+    ))}
+  </select>
+</div>
+  {/* Manufacturer ✅ NEW */}
+  <div>
+    <label className="block text-sm text-gray-400 mb-1">Manufacturer</label>
+    <input
+      type="text"
+      name="manufacturer"
+      value={form.manufacturer}
+      onChange={handleChange}
+      placeholder="Enter manufacturer name"
+      className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+    />
+  </div>
 
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Price (₹)</label>
-              <input
-                type="number"
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="Enter price"
-                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
-                required
-              />
-            </div>
+  {/* Cost Price ✅ NEW */}
+  <div>
+    <label className="block text-sm text-gray-400 mb-1">Cost Price (₹)</label>
+    <input
+      type="number"
+      name="cost_price"
+      value={form.cost_price}
+      onChange={handleChange}
+      placeholder="Enter cost price"
+      className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+    />
+  </div>
 
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Quantity</label>
-              <input
-                type="number"
-                name="quantity"
-                value={form.quantity}
-                onChange={handleChange}
-                placeholder="Enter quantity"
-                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
-                required
-              />
-            </div>
+  {/* Price */}
+  <div>
+    <label className="block text-sm text-gray-400 mb-1">Price (₹)</label>
+    <input
+      type="number"
+      name="price"
+      value={form.price}
+      onChange={handleChange}
+      placeholder="Enter price"
+      className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+      required
+    />
+  </div>
 
-            <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-semibold transition"
-              >
-                {editingId ? "Update Product" : "Add Product"}
-              </button>
-            </div>
-          </form>
+  {/* Quantity */}
+  <div>
+    <label className="block text-sm text-gray-400 mb-1">Quantity</label>
+    <input
+      type="number"
+      name="quantity"
+      value={form.quantity}
+      onChange={handleChange}
+      placeholder="Enter quantity"
+      className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+      required
+    />
+  </div>
+
+  <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
+    <button
+      type="submit"
+      disabled={loading}
+      className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-semibold transition"
+    >
+      {editingId ? "Update Product" : "Add Product"}
+    </button>
+  </div>
+</form>
+
         </section>
 
         {/* Product + Stock Table */}
@@ -189,12 +245,9 @@ const Inventory = () => {
                   </tr>
                 )}
                 {products.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-gray-700 hover:bg-gray-700/30 transition"
-                  >
+                  <tr key={p.id} className="border-b border-gray-700 hover:bg-gray-700/30 transition">
                     <td className="py-2 px-3">{p.name}</td>
-                    <td className="py-2 px-3">{p.category || "-"}</td>
+                    <td className="py-2 px-3">{p.category_detail.name || "-"}</td>
                     <td className="py-2 px-3 text-center">₹{p.price}</td>
                     <td className="py-2 px-3 text-center">{p.quantity}</td>
                     <td className="py-2 px-3 text-center">

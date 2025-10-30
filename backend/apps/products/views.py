@@ -1,11 +1,20 @@
 from rest_framework import generics, permissions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Product,StockEntry
-from .serializers import ProductSerializer,StockEntrySerializer
+from .models import Product,StockEntry,Category
+from .serializers import ProductSerializer,StockEntrySerializer,CategorySerializer
 from django.db.models import Sum, F
 from .permissions import IsManagerOrReadOnly
 
+
+class CategoryList(generics.ListCreateAPIView):
+    """
+    GET  /api/products/        -> list all (search/order supported)
+    POST /api/products/        -> add new product (manager only)
+    """
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated, IsManagerOrReadOnly]
 
 class ProductList(generics.ListCreateAPIView):
     """
@@ -38,14 +47,14 @@ class LowStockProductsView(APIView):
     GET /api/products/low-stock/?threshold=5
     Returns products whose quantity <= threshold (default = 5)
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        threshold_str = request.query_params.get("threshold", "5")
+        threshold_str = request.query_params.get("threshold", "20")
         try:
             threshold = int(threshold_str)
         except ValueError:
-            threshold = 5
+            threshold = 20
 
         products = Product.objects.filter(quantity__lte=threshold).order_by("quantity")
         serializer = ProductSerializer(products, many=True)
@@ -59,7 +68,7 @@ class StockEntryListCreateView(generics.ListCreateAPIView):
     """
     queryset = StockEntry.objects.all().select_related("product", "added_by").order_by("-created_at")
     serializer_class = StockEntrySerializer
-    permission_classes = [permissions.IsAuthenticated, IsManagerOrReadOnly]
+    permission_classes = [permissions.AllowAny, IsManagerOrReadOnly]
 
 
 class StockReportView(APIView):

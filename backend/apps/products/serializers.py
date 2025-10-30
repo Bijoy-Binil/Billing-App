@@ -1,13 +1,28 @@
 from rest_framework import serializers
-from . models import Product
-
-class ProductSerializer(serializers.ModelSerializer):
+from . models import Product,Category
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Product
+        model = Category
         fields = "__all__"
 
 
+class ProductSerializer(serializers.ModelSerializer):
+    # Include category detail (nested)
+    category_detail = CategorySerializer(source="category", read_only=True)
 
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+            "category",
+            "category_detail",
+            "manufacturer",
+            "quantity",
+            "cost_price",
+            "price",
+        ]
+        read_only_fields = ["item_id", "created_at"]
 
 # apps/stocks/serializers.py
 from rest_framework import serializers
