@@ -7,33 +7,57 @@ const Billing = () => {
   const [customer, setCustomer] = useState({ name: "", contact_number: "" });
   const [foundCustomer, setFoundCustomer] = useState(null);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
+  const [bills, setBills] = useState([]);
   const [message, setMessage] = useState("");
-
-  // ✅ Use same key that your login API stores, usually "access" or "access_token"
-  const token =
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token");
-
-  // ✅ Axios instance with token preconfigured
-  const axiosAuth = axios.create({
-    baseURL: "http://127.0.0.1:8000/api/",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-
-  // --- Load all products initially ---
+const API_BILLS = "http://127.0.0.1:8000/api/billings/";
+  // ✅ Token
+  const token = localStorage.getItem("accessToken");
+  const fetchBills = async () => {
+    const res = await axios.get(API_BILLS, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    setBills(res.data.results);
+  };
+  // --- Load products ---
   useEffect(() => {
+        fetchBills();
     if (!token) {
       console.warn("⚠️ No token found in localStorage");
       return;
     }
-
-    axiosAuth
-      .get("products/")
-      .then((res) => setProducts(res.data.results))
+    axios
+      .get("http://127.0.0.1:8000/api/products/", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setProducts(res.data.results || res.data))
       .catch((err) => console.error("Error loading products:", err));
   }, [token]);
+// --- Download PDF from backend ---
+  const handleDownloadInvoice = async (billId) => {
+    try {
+      const res = await axios.get(
+        `http://127.0.0.1:8000/api/billing/${billId}/invoice/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob", // important for binary data
+        }
+      );
 
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+
+      // create temporary link to trigger download
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `invoice_${billId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error("Error downloading invoice:", err);
+      alert("Failed to download invoice");
+    }
+  };
   // --- Add to cart ---
   const addToCart = (product) => {
     const exists = cart.find((item) => item.id === product.id);
@@ -65,15 +89,17 @@ const Billing = () => {
     [subtotal, tax, discount]
   );
 
-  // --- Search customer by contact number ---
+  // --- Search customer ---
   const handleSearchCustomer = async () => {
     if (!customer.contact_number.trim()) return;
     setLoadingCustomer(true);
     setMessage("");
-
     try {
-      const res = await axiosAuth.get("customers/");
-      const found = res.data.results.find(
+      const res = await axios.get("http://127.0.0.1:8000/api/customers/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const found = res.data.results?.find(
         (c) => c.contact_number === customer.contact_number
       );
 
@@ -93,7 +119,7 @@ const Billing = () => {
     }
   };
 
-  // --- Save bill ---
+  // --- Generate bill ---
   const handleGenerateBill = async () => {
     if (!cart.length) {
       alert("Cart is empty!");
@@ -103,9 +129,13 @@ const Billing = () => {
     try {
       let customerId = foundCustomer?.id;
 
-      // If new customer -> create
+      // Create new customer if not exists
       if (!customerId) {
-        const newCust = await axiosAuth.post("customers/", customer);
+        const newCust = await axios.post(
+          "http://127.0.0.1:8000/api/customers/",
+          customer,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         customerId = newCust.data.id;
       }
 
@@ -122,7 +152,11 @@ const Billing = () => {
         })),
       };
 
-      const billRes = await axiosAuth.post("billings/", payload);
+      const billRes = await axios.post(
+        "http://127.0.0.1:8000/api/billings/",
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       alert(`✅ Bill generated successfully: ${billRes.data.bill_id}`);
       setCart([]);
@@ -200,8 +234,9 @@ const Billing = () => {
       {/* Cart Section */}
       <div className="bg-gray-800 p-4 rounded-lg">
         <h2 className="text-xl font-medium mb-3">Cart</h2>
+
         {cart.length === 0 ? (
-             <>
+        <>
             <table className="w-full text-left mb-4">
               <thead>
                 <tr className="border-b border-gray-600">
@@ -297,6 +332,37 @@ const Billing = () => {
             </div>
           </>
         )}
+      </div>
+ {/* Bill History */}
+      <div className="max-w-6xl mx-auto mt-8 bg-gray-800/60 backdrop-blur-xl border border-gray-700 p-6 rounded-2xl">
+        <h2 className="text-xl font-semibold text-emerald-400 mb-4">Recent Bills</h2>
+        <table className="w-full text-sm">
+          <thead className="text-gray-400 border-b border-gray-700">
+            <tr>
+              <th className="text-left py-2">Bill ID</th>
+              <th>Total</th>
+              <th>Date</th>
+              <th>Invoice</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bills.map((b) => (
+              <tr key={b.id} className="border-b border-gray-700 hover:bg-gray-700/30">
+                <td className="py-2">{b.id}</td>
+                <td>₹{b.total}</td>
+                <td>{new Date(b.created_at).toLocaleString()}</td>
+                <td>
+                  <button
+                    onClick={() => handleDownloadInvoice(b.id)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Download PDF
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
