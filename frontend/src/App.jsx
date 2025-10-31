@@ -10,7 +10,10 @@ import Sidebar from "./components/Sidebar";
 import TopNav from "./components/TopNav";
 import Footer from "./components/Footer";
 import Stock from "./pages/Stock";
-import AuthProvider from "../../AuthProvider";
+import AuthProvider from "./AuthProvider";
+import PrivateRoute from "./PrivateRoute";
+import PublicRoute from "./PublicRoute";
+
 
 
 const App = () => {
@@ -18,6 +21,7 @@ const App = () => {
     <BrowserRouter>
       {/* AuthProvider wraps the entire app so all children share context */}
       <AuthProvider>
+  
         <div className="flex">
           <Sidebar />
 
@@ -28,13 +32,13 @@ const App = () => {
             {/* Routes Section */}
             <main className="flex-1 p-8">
               <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/billing" element={<Billing />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/stocks" element={<Stock />} />
+                <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+                <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+                <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                <Route path="/inventory" element={<PrivateRoute><Inventory /></PrivateRoute>} />
+                <Route path="/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
+                <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
+                <Route path="/stocks" element={<PrivateRoute><Stock /></PrivateRoute>} />
               </Routes>
             </main>
 
@@ -42,6 +46,7 @@ const App = () => {
             <Footer />
           </div>
         </div>
+
       </AuthProvider>
     </BrowserRouter>
   );

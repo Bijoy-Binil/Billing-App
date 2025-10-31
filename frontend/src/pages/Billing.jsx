@@ -64,7 +64,7 @@ const Billing = () => {
   // 🧮 Subtotal, Tax, Discount, Total
   const subtotal = useMemo(() => cart.reduce((sum, i) => sum + i.price * i.qty, 0), [cart]);
   const tax = useMemo(() => subtotal * 0.05, [subtotal]);
-  const discount = useMemo(() => (subtotal > 1000 ? subtotal * 0.05 : subtotal * 0.02), [subtotal]);
+  const discount = useMemo(() => (subtotal > 200 ? subtotal * 0.10 : subtotal * 0.02), [subtotal]);
   const total = useMemo(() => subtotal + tax - discount, [subtotal, tax, discount]);
 
   // 🧾 Checkout
@@ -197,7 +197,7 @@ const Billing = () => {
                 <span>Subtotal:</span> <span>₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax (5%):</span> <span>₹{tax.toFixed(2)}</span>
+                <span>GST (5%):</span> <span>₹{tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-emerald-400">
                 <span>Discount:</span> <span>- ₹{discount.toFixed(2)}</span>

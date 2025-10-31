@@ -23,7 +23,7 @@ const LoginPage = () => {
         email,
         password,
       });
-
+      console.log("loginRes==>",loginRes)
       localStorage.setItem("userId", loginRes.data.userId);
       localStorage.setItem("username", loginRes.data.username);
       localStorage.setItem("userEmail", loginRes.data.email);
@@ -31,7 +31,7 @@ const LoginPage = () => {
       localStorage.setItem("isLoggedIn", loginRes.data.user_login);
 
       // Redirect after successful login
-      window.location.href = "/dashboard";
+      window.location.href = "/";
     } catch (err) {
       console.error(err);
       setError("Invalid credentials. Try again!");

@@ -15,7 +15,7 @@ const AuthProvider = ({ children }) => {
   const userName = localStorage.getItem("username");
   const userEmail = localStorage.getItem("userEmail");
   const userJoined = localStorage.getItem("userJoined");
-  console.log("userAuthId==>",userId)
+  console.log("userAuthId==>",userName)
 
 
 
