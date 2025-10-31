@@ -24,6 +24,7 @@ class BillingSerializer(serializers.ModelSerializer):
             "id",
             "bill_id",
             "customer",
+            "cashier",
             "customer_name",
             "subtotal",
             "tax",
@@ -33,10 +34,21 @@ class BillingSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["bill_id", "created_at"]
+        depth=1
 
+        
     def create(self, validated_data):
+        request = self.context.get("request")  # Get the request from context
         items_data = validated_data.pop("items", [])
+
+        # ✅ Attach the logged-in user as the cashier
+        if request and hasattr(request, "user"):
+            validated_data["cashier"] = request.user
+
         billing = Bill.objects.create(**validated_data)
+
         for item_data in items_data:
             BillItem.objects.create(bill=billing, **item_data)
+
         return billing
+

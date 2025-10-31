@@ -13,6 +13,10 @@ class BillList(generics.ListCreateAPIView):
     serializer_class = BillingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
 
 class BillDetail(generics.RetrieveAPIView):
     queryset = Bill.objects.all()

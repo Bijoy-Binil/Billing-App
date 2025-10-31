@@ -3,15 +3,15 @@ import React from "react";
 
 const StockSummary = ({ products = [] }) => {
   return (
-    <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-2xl">
+    <div key={products.id} className="bg-gray-800/50 border border-gray-700 p-4 rounded-2xl">
       <div className="flex items-center justify-between mb-3">
         <div className="text-white font-semibold">Stock Summary</div>
         <div className="text-sm text-gray-400">{products.length} products</div>
       </div>
 
       <div className="grid grid-cols-1 gap-2">
-        {products.slice(0, 8).map((p) => (
-          <div key={p.item_id} className="flex items-center justify-between p-3 bg-gray-900/40 rounded-lg border border-gray-700">
+        {products.slice(0, 8).map((p,i) => (
+          <div key={i} className="flex items-center justify-between p-3 bg-gray-900/40 rounded-lg border border-gray-700">
             <div>
               <div className="text-sm text-gray-200 font-medium">{p.name}</div>
               <div className="text-xs text-gray-400">{p.category || "—"}</div>

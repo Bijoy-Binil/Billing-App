@@ -21,32 +21,39 @@ const Reports = () => {
   const [profitData, setProfitData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_SALES =  "http://127.0.0.1:8000/api/bills/";
-  const API_PRODUCTS =  "http://127.0.0.1:8000/api/products/";
+  const API_SALES = "http://127.0.0.1:8000/api/billings/"; // ✅ use your DRF bills endpoint
+  const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
 
   useEffect(() => {
     fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchReports = async () => {
     setLoading(true);
+    const token = localStorage.getItem("accessToken");
+
     try {
       const [salesRes, productRes] = await Promise.all([
-        axios.get(API_SALES),
-        axios.get(API_PRODUCTS),
+        axios.get(API_SALES, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(API_PRODUCTS, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
-      const sales = (salesRes.data || []).map((bill) => ({
+      // --- Sales Data ---
+      const sales = (salesRes.data.results || salesRes.data || []).map((bill) => ({
         date: new Date(bill.created_at).toLocaleDateString("en-GB", {
           day: "2-digit",
           month: "short",
         }),
         total: Number(bill.total) || 0,
-        profit: (Number(bill.total) || 0) * 0.2, // assuming 20% profit margin
+        profit: (Number(bill.total) || 0) * 0.2, // assuming 20% margin
       }));
 
-      const stock = (productRes.data || []).map((p) => ({
+      // --- Stock Data ---
+      const stock = (productRes.data.results || productRes.data || []).map((p) => ({
         name: p.name,
         quantity: Number(p.quantity) || 0,
       }));
@@ -69,134 +76,103 @@ const Reports = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-2xl font-bold text-emerald-400">Reports & Analytics</h2>
-          <div className="text-sm text-gray-400">{salesData.length ? `${salesData.length} data points` : "No data yet"}</div>
+          <div className="text-sm text-gray-400">
+            {salesData.length ? `${salesData.length} data points` : "No data yet"}
+          </div>
         </div>
 
-        {/* responsive grid: 1 col mobile, 2 cols md, 3 cols lg */}
+        {/* 3-column responsive grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Sales Report */}
-          <section
-            aria-label="Sales Overview"
-            className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 flex flex-col"
-          >
-            <h3 className="text-lg font-semibold mb-4 text-emerald-400">🧾 Sales Overview</h3>
+          {/* 📈 Sales Overview */}
+          <ReportCard title="🧾 Sales Overview">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={salesData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="date" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1F2937",
+                    borderColor: "#10B981",
+                    color: "#F3F4F6",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "#10B981" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ReportCard>
 
-            {/* Chart wrapper: sets explicit height per breakpoint so ResponsiveContainer can be percentage-based */}
-            <div className="w-full h-56 sm:h-64 md:h-72 lg:h-80">
-              {loading ? (
-                <div className="flex items-center justify-center h-full text-gray-400">Loading...</div>
-              ) : salesData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-400">No sales data</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={salesData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        borderColor: "#10B981",
-                        color: "#F3F4F6",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="total"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                      dot={{ r: 4, fill: "#10B981" }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </section>
+          {/* 📦 Stock Summary */}
+          <ReportCard title="📦 Stock Summary">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stockData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1F2937",
+                    borderColor: "#10B981",
+                    color: "#F3F4F6",
+                  }}
+                />
+                <Bar dataKey="quantity" fill="#10B981" barSize={35} radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ReportCard>
 
-          {/* Stock Summary */}
-          <section
-            aria-label="Stock Summary"
-            className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 flex flex-col"
-          >
-            <h3 className="text-lg font-semibold mb-4 text-emerald-400">📦 Stock Summary</h3>
-
-            <div className="w-full h-56 sm:h-64 md:h-72 lg:h-80">
-              {loading ? (
-                <div className="flex items-center justify-center h-full text-gray-400">Loading...</div>
-              ) : stockData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-400">No stock data</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stockData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="name" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        borderColor: "#10B981",
-                        color: "#F3F4F6",
-                      }}
-                    />
-                    <Bar dataKey="quantity" fill="#10B981" barSize={35} radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </section>
-
-          {/* Profit Report */}
-          <section
-            aria-label="Profit Report"
-            className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 flex flex-col"
-          >
-            <h3 className="text-lg font-semibold mb-4 text-emerald-400">💰 Profit Report</h3>
-
-            <div className="w-full h-56 sm:h-64 md:h-72 lg:h-80">
-              {loading ? (
-                <div className="flex items-center justify-center h-full text-gray-400">Loading...</div>
-              ) : profitData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-400">No profit data</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={profitData}>
-                    <defs>
-                      <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        borderColor: "#10B981",
-                        color: "#F3F4F6",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="profit"
-                      stroke="#10B981"
-                      fillOpacity={1}
-                      fill="url(#colorProfit)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </section>
+          {/* 💰 Profit Report */}
+          <ReportCard title="💰 Profit Report">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={profitData}>
+                <defs>
+                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="date" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1F2937",
+                    borderColor: "#10B981",
+                    color: "#F3F4F6",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="profit"
+                  stroke="#10B981"
+                  fillOpacity={1}
+                  fill="url(#colorProfit)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ReportCard>
         </div>
 
-        {/* small caption / notes area */}
         <div className="text-sm text-gray-400">
-          Tip: pinch/zoom or expand window for more data points. Charts scale by container height per breakpoint.
+          Tip: Zoom or resize the window to view more data points — charts resize automatically.
         </div>
       </div>
     </div>
   );
 };
+
+/** ✅ Reusable Card Layout */
+const ReportCard = ({ title, children }) => (
+  <section className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 flex flex-col h-[400px]">
+    <h3 className="text-lg font-semibold mb-4 text-emerald-400">{title}</h3>
+    <div className="flex-1">{children}</div>
+  </section>
+);
 
 export default Reports;
