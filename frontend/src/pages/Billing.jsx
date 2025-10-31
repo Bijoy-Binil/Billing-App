@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { motion } from "framer-motion";
+import { Search, FileText, ShoppingCart, User2 } from "lucide-react";
 
 const Billing = () => {
   const [products, setProducts] = useState([]);
@@ -8,26 +10,25 @@ const Billing = () => {
   const [foundCustomer, setFoundCustomer] = useState(null);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
   const [bills, setBills] = useState([]);
-  const [errors, seterros] = useState([]);
+  const [errors, setErrors] = useState([]);
   const [message, setMessage] = useState("");
-  const API_BILLS = "http://127.0.0.1:8000/api/billings/";
-  // ✅ Token
-  const token = localStorage.getItem("accessToken");
-const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-const handleSearch = async () => {
-  try {
-    const res = await axios.get(
-      `http://127.0.0.1:8000/api/products/?search=${searchTerm}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    setProducts(res.data.results || res.data || []);
-  } catch (err) {
-    console.error("Search error:", err);
-  }
-};
+  const API_BILLS = "http://127.0.0.1:8000/api/billings/";
+  const token = localStorage.getItem("accessToken");
+
+  // 🔍 Product Search
+  const handleSearch = async () => {
+    try {
+      const res = await axios.get(
+        `http://127.0.0.1:8000/api/products/?search=${searchTerm}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProducts(res.data.results || res.data || []);
+    } catch (err) {
+      console.error("Search error:", err);
+    }
+  };
 
   const fetchBills = async () => {
     try {
@@ -40,12 +41,8 @@ const handleSearch = async () => {
     }
   };
 
-  // --- Load products and bills ---
   useEffect(() => {
-    if (!token) {
-      console.warn("⚠️ No token found in localStorage");
-      return;
-    }
+    if (!token) return;
     fetchBills();
     axios
       .get("http://127.0.0.1:8000/api/products/", {
@@ -55,21 +52,18 @@ const handleSearch = async () => {
       .catch((err) => console.error("Error loading products:", err));
   }, [token]);
 
-  // --- Download PDF from backend ---
+  // 📄 Invoice Download
   const handleDownloadInvoice = async (billId) => {
     try {
       const res = await axios.get(
         `http://127.0.0.1:8000/api/billing/${billId}/invoice/`,
         {
           headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob", // important for binary data
+          responseType: "blob",
         }
       );
-
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-
-      // create temporary link to trigger download
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", `invoice_${billId}.pdf`);
@@ -83,7 +77,7 @@ const handleSearch = async () => {
     }
   };
 
-  // --- Add to cart ---
+  // 🛒 Cart
   const addToCart = (product) => {
     const exists = cart.find((item) => item.id === product.id);
     if (exists) {
@@ -97,14 +91,11 @@ const handleSearch = async () => {
     }
   };
 
-  // --- Remove from cart ---
   const removeFromCart = (id) => {
     setCart(cart.filter((item) => item.id !== id));
   };
 
-  // --- Totals (with rounding for financial precision) ---
-  const roundToCents = (value) => Math.round(value * 100) / 100;
-
+  const roundToCents = (v) => Math.round(v * 100) / 100;
   const subtotal = useMemo(
     () =>
       roundToCents(
@@ -112,7 +103,6 @@ const handleSearch = async () => {
       ),
     [cart]
   );
-
   const tax = useMemo(() => roundToCents(subtotal * 0.05), [subtotal]);
   const discount = useMemo(() => roundToCents(subtotal * 0.1), [subtotal]);
   const total = useMemo(
@@ -120,7 +110,7 @@ const handleSearch = async () => {
     [subtotal, tax, discount]
   );
 
-  // --- Search customer (using dedicated search endpoint for efficiency) ---
+  // 👤 Customer Search
   const handleSearchCustomer = async () => {
     if (!customer.contact_number.trim()) return;
     setLoadingCustomer(true);
@@ -128,14 +118,10 @@ const handleSearch = async () => {
     try {
       const res = await axios.get(
         `http://127.0.0.1:8000/api/customers/search/?contact=${customer.contact_number}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      const found = res.data; // Single object or error
-
-      if (found && found.id) { // Success: found customer
+      const found = res.data;
+      if (found && found.id) {
         setFoundCustomer(found);
         setCustomer({ name: found.name, contact_number: found.contact_number });
         setMessage(`Customer found: ${found.name}`);
@@ -144,9 +130,7 @@ const handleSearch = async () => {
         setMessage("New customer — please enter name to add.");
       }
     } catch (err) {
-      console.error(err);
-      seterros(err.contact_number)
-      // Handle 404 or other errors
+      setErrors(err.contact_number);
       if (err.response?.status === 404) {
         setFoundCustomer(null);
         setMessage("New customer — please enter name to add.");
@@ -158,26 +142,15 @@ const handleSearch = async () => {
     }
   };
 
-  // --- Generate bill ---
+  // 💳 Generate Bill
   const handleGenerateBill = async () => {
-    if (!cart.length) {
-      alert("Cart is empty!");
-      return;
-    }
-    if (!token) {
-      alert("Please log in to generate a bill.");
-      return;
-    }
+    if (!cart.length) return alert("Cart is empty!");
+    if (!token) return alert("Please log in to generate a bill.");
 
     try {
       let customerId = foundCustomer?.id;
-
-      // Create new customer if not exists (validate name for new)
       if (!customerId) {
-        if (!customer.name.trim()) {
-      
-          return;
-        }
+        if (!customer.name.trim()) return;
         const newCust = await axios.post(
           "http://127.0.0.1:8000/api/customers/",
           customer,
@@ -192,14 +165,12 @@ const handleSearch = async () => {
         tax,
         discount,
         total,
-        items: cart.map((item) => ({
-          product: item.id,
-          quantity: item.qty,
-          price: roundToCents(item.price), // Ensure rounded price per item
+        items: cart.map((i) => ({
+          product: i.id,
+          quantity: i.qty,
+          price: roundToCents(i.price),
         })),
       };
-
-      console.log("Sending payload:", payload); // Debug: Check values before send
 
       const billRes = await axios.post(
         "http://127.0.0.1:8000/api/billings/",
@@ -207,28 +178,40 @@ const handleSearch = async () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(`✅ Bill generated successfully: ${billRes.data.bill_id}`);
+      alert(`✅ Bill generated: ${billRes.data.bill_id}`);
       setCart([]);
       setCustomer({ name: "", contact_number: "" });
       setFoundCustomer(null);
       setMessage("");
-      fetchBills(); // Refresh bills list
+      fetchBills();
     } catch (err) {
-      console.error("Full error:", err.response?.data || err);
-      const errorDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-      seterros(err.response.data.contact_number)
-
+      console.error(err.response?.data || err);
+      setErrors(err.response?.data?.contact_number);
     }
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-semibold mb-6">🧾 Billing Section</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
+      <motion.h1
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-3xl font-bold mb-8 text-emerald-400 flex items-center gap-2"
+      >
+        <ShoppingCart className="text-emerald-500" />
+        Billing System
+      </motion.h1>
 
-      {/* Customer Search */}
-      <div className="bg-gray-800 p-4 rounded-lg mb-6">
-        <h2 className="text-xl font-medium mb-2">Customer Details</h2>
-        <div className="flex gap-3 items-center">
+      {/* 🧍 Customer Section */}
+      <motion.div
+        className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 mb-8 shadow-lg shadow-emerald-600/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h2 className="text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+          <User2 size={20} /> Customer Details
+        </h2>
+
+        <div className="flex flex-wrap gap-3 items-center mb-3">
           <input
             type="text"
             placeholder="Contact Number"
@@ -236,165 +219,120 @@ const handleSearch = async () => {
             onChange={(e) =>
               setCustomer({ ...customer, contact_number: e.target.value })
             }
-            className="px-3 py-2 rounded bg-gray-700 text-white w-48"
+            className="px-3 py-2 rounded-xl bg-gray-700/80 text-white w-48 border border-gray-600 focus:ring-2 focus:ring-emerald-500"
           />
           <button
             onClick={handleSearchCustomer}
             disabled={loadingCustomer}
-            className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded disabled:opacity-50"
+            className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl transition-all disabled:opacity-50"
           >
             {loadingCustomer ? "Searching..." : "Search"}
           </button>
-          {message && <p className="text-xl text-green-400 mt-2">{message}</p>}
-          {errors && <p className="text-xl text-red-400 mt-2">{errors}</p>}
+          {message && <p className="text-emerald-400 text-sm">{message}</p>}
+          {errors && <p className="text-red-400 text-sm">{errors}</p>}
         </div>
 
         {!foundCustomer && (
-          <div className="mt-3">
-            <input
-              type="text"
-              placeholder="Customer Name (for new)"
-              value={customer.name}
-              onChange={(e) =>
-                setCustomer({ ...customer, name: e.target.value })
-              }
-              className="px-3 py-2 rounded bg-gray-700 text-white w-64"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Customer Name (for new)"
+            value={customer.name}
+            onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+            className="px-3 py-2 rounded-xl bg-gray-700/80 text-white w-64 border border-gray-600 focus:ring-2 focus:ring-emerald-500"
+          />
         )}
+      </motion.div>
 
-        {foundCustomer && (
-          <p className="mt-2 text-gray-300">
-            Found: <strong>{foundCustomer.name}</strong> ({foundCustomer.contact_number})
-          </p>
-        )}
+      {/* 🔍 Product Search */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <input
+          type="text"
+          placeholder="Search by category or name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="px-3 py-2 rounded-xl bg-gray-700/80 text-white border border-gray-600 focus:ring-2 focus:ring-emerald-500 w-64"
+        />
+        <button
+          onClick={handleSearch}
+          className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl flex items-center gap-2"
+        >
+          <Search size={18} /> Search
+        </button>
+        <button
+          onClick={() => {
+            setSearchTerm("");
+            axios
+              .get("http://127.0.0.1:8000/api/products/", {
+                headers: { Authorization: `Bearer ${token}` },
+              })
+              .then((res) => setProducts(res.data.results || res.data || []));
+          }}
+          className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-xl"
+        >
+          Reset
+        </button>
       </div>
-{/* Product Search */}
-<div className="mb-4 flex gap-2">
-  <input
-    type="text"
-    placeholder="Search by category or name..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-    className="px-3 py-2 rounded bg-gray-700 text-white w-64"
-  />
-  <button
-    onClick={handleSearch}
-    className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded"
-  >
-    Search
-  </button>
-  <button
-    onClick={() => {
-      setSearchTerm("");
-      // reload all products
-      axios
-        .get("http://127.0.0.1:8000/api/products/", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => setProducts(res.data.results || res.data || []));
-    }}
-    className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded"
-  >
-    Reset
-  </button>
-</div>
 
-      {/* Product List */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      {/* 🧺 Products */}
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-10">
         {products.length === 0 ? (
-          <p className="col-span-3 text-gray-400 italic">Loading products...</p>
+          <p className="text-gray-400 italic col-span-full">
+            Loading products...
+          </p>
         ) : (
-          products.map((product) => (
-            <div
-              key={product.id}
-              className="p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors"
-              onClick={() => addToCart(product)}
+          products.map((p) => (
+            <motion.div
+              key={p.id}
+              whileHover={{ scale: 1.05 }}
+              className="p-5 bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-700 shadow-md hover:shadow-emerald-500/20 cursor-pointer transition-all"
+              onClick={() => addToCart(p)}
             >
-              <h3 className="text-lg font-medium">{product.name}</h3>
-              <p className="text-gray-400">₹{parseFloat(product.price).toFixed(2)}</p>
-            </div>
+              <h3 className="text-lg font-medium">{p.name}</h3>
+              <p className="text-gray-400 text-sm mt-1">
+                ₹{parseFloat(p.price).toFixed(2)}
+              </p>
+            </motion.div>
           ))
         )}
       </div>
 
-      {/* Cart Section */}
-      <div className="bg-gray-800 p-4 rounded-lg">
-        <h2 className="text-xl font-medium mb-3">Cart ({cart.length} items)</h2>
-
+      {/* 🧾 Cart */}
+      <motion.div
+        className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 shadow-lg shadow-emerald-600/10 mb-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h2 className="text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+          <ShoppingCart size={20} /> Cart ({cart.length})
+        </h2>
         {cart.length === 0 ? (
-          <>
-            <table className="w-full text-left mb-4">
-              <thead>
-                <tr className="border-b border-gray-600">
-                  <th className="py-2">Product</th>
-                  <th className="py-2 w-16">Qty</th>
-                  <th className="py-2 w-24">Price</th>
-                  <th className="py-2 w-24">Total</th>
-                  <th className="py-2 w-8"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {cart.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-700/50">
-                    <td className="py-2">{item.name}</td>
-                    <td className="py-2">{item.qty}</td>
-                    <td className="py-2">₹{parseFloat(item.price).toFixed(2)}</td>
-                    <td className="py-2">₹{roundToCents(item.qty * item.price).toFixed(2)}</td>
-                    <td>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-400 hover:text-red-600 text-lg"
-                      >
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Summary */}
-            <div className="text-right space-y-1 pt-4 border-t border-gray-600">
-              <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
-              <p>Tax (5%): +₹{tax.toFixed(2)}</p>
-              <p>Discount (10%): -₹{discount.toFixed(2)}</p>
-              <hr className="my-1" />
-              <p className="font-semibold text-lg">
-                Total: ₹{total.toFixed(2)}
-              </p>
-              <button
-                onClick={handleGenerateBill}
-                disabled={!token || loadingCustomer}
-                className="bg-green-600 hover:bg-green-700 mt-4 px-6 py-2 rounded disabled:opacity-50"
-              >
-                Generate Bill
-              </button>
-            </div>
-          </>
+          <p className="text-gray-400 italic">No items in cart</p>
         ) : (
           <>
-            <table className="w-full text-left mb-4">
-              <thead>
-                <tr className="border-b border-gray-600">
-                  <th className="py-2">Product</th>
-                  <th className="py-2 w-16">Qty</th>
-                  <th className="py-2 w-24">Price</th>
-                  <th className="py-2 w-24">Total</th>
-                  <th className="py-2 w-8"></th>
+            <table className="w-full text-left text-gray-300 mb-4">
+              <thead className="border-b border-gray-700 text-gray-400 text-sm">
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {cart.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-700/50">
-                    <td className="py-2">{item.name}</td>
-                    <td className="py-2">{item.qty}</td>
-                    <td className="py-2">₹{parseFloat(item.price).toFixed(2)}</td>
-                    <td className="py-2">₹{roundToCents(item.qty * item.price).toFixed(2)}</td>
+                {cart.map((i) => (
+                  <tr
+                    key={i.id}
+                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
+                  >
+                    <td>{i.name}</td>
+                    <td>{i.qty}</td>
+                    <td>₹{parseFloat(i.price).toFixed(2)}</td>
+                    <td>₹{(i.price * i.qty).toFixed(2)}</td>
                     <td>
                       <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-400 hover:text-red-600 text-lg"
+                        onClick={() => removeFromCart(i.id)}
+                        className="text-red-400 hover:text-red-600"
                       >
                         ✕
                       </button>
@@ -404,57 +342,66 @@ const handleSearch = async () => {
               </tbody>
             </table>
 
-            {/* Summary */}
-            <div className="text-right space-y-1 pt-4 border-t border-gray-600">
+            <div className="text-right text-gray-300 space-y-1 border-t border-gray-700 pt-4">
               <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
               <p>Tax (5%): +₹{tax.toFixed(2)}</p>
               <p>Discount (10%): -₹{discount.toFixed(2)}</p>
-              <hr className="my-1" />
-              <p className="font-semibold text-lg">
+              <hr className="my-1 border-gray-700" />
+              <p className="font-semibold text-lg text-white">
                 Total: ₹{total.toFixed(2)}
               </p>
               <button
                 onClick={handleGenerateBill}
-                disabled={!token || loadingCustomer}
-                className="bg-green-600 hover:bg-green-700 mt-4 px-6 py-2 rounded disabled:opacity-50"
+                className="bg-emerald-600 hover:bg-emerald-500 mt-4 px-6 py-2 rounded-xl transition-all"
               >
                 Generate Bill
               </button>
             </div>
           </>
         )}
-      </div>
+      </motion.div>
 
-      {/* Bill History */}
-      <div className="max-w-6xl mx-auto mt-8 bg-gray-800/60 backdrop-blur-xl border border-gray-700 p-6 rounded-2xl">
-        <h2 className="text-xl font-semibold text-emerald-400 mb-4">Recent Bills</h2>
+      {/* 📜 Bill History */}
+      <motion.div
+        className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 shadow-lg shadow-emerald-600/10"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h2 className="text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+          <FileText size={20} /> Recent Bills
+        </h2>
         {bills.length === 0 ? (
-          <p className="text-gray-400 italic">No bills yet. Generate your first bill above!</p>
+          <p className="text-gray-400 italic">
+            No bills yet. Generate your first bill above!
+          </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm text-gray-300">
               <thead className="text-gray-400 border-b border-gray-700">
                 <tr>
-                  <th className="text-left py-2">Bill ID</th>
-                  <th className="py-2 w-24">Total</th>
-                  <th className="py-2 w-32">Date</th>
-                  <th className="py-2 w-32">Customer</th>
-                  <th className="py-2 w-24">Invoice</th>
+                  <th>Bill ID</th>
+                  <th>Total</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Invoice</th>
                 </tr>
               </thead>
               <tbody>
                 {bills.map((b) => (
-                  <tr key={b.id} className="border-b border-gray-700/50 hover:bg-gray-700/30">
-                    <td className="py-2 font-mono text-sm">{b.bill_id}</td>
-                    <td className="py-2">₹{parseFloat(b.total || 0).toFixed(2)}</td>
-                    <td className="py-2">{new Date(b.created_at).toLocaleString('en-IN')}</td>
-                    <td className="py-2">{b.customer_name || 'Walk-in'}</td>
+                  <tr
+                    key={b.id}
+                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
+                  >
+                    <td className="font-mono text-sm">{b.bill_id}</td>
+                    <td>₹{parseFloat(b.total || 0).toFixed(2)}</td>
+                    <td>{new Date(b.created_at).toLocaleString("en-IN")}</td>
+                    <td>{b.customer_name || "Walk-in"}</td>
                     <td>
                       <button
                         onClick={() => handleDownloadInvoice(b.id)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                        className="bg-blue-900 cursor-pointer mt-3 hover:bg-blue-800 px-3 py-1 rounded-xl text-sm transition-all"
                       >
-                        Download PDF
+                        Download
                       </button>
                     </td>
                   </tr>
@@ -463,7 +410,7 @@ const handleSearch = async () => {
             </table>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+// App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
@@ -6,54 +7,57 @@ import Dashboard from "./pages/Dashboard";
 import Billing from "./pages/Billing";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
-import Sidebar from "./components/Sidebar";
-import TopNav from "./components/TopNav";
-import Footer from "./components/Footer";
 import Stock from "./pages/Stock";
-import AuthProvider from "./AuthProvider";
-import PrivateRoute from "./PrivateRoute";
-import PublicRoute from "./PublicRoute";
 import ProfitReport from "./pages/Reports/ProfitReport";
 import SalesReport from "./pages/Reports/SalesReport";
 import StockReport from "./pages/Reports/StockReport";
-
+import AuthProvider from "./AuthProvider";
+import PrivateRoute from "./PrivateRoute";
+import PublicRoute from "./PublicRoute";
+import ResponsiveLayout from "./ResponsiveLayout;";
 
 
 const App = () => {
   return (
     <BrowserRouter>
-      {/* AuthProvider wraps the entire app so all children share context */}
       <AuthProvider>
-  
-        <div className="flex">
-          <Sidebar />
+        <Routes>
+          {/* 🔓 Public Routes */}
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
 
-          {/* Main Content Area */}
-          <div className="flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 min-h-screen flex flex-col">
-            <TopNav />
-
-            {/* Routes Section */}
-            <main className="flex-1 p-8">
-              <Routes>
-                <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-                <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-                <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-                <Route path="/inventory" element={<PrivateRoute><Inventory /></PrivateRoute>} />
-                <Route path="/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
-                <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
-                <Route path="/stocks" element={<PrivateRoute><Stock /></PrivateRoute>} />
-
-                <Route path="/profit-report" element={<PrivateRoute><ProfitReport /></PrivateRoute>} />
-                <Route path="/sales-report" element={<PrivateRoute><SalesReport /></PrivateRoute>} />
-                <Route path="/stock-report" element={<PrivateRoute><StockReport /></PrivateRoute>} />
-              </Routes>
-            </main>
-
-            {/* Footer always visible */}
-            <Footer />
-          </div>
-        </div>
-
+          {/* 🔒 Protected Routes (Layout wraps all) */}
+          <Route
+            element={
+              <PrivateRoute>
+                <ResponsiveLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/billing" element={<Billing />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/stocks" element={<Stock />} />
+            <Route path="/profit-report" element={<ProfitReport />} />
+            <Route path="/sales-report" element={<SalesReport />} />
+            <Route path="/stock-report" element={<StockReport />} />
+          </Route>
+        </Routes>
       </AuthProvider>
     </BrowserRouter>
   );
