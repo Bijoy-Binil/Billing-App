@@ -8,10 +8,26 @@ const Billing = () => {
   const [foundCustomer, setFoundCustomer] = useState(null);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
   const [bills, setBills] = useState([]);
+  const [errors, seterros] = useState([]);
   const [message, setMessage] = useState("");
   const API_BILLS = "http://127.0.0.1:8000/api/billings/";
   // ✅ Token
   const token = localStorage.getItem("accessToken");
+const [searchTerm, setSearchTerm] = useState("");
+
+const handleSearch = async () => {
+  try {
+    const res = await axios.get(
+      `http://127.0.0.1:8000/api/products/?search=${searchTerm}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    setProducts(res.data.results || res.data || []);
+  } catch (err) {
+    console.error("Search error:", err);
+  }
+};
 
   const fetchBills = async () => {
     try {
@@ -129,6 +145,7 @@ const Billing = () => {
       }
     } catch (err) {
       console.error(err);
+      seterros(err.contact_number)
       // Handle 404 or other errors
       if (err.response?.status === 404) {
         setFoundCustomer(null);
@@ -158,7 +175,7 @@ const Billing = () => {
       // Create new customer if not exists (validate name for new)
       if (!customerId) {
         if (!customer.name.trim()) {
-          alert("Please enter customer name for new customer.");
+      
           return;
         }
         const newCust = await axios.post(
@@ -199,7 +216,8 @@ const Billing = () => {
     } catch (err) {
       console.error("Full error:", err.response?.data || err);
       const errorDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-      alert(`❌ Error generating bill: ${errorDetail}`);
+      seterros(err.response.data.contact_number)
+
     }
   };
 
@@ -227,7 +245,8 @@ const Billing = () => {
           >
             {loadingCustomer ? "Searching..." : "Search"}
           </button>
-          {message && <p className="text-sm text-green-400 mt-2">{message}</p>}
+          {message && <p className="text-xl text-green-400 mt-2">{message}</p>}
+          {errors && <p className="text-xl text-red-400 mt-2">{errors}</p>}
         </div>
 
         {!foundCustomer && (
@@ -250,6 +269,36 @@ const Billing = () => {
           </p>
         )}
       </div>
+{/* Product Search */}
+<div className="mb-4 flex gap-2">
+  <input
+    type="text"
+    placeholder="Search by category or name..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="px-3 py-2 rounded bg-gray-700 text-white w-64"
+  />
+  <button
+    onClick={handleSearch}
+    className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded"
+  >
+    Search
+  </button>
+  <button
+    onClick={() => {
+      setSearchTerm("");
+      // reload all products
+      axios
+        .get("http://127.0.0.1:8000/api/products/", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => setProducts(res.data.results || res.data || []));
+    }}
+    className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded"
+  >
+    Reset
+  </button>
+</div>
 
       {/* Product List */}
       <div className="grid grid-cols-3 gap-4 mb-8">
@@ -274,7 +323,55 @@ const Billing = () => {
         <h2 className="text-xl font-medium mb-3">Cart ({cart.length} items)</h2>
 
         {cart.length === 0 ? (
-          <p className="text-gray-400 italic py-4">Cart is empty. Click on products above to add items.</p>
+          <>
+            <table className="w-full text-left mb-4">
+              <thead>
+                <tr className="border-b border-gray-600">
+                  <th className="py-2">Product</th>
+                  <th className="py-2 w-16">Qty</th>
+                  <th className="py-2 w-24">Price</th>
+                  <th className="py-2 w-24">Total</th>
+                  <th className="py-2 w-8"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {cart.map((item) => (
+                  <tr key={item.id} className="border-b border-gray-700/50">
+                    <td className="py-2">{item.name}</td>
+                    <td className="py-2">{item.qty}</td>
+                    <td className="py-2">₹{parseFloat(item.price).toFixed(2)}</td>
+                    <td className="py-2">₹{roundToCents(item.qty * item.price).toFixed(2)}</td>
+                    <td>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="text-red-400 hover:text-red-600 text-lg"
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Summary */}
+            <div className="text-right space-y-1 pt-4 border-t border-gray-600">
+              <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
+              <p>Tax (5%): +₹{tax.toFixed(2)}</p>
+              <p>Discount (10%): -₹{discount.toFixed(2)}</p>
+              <hr className="my-1" />
+              <p className="font-semibold text-lg">
+                Total: ₹{total.toFixed(2)}
+              </p>
+              <button
+                onClick={handleGenerateBill}
+                disabled={!token || loadingCustomer}
+                className="bg-green-600 hover:bg-green-700 mt-4 px-6 py-2 rounded disabled:opacity-50"
+              >
+                Generate Bill
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <table className="w-full text-left mb-4">

@@ -27,7 +27,7 @@ class ProductList(generics.ListCreateAPIView):
 
     # enable search and ordering
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["name", "item_id", "category"]
+    search_fields = ["name", "item_id", "category__name", "manufacturer"]
     ordering_fields = ["price", "quantity", "created_at"]
 
 
