@@ -31,8 +31,8 @@ const BillsTable = ({ bills = [] }) => {
                 </td>
               </tr>
             ) : (
-              todayBills.map((b) => (
-                <tr key={b.id} className="border-t border-gray-700">
+              todayBills.slice(0,10).map((b,idx) => (
+                <tr key={b.idx} className="border-t border-gray-700">
                   <td className="py-3 text-sm text-white">{b.bill_id}</td>
                   <td className="py-3 text-sm text-gray-200">
                     {b.cashier?.first_name

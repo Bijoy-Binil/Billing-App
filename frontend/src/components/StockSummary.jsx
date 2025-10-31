@@ -14,7 +14,7 @@ const StockSummary = ({ products = [] }) => {
           <div key={i} className="flex items-center justify-between p-3 bg-gray-900/40 rounded-lg border border-gray-700">
             <div>
               <div className="text-sm text-gray-200 font-medium">{p.name}</div>
-              <div className="text-xs text-gray-400">{p.category || "—"}</div>
+              <div className="text-xs text-gray-400">{p.category_detail.name || "—"}</div>
             </div>
 
             <div className="text-right">

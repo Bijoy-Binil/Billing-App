@@ -8,7 +8,7 @@ class BillingItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BillItem
-        fields = ["id", "product", "product_name", "qty", "price"]
+        fields = ["id", "product", "product_name", "quantity", "price"]
 
 
 class BillingSerializer(serializers.ModelSerializer):
