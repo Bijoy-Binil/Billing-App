@@ -14,10 +14,10 @@ class Bill(models.Model):
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, null=True, blank=True
     )
-    subtotal = models.DecimalField(max_digits=12, decimal_places=2)
-    tax = models.DecimalField(max_digits=12, decimal_places=2)
-    discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    total = models.DecimalField(max_digits=12, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=30, decimal_places=2)  # Increased
+    tax = models.DecimalField(max_digits=30, decimal_places=2)       # Increased
+    discount = models.DecimalField(max_digits=30, decimal_places=2, default=0)  # Increased
+    total = models.DecimalField(max_digits=30, decimal_places=2)     # Increased
     created_at = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
@@ -36,7 +36,7 @@ class BillItem(models.Model):
     bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.IntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)  # price at time of sale
+    price = models.DecimalField(max_digits=12, decimal_places=2)  # Increased for safety
 
     def __str__(self):
-        return f"{self.product.name} × {self.qty}"
+        return f"{self.product.name} × {self.quantity}"

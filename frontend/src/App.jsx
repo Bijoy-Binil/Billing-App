@@ -13,6 +13,9 @@ import Stock from "./pages/Stock";
 import AuthProvider from "./AuthProvider";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
+import ProfitReport from "./pages/Reports/ProfitReport";
+import SalesReport from "./pages/Reports/SalesReport";
+import StockReport from "./pages/Reports/StockReport";
 
 
 
@@ -39,6 +42,10 @@ const App = () => {
                 <Route path="/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
                 <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
                 <Route path="/stocks" element={<PrivateRoute><Stock /></PrivateRoute>} />
+
+                <Route path="/profit-report" element={<PrivateRoute><ProfitReport /></PrivateRoute>} />
+                <Route path="/sales-report" element={<PrivateRoute><SalesReport /></PrivateRoute>} />
+                <Route path="/stock-report" element={<PrivateRoute><StockReport /></PrivateRoute>} />
               </Routes>
             </main>
 
