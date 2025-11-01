@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { Search, FileText, ShoppingCart, User2 } from "lucide-react";
+import { ToastContainer, toast } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css"; // ✅ Important import
 
 const Billing = () => {
   const [products, setProducts] = useState([]);
@@ -25,11 +27,14 @@ const Billing = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setProducts(res.data.results || res.data || []);
+      toast.success("Products filtered successfully ✅");
     } catch (err) {
       console.error("Search error:", err);
+      toast.error("Failed to search products ❌");
     }
   };
 
+  // 📦 Fetch Bills + Products
   const fetchBills = async () => {
     try {
       const res = await axios.get(API_BILLS, {
@@ -37,7 +42,7 @@ const Billing = () => {
       });
       setBills(res.data.results || []);
     } catch (err) {
-      console.error("Error fetching bills:", err);
+      toast.error("Failed to fetch bills ❌");
     }
   };
 
@@ -49,7 +54,7 @@ const Billing = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setProducts(res.data.results || res.data || []))
-      .catch((err) => console.error("Error loading products:", err));
+      .catch(() => toast.error("Error loading products ❌"));
   }, [token]);
 
   // 📄 Invoice Download
@@ -71,9 +76,10 @@ const Billing = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded ✅");
     } catch (err) {
       console.error("Error downloading invoice:", err);
-      alert("Failed to download invoice");
+      toast.error("Failed to download invoice ❌");
     }
   };
 
@@ -89,10 +95,13 @@ const Billing = () => {
     } else {
       setCart([...cart, { ...product, qty: 1 }]);
     }
+   
   };
 
   const removeFromCart = (id) => {
+    const removedItem = cart.find((i) => i.id === id);
     setCart(cart.filter((item) => item.id !== id));
+    toast.warn(`${removedItem?.name || "Item"} removed from cart ⚠️`);
   };
 
   const roundToCents = (v) => Math.round(v * 100) / 100;
@@ -114,7 +123,6 @@ const Billing = () => {
   const handleSearchCustomer = async () => {
     if (!customer.contact_number.trim()) return;
     setLoadingCustomer(true);
-    setMessage("");
     try {
       const res = await axios.get(
         `http://127.0.0.1:8000/api/customers/search/?contact=${customer.contact_number}`,
@@ -124,18 +132,18 @@ const Billing = () => {
       if (found && found.id) {
         setFoundCustomer(found);
         setCustomer({ name: found.name, contact_number: found.contact_number });
+        toast.success(`Customer found: ${found.name}`);
         setMessage(`Customer found: ${found.name}`);
       } else {
         setFoundCustomer(null);
-        setMessage("New customer — please enter name to add.");
+        toast.info("New customer — please enter name to add");
       }
     } catch (err) {
-      setErrors(err.contact_number);
       if (err.response?.status === 404) {
         setFoundCustomer(null);
-        setMessage("New customer — please enter name to add.");
+        toast.info("New customer — please enter name to add");
       } else {
-        setMessage("Error searching customer");
+        toast.error("Error searching customer ❌");
       }
     } finally {
       setLoadingCustomer(false);
@@ -144,13 +152,14 @@ const Billing = () => {
 
   // 💳 Generate Bill
   const handleGenerateBill = async () => {
-    if (!cart.length) return alert("Cart is empty!");
-    if (!token) return alert("Please log in to generate a bill.");
+    if (!cart.length) return toast.warning("Cart is empty!");
+    if (!token) return toast.error("Please log in to generate a bill.");
 
     try {
       let customerId = foundCustomer?.id;
       if (!customerId) {
-        if (!customer.name.trim()) return;
+        if (!customer.name.trim())
+          return toast.warning("Please enter new customer name.");
         const newCust = await axios.post(
           "http://127.0.0.1:8000/api/customers/",
           customer,
@@ -178,20 +187,22 @@ const Billing = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(`✅ Bill generated: ${billRes.data.bill_id}`);
+      toast.success(`Bill generated successfully ✅`);
       setCart([]);
       setCustomer({ name: "", contact_number: "" });
       setFoundCustomer(null);
-      setMessage("");
       fetchBills();
     } catch (err) {
-      console.error(err.response?.data || err);
-      setErrors(err.response?.data?.contact_number);
+      console.error(err.response.data.contact_number);
+  toast.error(err.response?.data?.contact_number ? err.response.data.contact_number[0] : "Failed to generate bill ❌");
+
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
+<div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
+      <ToastContainer position="top-right" autoClose={2000} />
+
       <motion.h1
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -228,6 +239,7 @@ const Billing = () => {
           >
             {loadingCustomer ? "Searching..." : "Search"}
           </button>
+     
           {message && <p className="text-emerald-400 text-sm">{message}</p>}
           {errors && <p className="text-red-400 text-sm">{errors}</p>}
         </div>
