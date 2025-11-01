@@ -1,6 +1,6 @@
-# payments/models.py
 from django.db import models
 from apps.billing.models import Bill
+
 
 class Payment(models.Model):
     STATUS_CHOICES = [
@@ -14,7 +14,8 @@ class Payment(models.Model):
         Bill,
         on_delete=models.CASCADE,
         related_name="payment",
-        null=True, blank=True
+        null=True,
+        blank=True,
     )
     transaction_id = models.CharField(max_length=255, unique=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -24,3 +25,15 @@ class Payment(models.Model):
 
     def __str__(self) -> str:
         return f"Payment {self.transaction_id} ({self.status})"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # 🔄 Sync payment status with Bill
+        if self.bill:
+            if self.status == "succeeded":
+                self.bill.payment_status = "paid"
+            elif self.status == "failed":
+                self.bill.payment_status = "failed"
+            else:
+                self.bill.payment_status = "pending"
+            self.bill.save()
