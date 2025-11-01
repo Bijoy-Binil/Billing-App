@@ -1,6 +1,7 @@
 // App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
@@ -15,21 +16,18 @@ import AuthProvider from "./AuthProvider";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 import ResponsiveLayout from "./ResponsiveLayout";
-import { PayPalScriptProvider } from "@paypal/react-paypal-js";
-const initialOptions = {
-  clientId: "ASqqceJZuDR8treyXO9LQIj4x9V8h8ZvfH-DEt6tIeYLa3D6a4H1k8NVrG7KAn80zI2aJN9PdUVKJUsm", // 🔹 Replace with your real ID
-  currency: "INR",
+
+const paypalOptions = {
+  clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
+  currency: import.meta.env.VITE_PAYPAL_CURRENCY || "USD",
   intent: "capture",
 };
 
-
-const App = () => {
-  return (
-     <PayPalScriptProvider options={initialOptions}>
+const App = () => (
+  <PayPalScriptProvider options={paypalOptions}>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* 🔓 Public Routes */}
           <Route
             path="/login"
             element={
@@ -46,8 +44,6 @@ const App = () => {
               </PublicRoute>
             }
           />
-
-          {/* 🔒 Protected Routes (Layout wraps all) */}
           <Route
             element={
               <PrivateRoute>
@@ -65,11 +61,9 @@ const App = () => {
             <Route path="/stock-report" element={<StockReport />} />
           </Route>
         </Routes>
-        
       </AuthProvider>
     </BrowserRouter>
-    </PayPalScriptProvider>
-  );
-};
+  </PayPalScriptProvider>
+);
 
 export default App;

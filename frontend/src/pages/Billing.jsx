@@ -16,8 +16,12 @@ const Billing = () => {
   const [errors, setErrors] = useState([]);
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [paid, setPaid] = useState(false);
-  const [error, setError] = useState(null);
+
+
+const [isPaid, setIsPaid] = useState(false);
+const [paypalOrderId, setPaypalOrderId] = useState(null);
+
+
   const API_BILLS = "http://127.0.0.1:8000/api/billings/";
   const token = localStorage.getItem("accessToken");
 
@@ -153,53 +157,67 @@ const Billing = () => {
   };
 
   // 💳 Generate Bill
-  const handleGenerateBill = async () => {
-    if (!cart.length) return toast.warning("Cart is empty!");
-    if (!token) return toast.error("Please log in to generate a bill.");
+const handleGenerateBill = async () => {
+  if (!cart.length) return toast.warning("Cart is empty!");
+  if (!token) return toast.error("Please log in to generate a bill.");
+  if (!isPaid) return toast.warning("Please complete PayPal payment first 💳");
 
-    try {
-      let customerId = foundCustomer?.id;
-      if (!customerId) {
-        if (!customer.name.trim())
-          return toast.warning("Please enter new customer name.");
-        const newCust = await axios.post(
-          "http://127.0.0.1:8000/api/customers/",
-          customer,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        customerId = newCust.data.id;
-      }
-
-      const payload = {
-        customer: customerId,
-        subtotal,
-        tax,
-        discount,
-        total,
-        items: cart.map((i) => ({
-          product: i.id,
-          quantity: i.qty,
-          price: roundToCents(i.price),
-        })),
-      };
-
-      const billRes = await axios.post(
-        "http://127.0.0.1:8000/api/billings/",
-        payload,
+  try {
+    let customerId = foundCustomer?.id;
+    if (!customerId) {
+      if (!customer.name.trim())
+        return toast.warning("Please enter new customer name.");
+      const newCust = await axios.post(
+        "http://127.0.0.1:8000/api/customers/",
+        customer,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      toast.success(`Bill generated successfully ✅`);
-      setCart([]);
-      setCustomer({ name: "", contact_number: "" });
-      setFoundCustomer(null);
-      fetchBills();
-    } catch (err) {
-      console.error(err.response.data.contact_number);
-  toast.error(err.response?.data?.contact_number ? err.response.data.contact_number[0] : "Failed to generate bill ❌");
-
+      customerId = newCust.data.id;
     }
-  };
+
+    const payload = {
+      customer: customerId,
+      subtotal,
+      tax,
+      discount,
+      total,
+      items: cart.map((i) => ({
+        product: i.id,
+        quantity: i.qty,
+        price: roundToCents(i.price),
+      })),
+    };
+
+    const billRes = await axios.post(
+      "http://127.0.0.1:8000/api/billings/",
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+   if (paypalOrderId) {
+  await axios.patch(
+    `${import.meta.env.VITE_API_BASE_URL}/payments/${paypalOrderId}/link_bill/`,
+    { bill_id: billRes.data.id },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+}
+
+
+    toast.success("Bill generated successfully ✅");
+    setCart([]);
+    setCustomer({ name: "", contact_number: "" });
+    setFoundCustomer(null);
+    setIsPaid(false);
+    setPaypalOrderId(null);
+    fetchBills();
+  } catch (err) {
+    toast.error(
+      err.response?.data?.contact_number
+        ? err.response.data.contact_number[0]
+        : "Failed to generate bill ❌"
+    );
+  }
+};
 
   return (
 <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
@@ -371,42 +389,68 @@ const Billing = () => {
                 Generate Bill
               </button>
             </div>
-            <div className="p-8">
-      <h2 className="text-2xl font-semibold mb-4">Pay with PayPal</h2>
+       <div className="p-8">
+  <h2 className="text-2xl font-semibold mb-4">💳 Pay with PayPal</h2>
 
-      {paid ? (
-        <div className="text-green-600 font-semibold">✅ Payment successful!</div>
-      ) : (
-        <PayPalButtons
-          style={{ layout: "vertical", color: "gold", shape: "rect", label: "paypal" }}
-          createOrder={(data, actions) => {
-            return actions.order.create({
-              purchase_units: [
-                {
-                  description: product.description,
-                  amount: {
-                    currency_code: "USD",
-                    value: product.price.toString(),
-                  },
-                },
-              ],
-            });
-          }}
-          onApprove={async (data, actions) => {
-            const order = await actions.order.capture();
-            console.log("Order:", order);
-            setPaid(true);
-          }}
-          onError={(err) => {
-            console.error("PayPal error:", err);
-            setError(err);
-          }}
-        />
-      )}
-
-      {error && <p className="text-red-600 mt-4">Error: {error.message}</p>}
+  {isPaid ? (
+    <div className="text-green-500 font-semibold">
+      ✅ Payment successful! You can now generate the bill.
     </div>
-  
+  ) : (
+<PayPalButtons
+  style={{
+    layout: "vertical",
+    color: "gold",
+    shape: "rect",
+    label: "paypal",
+  }}
+  createOrder={(data, actions) => {
+    return actions.order.create({
+      purchase_units: [
+        {
+          description: "Supermarket Bill Payment",
+          amount: {
+            currency_code: import.meta.env.VITE_PAYPAL_CURRENCY|| "USD",
+            value: total.toFixed(2) === "0.00" ? "0.01" : total.toFixed(2),
+          },
+        },
+      ],
+    });
+  }}
+  onApprove={async (data, actions) => {
+    const order = await actions.order.capture();
+    console.log("✅ PayPal Order:", order);
+
+    try {
+      await axios.post(
+        `${ import.meta.env.VITE_API_BASE_URL}/payments/`,
+        {
+          bill: null,
+          transaction_id: order.id,
+          amount: total,
+          status: "succeeded",
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Payment recorded successfully ✅");
+      setPaypalOrderId(order.id);
+      setIsPaid(true);
+    } catch (err) {
+      console.error("Payment save error:", err);
+      toast.error("Failed to save payment ❌");
+    }
+  }}
+  onError={(err) => {
+    console.error("PayPal error:", err);
+    toast.error("Payment failed ❌");
+  }}
+/>
+
+
+  )}
+</div>
+
 
           </>
         )}
