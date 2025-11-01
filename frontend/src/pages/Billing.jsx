@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Search, FileText, ShoppingCart, User2 } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css"; // ✅ Important import
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
 const Billing = () => {
   const [products, setProducts] = useState([]);
@@ -15,7 +16,8 @@ const Billing = () => {
   const [errors, setErrors] = useState([]);
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
+  const [paid, setPaid] = useState(false);
+  const [error, setError] = useState(null);
   const API_BILLS = "http://127.0.0.1:8000/api/billings/";
   const token = localStorage.getItem("accessToken");
 
@@ -369,6 +371,43 @@ const Billing = () => {
                 Generate Bill
               </button>
             </div>
+            <div className="p-8">
+      <h2 className="text-2xl font-semibold mb-4">Pay with PayPal</h2>
+
+      {paid ? (
+        <div className="text-green-600 font-semibold">✅ Payment successful!</div>
+      ) : (
+        <PayPalButtons
+          style={{ layout: "vertical", color: "gold", shape: "rect", label: "paypal" }}
+          createOrder={(data, actions) => {
+            return actions.order.create({
+              purchase_units: [
+                {
+                  description: product.description,
+                  amount: {
+                    currency_code: "USD",
+                    value: product.price.toString(),
+                  },
+                },
+              ],
+            });
+          }}
+          onApprove={async (data, actions) => {
+            const order = await actions.order.capture();
+            console.log("Order:", order);
+            setPaid(true);
+          }}
+          onError={(err) => {
+            console.error("PayPal error:", err);
+            setError(err);
+          }}
+        />
+      )}
+
+      {error && <p className="text-red-600 mt-4">Error: {error.message}</p>}
+    </div>
+  
+
           </>
         )}
       </motion.div>

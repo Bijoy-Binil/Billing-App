@@ -15,10 +15,17 @@ import AuthProvider from "./AuthProvider";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 import ResponsiveLayout from "./ResponsiveLayout";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+const initialOptions = {
+  clientId: "ASqqceJZuDR8treyXO9LQIj4x9V8h8ZvfH-DEt6tIeYLa3D6a4H1k8NVrG7KAn80zI2aJN9PdUVKJUsm", // 🔹 Replace with your real ID
+  currency: "INR",
+  intent: "capture",
+};
 
 
 const App = () => {
   return (
+     <PayPalScriptProvider options={initialOptions}>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
@@ -61,6 +68,7 @@ const App = () => {
         
       </AuthProvider>
     </BrowserRouter>
+    </PayPalScriptProvider>
   );
 };
 
