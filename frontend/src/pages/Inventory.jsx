@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { Package, PlusCircle, Edit2, Trash2, Boxes } from "lucide-react";
+import { Package, PlusCircle, Edit2, Trash2, Boxes, AlertTriangle } from "lucide-react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
 
@@ -18,6 +20,7 @@ const Inventory = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
 
   useEffect(() => {
     fetchCategories();
@@ -43,7 +46,17 @@ const Inventory = () => {
       const res = await axios.get(API_PRODUCTS, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setProducts(res.data.results || res.data);
+      const data = res.data.results || res.data;
+      setProducts(data);
+
+      // 🔔 Detect low stock items (threshold: 10)
+      const lowStock = data.filter((item) => item.quantity < 10);
+      setLowStockProducts(lowStock);
+
+      // Optional toast alert for first fetch
+      if (lowStock.length > 0) {
+        toast.warning(`⚠️ ${lowStock.length} products are running low on stock!`);
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -51,13 +64,12 @@ const Inventory = () => {
     }
   };
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price || !form.quantity) {
-      alert("Please fill all required fields");
+      toast.warn("⚠️ Please fill all required fields");
       return;
     }
 
@@ -68,6 +80,7 @@ const Inventory = () => {
         await axios.put(`${API_PRODUCTS}${editingId}/`, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        toast.success("✅ Product updated successfully!");
       } else {
         await axios.post(API_PRODUCTS, form, {
           headers: {
@@ -75,7 +88,9 @@ const Inventory = () => {
             "Content-Type": "application/json",
           },
         });
+        toast.success("🎉 Product added successfully!");
       }
+
       setForm({
         name: "",
         category: "",
@@ -87,7 +102,7 @@ const Inventory = () => {
       setEditingId(null);
       fetchProducts();
     } catch (error) {
-      console.error("Error saving product:", error);
+      toast.error("❌ Error saving product. Try again!");
     } finally {
       setLoading(false);
     }
@@ -106,28 +121,52 @@ const Inventory = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
       const token = localStorage.getItem("accessToken");
       await axios.delete(`${API_PRODUCTS}${id}/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      toast.info("🗑️ Product deleted");
       fetchProducts();
     } catch (error) {
-      console.error("Error deleting product:", error);
+      toast.error("❌ Error deleting product");
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-6 relative overflow-hidden">
-      {/* Background glow orbs */}
+      <ToastContainer position="top-right" autoClose={3000} />
+
+      {/* 🌟 Floating background orbs */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-emerald-600/30 blur-[150px] rounded-full opacity-30 animate-pulse" />
         <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-emerald-500/20 blur-[120px] rounded-full opacity-20 animate-pulse delay-700" />
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-8">
+      {/* ⚠️ BIG LOW STOCK ALERT */}
+      {lowStockProducts.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-0 left-0 w-full bg-red-700/90 text-white py-4 px-6 text-center z-50 shadow-lg"
+        >
+          <div className="flex items-center justify-center gap-2 text-lg font-semibold">
+            <AlertTriangle size={22} className="text-yellow-300 animate-pulse" />
+            Low Stock Alert!{" "}
+            <span className="text-yellow-200 font-bold">
+              {lowStockProducts.length} product(s)
+            </span>{" "}
+            need restocking!
+          </div>
+          <div className="text-sm mt-1 opacity-90">
+            {lowStockProducts.map((item) => item.name).join(", ")}
+          </div>
+        </motion.div>
+      )}
+
+      {/* 🧩 Inventory UI */}
+      <div className="max-w-7xl mx-auto space-y-8 mt-12">
         {/* Header */}
         <header className="flex items-center justify-between">
           <motion.h1
@@ -138,6 +177,7 @@ const Inventory = () => {
             <Boxes className="text-emerald-400" size={26} />
             Inventory Management
           </motion.h1>
+
           <button
             onClick={() => {
               setEditingId(null);
@@ -248,10 +288,7 @@ const Inventory = () => {
               <tbody>
                 {products.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center text-gray-500 py-4"
-                    >
+                    <td colSpan={6} className="text-center text-gray-500 py-4">
                       No products found
                     </td>
                   </tr>
@@ -270,24 +307,24 @@ const Inventory = () => {
                     <td className="py-2 px-3 text-center">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          p.quantity > 10
+                          p.quantity >= 10
                             ? "bg-emerald-600/20 text-emerald-400 border border-emerald-700"
                             : "bg-red-600/20 text-red-400 border border-red-700"
                         }`}
                       >
-                        {p.quantity > 10 ? "In Stock" : "Low Stock"}
+                        {p.quantity >= 10 ? "In Stock" : "Low Stock"}
                       </span>
                     </td>
-                    <td className="py-3 flex  px-3 text-center space-x-2">
+                    <td className="py-3 flex px-3 text-center space-x-2">
                       <button
                         onClick={() => handleEdit(p)}
-                        className="px-3 py-1 cursor-pointer  bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs flex items-center gap-1"
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs flex items-center gap-1"
                       >
                         <Edit2 size={14} /> Edit
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(p.id)}
-                        className="px-3 py-1 cursor-pointer bg-red-600 hover:bg-red-500 text-white rounded-md text-xs flex items-center gap-1"
+                        className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-md text-xs flex items-center gap-1"
                       >
                         <Trash2 size={14} /> Delete
                       </button>

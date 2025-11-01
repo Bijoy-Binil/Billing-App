@@ -14,7 +14,7 @@ import StockReport from "./pages/Reports/StockReport";
 import AuthProvider from "./AuthProvider";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
-import ResponsiveLayout from "./ResponsiveLayout;";
+import ResponsiveLayout from "./ResponsiveLayout";
 
 
 const App = () => {
@@ -58,6 +58,7 @@ const App = () => {
             <Route path="/stock-report" element={<StockReport />} />
           </Route>
         </Routes>
+        
       </AuthProvider>
     </BrowserRouter>
   );

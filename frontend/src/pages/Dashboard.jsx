@@ -6,7 +6,9 @@ import BillsTable from "../components/BillsTable";
 import StockSummary from "../components/StockSummary";
 import { ChartBarIcon, ReceiptTaxIcon, CubeIcon } from "@heroicons/react/solid";
 import { motion } from "framer-motion";
-
+import { toast } from "react-toastify"; // ✅ Toastify import
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const Dashboard = () => {
   const [bills, setBills] = useState([]);
   const [todayBills, setTodayBills] = useState([]);
@@ -66,14 +68,28 @@ const Dashboard = () => {
     }
   };
 
-  const fetchLowstock = async () => {
+ const fetchLowstock = async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
     try {
-      const res = await axios.get("http://127.0.0.1:8000/api/products/low-stock/", {
+      const res = await axios.get("http://127.0.0.1:8000/api/products/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setStockProducts(res.data.results || res.data);
+
+      const products = res.data.results || res.data;
+      const lowStock = products.filter((p) => p.quantity < 10);
+      setStockProducts(lowStock);
+
+      // ✅ Beautiful alert for low stock
+      if (lowStock.length > 0) {
+        const productNames = lowStock.map((p) => p.name).slice(0, 5).join(", ");
+        toast.warning(
+          `⚠️ ${lowStock.length} items are running low: ${productNames}${
+            lowStock.length > 5 ? "..." : ""
+          }`,
+          { icon: "🚨", theme: "dark" }
+        );
+      }
     } catch (error) {
       console.error("Error fetching low stock:", error);
       setStockProducts([]);
@@ -82,6 +98,16 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 relative overflow-hidden">
+     <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="dark"
+        />
       {/* Background Emerald Glow */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-emerald-600/30 blur-[150px] rounded-full opacity-40 animate-pulse" />
