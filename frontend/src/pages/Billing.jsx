@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { Search, FileText, ShoppingCart, User2 } from "lucide-react";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // ✅ Important import
 import { PayPalButtons } from "@paypal/react-paypal-js";
 
@@ -16,11 +16,10 @@ const Billing = () => {
   const [errors, setErrors] = useState([]);
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showPayPal, setShowPayPal] = useState(false);
 
-
-const [isPaid, setIsPaid] = useState(false);
-const [paypalOrderId, setPaypalOrderId] = useState(null);
-
+  const [isPaid, setIsPaid] = useState(false);
+  const [paypalOrderId, setPaypalOrderId] = useState(null);
 
   const API_BILLS = "http://127.0.0.1:8000/api/billings/";
   const token = localStorage.getItem("accessToken");
@@ -28,10 +27,9 @@ const [paypalOrderId, setPaypalOrderId] = useState(null);
   // 🔍 Product Search
   const handleSearch = async () => {
     try {
-      const res = await axios.get(
-        `http://127.0.0.1:8000/api/products/?search=${searchTerm}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axios.get(`http://127.0.0.1:8000/api/products/?search=${searchTerm}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setProducts(res.data.results || res.data || []);
       toast.success("Products filtered successfully ✅");
     } catch (err) {
@@ -66,13 +64,10 @@ const [paypalOrderId, setPaypalOrderId] = useState(null);
   // 📄 Invoice Download
   const handleDownloadInvoice = async (billId) => {
     try {
-      const res = await axios.get(
-        `http://127.0.0.1:8000/api/billing/${billId}/invoice/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        }
-      );
+      const res = await axios.get(`http://127.0.0.1:8000/api/billing/${billId}/invoice/`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -93,15 +88,10 @@ const [paypalOrderId, setPaypalOrderId] = useState(null);
   const addToCart = (product) => {
     const exists = cart.find((item) => item.id === product.id);
     if (exists) {
-      setCart(
-        cart.map((item) =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-        )
-      );
+      setCart(cart.map((item) => (item.id === product.id ? { ...item, qty: item.qty + 1 } : item)));
     } else {
       setCart([...cart, { ...product, qty: 1 }]);
     }
-   
   };
 
   const removeFromCart = (id) => {
@@ -112,28 +102,33 @@ const [paypalOrderId, setPaypalOrderId] = useState(null);
 
   const roundToCents = (v) => Math.round(v * 100) / 100;
   const subtotal = useMemo(
-    () =>
-      roundToCents(
-        cart.reduce((sum, item) => sum + roundToCents(item.price * item.qty), 0)
-      ),
+    () => roundToCents(cart.reduce((sum, item) => sum + roundToCents(item.price * item.qty), 0)),
     [cart]
   );
   const tax = useMemo(() => roundToCents(subtotal * 0.05), [subtotal]);
   const discount = useMemo(() => roundToCents(subtotal * 0.1), [subtotal]);
-  const total = useMemo(
-    () => roundToCents(subtotal + tax - discount),
-    [subtotal, tax, discount]
-  );
+  const total = useMemo(() => roundToCents(subtotal + tax - discount), [subtotal, tax, discount]);
+  // ✅ Speak amount using browser voice
+  const speakTotal = (amount) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(`Your total is rupees ${amount}`);
+      utterance.lang = "en-IN"; // Indian English accent
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      speechSynthesis.speak(utterance);
+    } else {
+      console.warn("Speech synthesis not supported in this browser.");
+    }
+  };
 
   // 👤 Customer Search
   const handleSearchCustomer = async () => {
     if (!customer.contact_number.trim()) return;
     setLoadingCustomer(true);
     try {
-      const res = await axios.get(
-        `http://127.0.0.1:8000/api/customers/search/?contact=${customer.contact_number}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axios.get(`http://127.0.0.1:8000/api/customers/search/?contact=${customer.contact_number}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const found = res.data;
       if (found && found.id) {
         setFoundCustomer(found);
@@ -157,77 +152,73 @@ const [paypalOrderId, setPaypalOrderId] = useState(null);
   };
 
   // 💳 Generate Bill
-// ✅ Update after PayPal success
-const handleGenerateBill = async () => {
-  if (!cart.length) return toast.warning("Cart is empty!");
-  if (!token) return toast.error("Please log in to generate a bill.");
-  if (!isPaid) return toast.warning("Please complete PayPal payment first 💳");
+  // ✅ Update after PayPal success
+  const handleGenerateBill = async () => {
+    if (!cart.length) return toast.warning("Cart is empty!");
+    if (!token) return toast.error("Please log in to generate a bill.");
+    if (!isPaid) return toast.warning("Please complete PayPal payment first 💳");
 
-  try {
-    let customerId = foundCustomer?.id;
-    if (!customerId) {
-      if (!customer.name.trim())
-        return toast.warning("Please enter new customer name.");
-      const newCust = await axios.post(
-        "http://127.0.0.1:8000/api/customers/",
-        customer,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      customerId = newCust.data.id;
+    try {
+      let customerId = foundCustomer?.id;
+      if (!customerId) {
+        if (!customer.name.trim()) return toast.warning("Please enter new customer name.");
+        const newCust = await axios.post("http://127.0.0.1:8000/api/customers/", customer, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        customerId = newCust.data.id;
+      }
+
+      const payload = {
+        customer: customerId,
+        subtotal,
+        tax,
+        discount,
+        total,
+        items: cart.map((i) => ({
+          product: i.id,
+          quantity: i.qty,
+          price: roundToCents(i.price),
+        })),
+      };
+
+      // Step 1: create the bill
+      const billRes = await axios.post(API_BILLS, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Step 2: link PayPal payment to the bill
+      if (paypalOrderId) {
+        await axios.patch(
+          `${import.meta.env.VITE_API_BASE_URL}/payments/${paypalOrderId}/link_bill/`,
+          { bill_id: billRes.data.id },
+          { headers: { Authorization: `Bearer ${token}` } },
+
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Step 3: mark the bill as paid
+        await axios.patch(
+          `http://127.0.0.1:8000/api/billing/${billRes.data.id}/mark_paid/`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      toast.success("Bill generated and marked as Paid ✅");
+      setCart([]);
+      setCustomer({ name: "", contact_number: "" });
+      setFoundCustomer(null);
+      setIsPaid(false);
+      setPaypalOrderId(null);
+      fetchBills();
+    } catch (err) {
+      console.error("Bill creation error:", err);
+      toast.error("Failed to generate bill ❌");
     }
-
-    const payload = {
-      customer: customerId,
-      subtotal,
-      tax,
-      discount,
-      total,
-      items: cart.map((i) => ({
-        product: i.id,
-        quantity: i.qty,
-        price: roundToCents(i.price),
-      })),
-    };
-
-    // Step 1: create the bill
-    const billRes = await axios.post(API_BILLS, payload, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    // Step 2: link PayPal payment to the bill
-    if (paypalOrderId) {
-     await axios.patch(
-  `${import.meta.env.VITE_API_BASE_URL}/payments/${paypalOrderId}/link_bill/`,
-  { bill_id: billRes.data.id },
-  { headers: { Authorization: `Bearer ${token}` } }
-
-,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Step 3: mark the bill as paid
-      await axios.patch(
-        `http://127.0.0.1:8000/api/billing/${billRes.data.id}/mark_paid/`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-    }
-
-    toast.success("Bill generated and marked as Paid ✅");
-    setCart([]);
-    setCustomer({ name: "", contact_number: "" });
-    setFoundCustomer(null);
-    setIsPaid(false);
-    setPaypalOrderId(null);
-    fetchBills();
-  } catch (err) {
-    console.error("Bill creation error:", err);
-    toast.error("Failed to generate bill ❌");
-  }
-};
+  };
 
   return (
-<div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
       <ToastContainer position="top-right" autoClose={2000} />
 
       <motion.h1
@@ -254,9 +245,7 @@ const handleGenerateBill = async () => {
             type="text"
             placeholder="Contact Number"
             value={customer.contact_number}
-            onChange={(e) =>
-              setCustomer({ ...customer, contact_number: e.target.value })
-            }
+            onChange={(e) => setCustomer({ ...customer, contact_number: e.target.value })}
             className="px-3 py-2 rounded-xl bg-gray-700/80 text-white w-48 border border-gray-600 focus:ring-2 focus:ring-emerald-500"
           />
           <button
@@ -266,7 +255,7 @@ const handleGenerateBill = async () => {
           >
             {loadingCustomer ? "Searching..." : "Search"}
           </button>
-     
+
           {message && <p className="text-emerald-400 text-sm">{message}</p>}
           {errors && <p className="text-red-400 text-sm">{errors}</p>}
         </div>
@@ -315,9 +304,7 @@ const handleGenerateBill = async () => {
       {/* 🧺 Products */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-10">
         {products.length === 0 ? (
-          <p className="text-gray-400 italic col-span-full">
-            Loading products...
-          </p>
+          <p className="text-gray-400 italic col-span-full">Loading products...</p>
         ) : (
           products.map((p) => (
             <motion.div
@@ -327,9 +314,7 @@ const handleGenerateBill = async () => {
               onClick={() => addToCart(p)}
             >
               <h3 className="text-lg font-medium">{p.name}</h3>
-              <p className="text-gray-400 text-sm mt-1">
-                ₹{parseFloat(p.price).toFixed(2)}
-              </p>
+              <p className="text-gray-400 text-sm mt-1">₹{parseFloat(p.price).toFixed(2)}</p>
             </motion.div>
           ))
         )}
@@ -360,19 +345,13 @@ const handleGenerateBill = async () => {
               </thead>
               <tbody>
                 {cart.map((i) => (
-                  <tr
-                    key={i.id}
-                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
-                  >
+                  <tr key={i.id} className="border-b border-gray-700/50 hover:bg-gray-700/30">
                     <td>{i.name}</td>
                     <td>{i.qty}</td>
                     <td>₹{parseFloat(i.price).toFixed(2)}</td>
                     <td>₹{(i.price * i.qty).toFixed(2)}</td>
                     <td>
-                      <button
-                        onClick={() => removeFromCart(i.id)}
-                        className="text-red-400 hover:text-red-600"
-                      >
+                      <button onClick={() => removeFromCart(i.id)} className="text-red-400 hover:text-red-600">
                         ✕
                       </button>
                     </td>
@@ -386,82 +365,86 @@ const handleGenerateBill = async () => {
               <p>Tax (5%): +₹{tax.toFixed(2)}</p>
               <p>Discount (10%): -₹{discount.toFixed(2)}</p>
               <hr className="my-1 border-gray-700" />
-              <p className="font-semibold text-lg text-white">
-                Total: ₹{total.toFixed(2)}
-              </p>
-              <button
-                onClick={handleGenerateBill}
-                className="bg-emerald-600 hover:bg-emerald-500 mt-4 px-6 py-2 rounded-xl transition-all"
-              >
-                Generate Bill
-              </button>
+              <p className="font-semibold text-lg text-white">Total: ₹{total.toFixed(2)}</p>
+
+              {/* ✅ Conditional Buttons */}
+              {!isPaid ? (
+                <>
+                  {!showPayPal ? (
+                    <button
+                      onClick={() => {
+  speakTotal(total.toFixed(2));
+  setTimeout(() => setShowPayPal(true), 5000); // wait 2 seconds
+}}
+                      className="bg-blue-600 hover:bg-blue-500 mt-4 px-6 py-2 rounded-xl transition-all"
+                    >
+                      Go to Payment 💳
+                    </button>
+                  ) : (
+                    <div className="mt-6">
+                      <h3 className="text-emerald-400 text-sm mb-2">Proceed to Payment</h3>
+                      <PayPalButtons
+                        style={{
+                          layout: "vertical",
+                          color: "gold",
+                          shape: "rect",
+                          label: "paypal",
+                        }}
+                        createOrder={(data, actions) =>
+                          actions.order.create({
+                            purchase_units: [
+                              {
+                                description: "Supermarket Bill Payment",
+                                amount: {
+                                  currency_code: import.meta.env.VITE_PAYPAL_CURRENCY || "USD",
+                                  value: total.toFixed(2) === "0.00" ? "0.01" : total.toFixed(2),
+                                },
+                              },
+                            ],
+                          })
+                        }
+                        onApprove={async (data, actions) => {
+                          const order = await actions.order.capture();
+                          try {
+                            await axios.post(
+                              `${import.meta.env.VITE_API_BASE_URL}/payments/`,
+                              {
+                                bill: null,
+                                transaction_id: order.id,
+                                amount: total,
+                                status: "succeeded",
+                              },
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            setPaypalOrderId(order.id);
+                            setIsPaid(true);
+                            setShowPayPal(false);
+                            toast.success("✅ Payment successful! You can now generate the bill.");
+                          } catch (err) {
+                            console.error("Payment save error:", err);
+                            toast.error("Failed to record payment ❌");
+                          }
+                        }}
+                        onError={(err) => {
+                          console.error("PayPal error:", err);
+                          toast.error("Payment failed ❌");
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="mt-6 text-center">
+                  <p className="text-green-400 font-semibold mb-2">✅ Payment successful! Now generate your bill.</p>
+                  <button
+                    onClick={handleGenerateBill}
+                    className="bg-emerald-600 hover:bg-emerald-500 mt-2 px-6 py-2 rounded-xl transition-all"
+                  >
+                    Generate Bill 🧾
+                  </button>
+                </div>
+              )}
             </div>
-       <div className="p-8">
-  <h2 className="text-2xl font-semibold mb-4">💳 Pay with PayPal</h2>
-
-  {isPaid ? (
-    <div className="text-green-500 font-semibold">
-      ✅ Payment successful! You can now generate the bill.
-    </div>
-  ) : (
-// ✅ PayPal section
-<PayPalButtons
-  style={{
-    layout: "vertical",
-    color: "gold",
-    shape: "rect",
-    label: "paypal",
-  }}
-  createOrder={(data, actions) => {
-    return actions.order.create({
-      purchase_units: [
-        {
-          description: "Supermarket Bill Payment",
-          amount: {
-            currency_code: import.meta.env.VITE_PAYPAL_CURRENCY || "USD",
-            value: total.toFixed(2) === "0.00" ? "0.01" : total.toFixed(2),
-          },
-        },
-      ],
-    });
-  }}
-  onApprove={async (data, actions) => {
-    const order = await actions.order.capture();
-    console.log("✅ PayPal Order:", order);
-
-    try {
-      // Step 1: Save payment in backend
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/payments/`,
-        {
-          bill: null, // will be linked later
-          transaction_id: order.id,
-          amount: total,
-          status: "succeeded",
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setPaypalOrderId(order.id);
-      setIsPaid(true);
-      toast.success("Payment successful! You can now generate bill ✅");
-    } catch (err) {
-      console.error("Payment save error:", err);
-      toast.error("Failed to record payment ❌");
-    }
-  }}
-  onError={(err) => {
-    console.error("PayPal error:", err);
-    toast.error("Payment failed ❌");
-  }}
-/>
-
-
-
-  )}
-</div>
-
-
           </>
         )}
       </motion.div>
@@ -476,9 +459,7 @@ const handleGenerateBill = async () => {
           <FileText size={20} /> Recent Bills
         </h2>
         {bills.length === 0 ? (
-          <p className="text-gray-400 italic">
-            No bills yet. Generate your first bill above!
-          </p>
+          <p className="text-gray-400 italic">No bills yet. Generate your first bill above!</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-gray-300">
@@ -493,10 +474,7 @@ const handleGenerateBill = async () => {
               </thead>
               <tbody>
                 {bills.map((b) => (
-                  <tr
-                    key={b.id}
-                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
-                  >
+                  <tr key={b.id} className="border-b border-gray-700/50 hover:bg-gray-700/30">
                     <td className="font-mono text-sm">{b.bill_id}</td>
                     <td>₹{parseFloat(b.total || 0).toFixed(2)}</td>
                     <td>{new Date(b.created_at).toLocaleString("en-IN")}</td>
