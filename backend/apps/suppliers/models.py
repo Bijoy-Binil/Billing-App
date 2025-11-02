@@ -1,4 +1,6 @@
 from django.db import models
+import uuid
+from django.utils import timezone
 
 class Supplier(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -13,6 +15,7 @@ class Supplier(models.Model):
         return self.name
 
 class PurchaseOrder(models.Model):
+    purchase_id = models.CharField(max_length=100, unique=True, editable=False,null=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_orders')
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='purchase_orders')
     quantity = models.IntegerField(default=1)
@@ -21,8 +24,16 @@ class PurchaseOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        # Calculate total
         self.total = self.quantity * self.cost_price
+
+        # Generate unique purchase_id only on creation
+        if not self.purchase_id:
+            timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
+            unique_part = uuid.uuid4().hex[:6].upper()
+            self.purchase_id = f"PO-{timestamp}-{unique_part}"
+
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"PO-{self.id} - {self.supplier.name} - {self.product.name}"
+        return f"{self.purchase_id} - {self.supplier.name} - {self.product.name}"

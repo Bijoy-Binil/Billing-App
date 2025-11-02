@@ -5,7 +5,8 @@ urlpatterns = [
     path('suppliers/', views.SupplierListCreateView.as_view(), name='supplier-list-create'),
     path('suppliers/<int:pk>/', views.SupplierDetailView.as_view(), name='supplier-detail'),
     path('suppliers/autocomplete/', views.supplier_autocomplete, name='supplier-autocomplete'),
-
+    
+    path('purchase-orders/<int:pk>/invoice/', views.PurchaseOrderInvoicePDFView.as_view(), name='purchase-order-invoice'),
     path('purchase-orders/', views.PurchaseOrderListCreateView.as_view(), name='purchaseorder-list-create'),
     path('purchase-orders/<int:pk>/', views.PurchaseOrderDetailView.as_view(), name='purchaseorder-detail'),
 ]

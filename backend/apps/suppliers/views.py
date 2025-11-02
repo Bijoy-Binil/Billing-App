@@ -3,8 +3,24 @@ from .models import Supplier, PurchaseOrder
 from .serializers import SupplierSerializer, PurchaseOrderSerializer
 from apps.products.models import Product
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions
+from rest_framework import generics, permissions
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.http import HttpResponse, Http404
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status, permissions
+# apps/billing/views.py
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from .models import PurchaseOrder
+from rest_framework.views import APIView
+
 # ---- SUPPLIER VIEWS ----
 class SupplierListCreateView(generics.ListCreateAPIView):
     queryset = Supplier.objects.all().order_by('-created_at')
@@ -43,3 +59,20 @@ def supplier_autocomplete(request):
     suppliers = Supplier.objects.filter(name__icontains=query)[:10]
     serializer = SupplierSerializer(suppliers, many=True)
     return Response(serializer.data)
+
+class PurchaseOrderInvoicePDFView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        purchase_order = get_object_or_404(PurchaseOrder, pk=pk)
+
+        # Render HTML with template
+        html_string = render_to_string("purchase_orders/invoice.html", {"purchase_order": purchase_order})
+
+        # Convert HTML to PDF
+        pdf_file = HTML(string=html_string).write_pdf()
+
+        # Return PDF response
+        response = HttpResponse(pdf_file, content_type="application/pdf")
+        response['Content-Disposition'] = f'attachment; filename="invoice_{purchase_order.id}.pdf"'
+        return response

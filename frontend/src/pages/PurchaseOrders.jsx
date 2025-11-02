@@ -41,6 +41,29 @@ const PurchaseOrders = () => {
       toast.error("Failed to fetch purchase orders");
     }
   };
+// 📄 Invoice Download
+const handleDownloadInvoice = async (purchase_id) => {
+  try {
+    const res = await axios.get(`${baseUrl}purchase-orders/${purchase_id}/invoice/`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    });
+
+    const blob = new Blob([res.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `invoice_${purchase_id}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    toast.success("Invoice downloaded ✅");
+  } catch (err) {
+    console.error("Error downloading invoice:", err);
+    toast.error("Failed to download invoice ❌");
+  }
+};
 
   const fetchSuppliers = async () => {
     try {
@@ -177,6 +200,7 @@ const PurchaseOrders = () => {
                   Total
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">Invoice</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -202,6 +226,15 @@ const PurchaseOrders = () => {
                     <td className="px-6 py-4 text-center text-gray-200">₹{po.cost_price}</td>
                     <td className="px-6 py-4 text-center text-emerald-400 font-medium">₹{po.total}</td>
                     <td className="px-6 py-4 text-right text-gray-400">{moment(po.created_at).format("DD MMM YYYY")}</td>
+<td>
+  <button
+    onClick={() => handleDownloadInvoice(po.id)}
+    className="bg-blue-900 cursor-pointer mt-3 hover:bg-blue-800 px-3 py-1 rounded-xl text-sm transition-all"
+  >
+    Download
+  </button>
+</td>
+
                   </tr>
                 ))
               )}
