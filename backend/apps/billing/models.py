@@ -4,7 +4,7 @@ from django.utils import timezone
 from apps.accounts.models import CustomUser
 from apps.customers.models import Customer
 from apps.products.models import Product
-
+from apps.customers.models import CustomerLoyalty
 
 class Bill(models.Model):
     STATUS_CHOICES = [
@@ -36,6 +36,17 @@ class Bill(models.Model):
             self.bill_id = f"BILL-{timestamp}-{unique_part}"
         super().save(*args, **kwargs)
 
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding  # Detect first save
+        super().save(*args, **kwargs)
+
+        if is_new and self.customer:
+            loyalty, _ = CustomerLoyalty.objects.get_or_create(customer=self.customer)
+            earned_points = int(self.total // 100)  # 1 point per ₹100 spent
+            loyalty.available_points += earned_points
+            loyalty.lifetime_points += earned_points
+            loyalty.update_tier()
+            
     def __str__(self):
         return self.bill_id
 

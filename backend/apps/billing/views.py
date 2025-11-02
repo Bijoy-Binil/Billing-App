@@ -49,3 +49,4 @@ class BillInvoicePDFView(APIView):
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="invoice_{bill.bill_id}.pdf"'
         return response
+

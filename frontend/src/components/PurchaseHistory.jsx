@@ -1,22 +1,6 @@
 import React from "react";
-import {
-  Card,
-  Table,
-  Typography,
-  Statistic,
-  Row,
-  Col,
-  List,
-  Tag,
-  Space,
-  Tooltip,
-} from "antd";
-import {
-  AreaChartOutlined,
-  ShoppingOutlined,
-  DollarOutlined,
-  ClockCircleOutlined,
-} from "@ant-design/icons";
+import { Card, Table, Typography, Statistic, Row, Col, List, Tag, Space, Tooltip } from "antd";
+import { AreaChartOutlined, ShoppingOutlined, DollarOutlined, ClockCircleOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -29,13 +13,7 @@ const PurchaseHistory = ({ purchaseData }) => {
     );
   }
 
-  const {
-    total_spent,
-    total_bills,
-    average_bill_value,
-    recent_purchases,
-    frequent_products,
-  } = purchaseData;
+  const { total_spent, total_bills, average_bill_value, recent_purchases, frequent_products } = purchaseData;
 
   // Format currency (₹ instead of $)
   const formatCurrency = (value) => {
@@ -82,11 +60,7 @@ const PurchaseHistory = ({ purchaseData }) => {
       title: "Status",
       dataIndex: "payment_status",
       key: "payment_status",
-      render: (status) => (
-        <Tag color={statusColors[status] || "default"}>
-          {status ? status.toUpperCase() : "N/A"}
-        </Tag>
-      ),
+      render: (status) => <Tag color={statusColors[status] || "default"}>{status ? status.toUpperCase() : "N/A"}</Tag>,
     },
   ];
 
@@ -161,9 +135,7 @@ const PurchaseHistory = ({ purchaseData }) => {
           style={{ borderRadius: 8 }}
           renderItem={(item) => (
             <List.Item>
-              <Space
-                style={{ width: "100%", justifyContent: "space-between" }}
-              >
+              <Space style={{ width: "100%", justifyContent: "space-between" }}>
                 <Text strong>{item.product__name}</Text>
                 <Space>
                   <Tooltip title="Number of purchases">

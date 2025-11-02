@@ -1,62 +1,39 @@
 import React, { useState, useEffect } from "react";
-import {
-  Layout,
-  Table,
-  Card,
-  Button,
-  Input,
-  Modal,
-  Form,
-  message,
-  Tabs,
-  Drawer,
-  Spin,
-  Row,
-  Col,
-  Space,
-} from "antd";
-import {
-  UserAddOutlined,
-  SearchOutlined,
-  UserOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-} from "@ant-design/icons";
 import axios from "axios";
-import LoyaltyCard from "../components/LoyaltyCard";
-import PurchaseHistory from "../components/PurchaseHistory";
-
-const { Content } = Layout;
-const { TabPane } = Tabs;
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingCustomerId, setEditingCustomerId] = useState(null);
-  const [customerDetailVisible, setCustomerDetailVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerLoyalty, setCustomerLoyalty] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState(null);
+  const [detailsVisible, setDetailsVisible] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  // Fetch all customers
+  const [formData, setFormData] = useState({
+    name: "",
+    contact_number: "",
+    email: "",
+    address: "",
+    date_of_birth: "",
+  });
+
+  const baseUrl = "http://127.0.0.1:8000/api/";
+  const token = localStorage.getItem("accessToken");
+
+  // 🔹 Fetch all customers
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/customers/");
-      setCustomers(
-        Array.isArray(response.data)
-          ? response.data
-          : response.data.results || []
-      );
+      const res = await axios.get(`${baseUrl}customers/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCustomers(Array.isArray(res.data) ? res.data : res.data.results || []);
     } catch (error) {
-      message.error("Failed to fetch customers");
-      console.error(error);
-      setCustomers([]);
+      alert("Failed to fetch customers");
     } finally {
       setLoading(false);
     }
@@ -66,244 +43,285 @@ const Customers = () => {
     fetchCustomers();
   }, []);
 
-  // Handle Add / Edit
-  const handleFormSubmit = async (values) => {
-    try {
-      if (editingCustomerId) {
-        await axios.put(`/api/customers/${editingCustomerId}/`, values);
-        message.success("Customer updated successfully");
-      } else {
-        await axios.post("/api/customers/", values);
-        message.success("Customer added successfully");
-      }
-      setIsModalVisible(false);
-      form.resetFields();
-      setEditingCustomerId(null);
-      fetchCustomers();
-    } catch (error) {
-      message.error("Operation failed");
-      console.error(error);
-    }
-  };
-
-  // Handle delete
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`/api/customers/${id}/`);
-      message.success("Customer deleted successfully");
-      fetchCustomers();
-    } catch (error) {
-      message.error("Failed to delete customer");
-      console.error(error);
-    }
-  };
-
-  // View details
-  const handleViewDetails = (customer) => {
-    setSelectedCustomer(customer);
-    setCustomerDetailVisible(true);
-    fetchCustomerDetails(customer.id);
-  };
-
-  const fetchCustomerDetails = async (id) => {
+  // 🔹 Fetch loyalty & purchase history
+  const fetchCustomerSpentDetails = async (id) => {
+    if (!id) return;
     setDetailsLoading(true);
     try {
-      const loyalty = await axios.get(`/api/customer-loyalty/${id}/`);
-      const history = await axios.get(
-        `/api/customer-analytics/${id}/purchase-history/`
-      );
-      setCustomerLoyalty(loyalty.data);
-      setPurchaseHistory(history.data);
-    } catch (error) {
-      message.error("Failed to fetch customer details");
+      const [loyaltyRes, historyRes] = await Promise.all([
+        axios.get(`${baseUrl}customer-loyalty/${id}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${baseUrl}customer-analytics/${id}/purchase-history/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      setCustomerLoyalty(loyaltyRes.data || {});
+      setPurchaseHistory(historyRes.data || {});
+    } catch (err) {
+      alert("Failed to fetch customer details");
     } finally {
       setDetailsLoading(false);
     }
   };
 
+  // 🔹 Handle Form Change
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // 🔹 Add or Edit Customer
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingCustomerId) {
+        await axios.put(`${baseUrl}customer/${editingCustomerId}/`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        alert("Customer updated successfully");
+      } else {
+        await axios.post(`${baseUrl}customer/`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        alert("Customer added successfully");
+      }
+      setFormData({
+        name: "",
+        contact_number: "",
+        email: "",
+        address: "",
+        date_of_birth: "",
+      });
+      setIsFormVisible(false);
+      setEditingCustomerId(null);
+      fetchCustomers();
+    } catch {
+      alert("Failed to save customer");
+    }
+  };
+
+  // 🔹 Delete Customer
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this customer?")) return;
+    try {
+      await axios.delete(`${baseUrl}customer/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchCustomers();
+    } catch {
+      alert("Failed to delete customer");
+    }
+  };
+
+  // 🔹 View Details Drawer
+  const handleViewDetails = (customer) => {
+    setSelectedCustomer(customer);
+    setDetailsVisible(true);
+    fetchCustomerSpentDetails(customer.id);
+  };
+
+  // 🔹 Filter Customers
   const filteredCustomers = customers.filter(
     (c) =>
       c.name.toLowerCase().includes(searchText.toLowerCase()) ||
       c.contact_number.includes(searchText)
   );
 
-  const columns = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Contact", dataIndex: "contact_number", key: "contact_number" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    {
-      title: "Total Spent",
-      dataIndex: "total_spent",
-      key: "total_spent",
-      render: (v) => (v ? `₹${parseFloat(v).toFixed(2)}` : "₹0.00"),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space>
-          <Button
-            icon={<EyeOutlined />}
-            type="primary"
-            ghost
-            onClick={() => handleViewDetails(record)}
-            className="bg-emerald-600 text-white border-none hover:bg-emerald-500"
-          />
-          <Button
-            icon={<EditOutlined />}
-            className="text-emerald-400 hover:text-emerald-300"
-            onClick={() => {
-              setEditingCustomerId(record.id);
-              form.setFieldsValue(record);
-              setIsModalVisible(true);
-            }}
-          />
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            onClick={() => handleDelete(record.id)}
-          />
-        </Space>
-      ),
-    },
-  ];
-
   return (
-    <Layout
-     className="p-6 min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white"
-    >
-      <Content className="p-8">
-        <Card
-          title={<span className="text-emerald-400 text-xl">Customer Management</span>}
-          className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl shadow-lg"
-          extra={
-            <Space>
-              <Input
-                placeholder="Search customers..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                style={{
-                  width: 250,
-                  backgroundColor: "#1f2937",
-                  color: "#f9fafb",
-                  borderColor: "#374151",
-                }}
-              />
-              <Button
-                type="primary"
-                icon={<UserAddOutlined />}
-                className="bg-emerald-600 hover:bg-emerald-500 border-none"
-                onClick={() => {
-                  setEditingCustomerId(null);
-                  form.resetFields();
-                  setIsModalVisible(true);
-                }}
-              >
-                Add Customer
-              </Button>
-            </Space>
-          }
-        >
-          <Table
-            columns={columns}
-            dataSource={filteredCustomers}
-            rowKey="id"
-            loading={loading}
-            pagination={{ pageSize: 8 }}
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-emerald-400">Customer Management</h1>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="px-3 py-2 rounded bg-gray-800 border border-gray-700"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
-        </Card>
+          <button
+            onClick={() => {
+              setIsFormVisible(true);
+              setEditingCustomerId(null);
+              setFormData({
+                name: "",
+                contact_number: "",
+                email: "",
+                address: "",
+                date_of_birth: "",
+              });
+            }}
+            className="bg-emerald-600 px-4 py-2 rounded hover:bg-emerald-500"
+          >
+            + Add Customer
+          </button>
+        </div>
+      </div>
 
-        {/* Modal */}
-        <Modal
-          title={
-            editingCustomerId ? "Edit Customer" : "Add Customer"
-          }
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          footer={null}
-        >
-          <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-            <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-              <Input prefix={<UserOutlined />} placeholder="Customer Name" />
-            </Form.Item>
-            <Form.Item
-              name="contact_number"
-              label="Contact Number"
-              rules={[{ required: true }]}
+      {loading ? (
+        <p>Loading customers...</p>
+      ) : (
+        <table className="min-w-full border border-gray-700 bg-gray-800 rounded-lg">
+          <thead>
+            <tr className="bg-gray-700">
+              <th className="px-4 py-2 text-left">Name</th>
+              <th className="px-4 py-2 text-left">Contact</th>
+              <th className="px-4 py-2 text-left">Email</th>
+              <th className="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredCustomers.map((c) => (
+              <tr key={c.id} className="hover:bg-gray-700/60">
+                <td className="px-4 py-2">{c.name}</td>
+                <td className="px-4 py-2">{c.contact_number}</td>
+                <td className="px-4 py-2">{c.email || "N/A"}</td>
+                <td className="px-4 py-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleViewDetails(c)}
+                      className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-500"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingCustomerId(c.id);
+                        setFormData(c);
+                        setIsFormVisible(true);
+                      }}
+                      className="bg-yellow-600 px-3 py-1 rounded hover:bg-yellow-500"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      className="bg-red-600 px-3 py-1 rounded hover:bg-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filteredCustomers.length === 0 && (
+              <tr>
+                <td colSpan="4" className="text-center py-4 text-gray-400">
+                  No customers found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
+
+      {/* 🔹 Add/Edit Modal */}
+      {isFormVisible && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-96">
+            <h2 className="text-lg font-semibold mb-4">
+              {editingCustomerId ? "Edit Customer" : "Add Customer"}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input
+                name="name"
+                placeholder="Name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600"
+                required
+              />
+              <input
+                name="contact_number"
+                placeholder="Contact Number"
+                value={formData.contact_number}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600"
+                required
+              />
+              <input
+                name="email"
+                placeholder="Email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600"
+              />
+              <textarea
+                name="address"
+                placeholder="Address"
+                value={formData.address}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600"
+              />
+              <input
+                name="date_of_birth"
+                type="date"
+                value={formData.date_of_birth}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600"
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsFormVisible(false)}
+                  className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 rounded hover:bg-emerald-500"
+                >
+                  {editingCustomerId ? "Update" : "Add"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🔹 Customer Details Drawer */}
+      {detailsVisible && selectedCustomer && (
+        <div className="fixed inset-0 bg-black/70 flex justify-end z-50">
+          <div className="w-96 bg-gray-800 p-6 overflow-y-auto">
+            <button
+              onClick={() => setDetailsVisible(false)}
+              className="text-gray-400 hover:text-white mb-4"
             >
-              <Input placeholder="Contact Number" />
-            </Form.Item>
-            <Form.Item name="email" label="Email">
-              <Input type="email" placeholder="Email" />
-            </Form.Item>
-            <Form.Item name="address" label="Address">
-              <Input.TextArea placeholder="Address" />
-            </Form.Item>
-            <Form.Item name="date_of_birth" label="Date of Birth">
-              <Input type="date" />
-            </Form.Item>
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                block
-                className="bg-emerald-600 hover:bg-emerald-500 border-none"
-              >
-                {editingCustomerId ? "Update" : "Add"}
-              </Button>
-            </Form.Item>
-          </Form>
-        </Modal>
-
-        {/* Drawer */}
-        <Drawer
-          title={
-            selectedCustomer
-              ? `${selectedCustomer.name}'s Profile`
-              : "Customer Profile"
-          }
-          placement="right"
-          width={720}
-          onClose={() => setCustomerDetailVisible(false)}
-          open={customerDetailVisible}
-          className="bg-gray-900 text-gray-100"
-        >
-          {detailsLoading ? (
-            <div className="text-center py-16">
-              <Spin size="large" />
-            </div>
-          ) : (
-            <Tabs defaultActiveKey="1">
-              <TabPane tab="Customer Info" key="1">
-                {selectedCustomer && (
-                  <Card className="bg-gray-800/60 border border-gray-700 backdrop-blur-lg">
-                    <Row gutter={16}>
-                      <Col span={12}>
-                        <p><strong>Name:</strong> {selectedCustomer.name}</p>
-                        <p><strong>Contact:</strong> {selectedCustomer.contact_number}</p>
-                        <p><strong>Email:</strong> {selectedCustomer.email || "N/A"}</p>
-                      </Col>
-                      <Col span={12}>
-                        <p><strong>Address:</strong> {selectedCustomer.address || "N/A"}</p>
-                        <p><strong>DOB:</strong> {selectedCustomer.date_of_birth || "N/A"}</p>
-                        <p><strong>Customer Since:</strong> {new Date(selectedCustomer.created_at).toLocaleDateString()}</p>
-                      </Col>
-                    </Row>
-                  </Card>
-                )}
-              </TabPane>
-              <TabPane tab="Loyalty Program" key="2">
-                <LoyaltyCard loyalty={customerLoyalty} />
-              </TabPane>
-              <TabPane tab="Purchase History" key="3">
-                <PurchaseHistory purchaseData={purchaseHistory} />
-              </TabPane>
-            </Tabs>
-          )}
-        </Drawer>
-      </Content>
-    </Layout>
+              ✕ Close
+            </button>
+            {detailsLoading ? (
+              <p>Loading details...</p>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold mb-2">
+                  {selectedCustomer.name}
+                </h2>
+                <p>Contact: {selectedCustomer.contact_number}</p>
+                <p>Email: {selectedCustomer.email || "N/A"}</p>
+                <p>Address: {selectedCustomer.address || "N/A"}</p>
+                <p>DOB: {selectedCustomer.date_of_birth || "N/A"}</p>
+                <hr className="my-4 border-gray-700" />
+                <h3 className="text-lg font-semibold">Loyalty</h3>
+                <p>Tier: {customerLoyalty?.tier || "Bronze"}</p>
+                <p>Available Points: {customerLoyalty?.available_points || 0}</p>
+                <p>Lifetime Points: {customerLoyalty?.lifetime_points || 0}</p>
+                <hr className="my-4 border-gray-700" />
+                <h3 className="text-lg font-semibold">Purchase History</h3>
+                <p>Total Spent: ₹{purchaseHistory?.total_spent || 0}</p>
+                <p>Total Bills: {purchaseHistory?.total_bills || 0}</p>
+                <p>
+                  Avg Bill Value: ₹
+                  {purchaseHistory?.average_bill_value?.toFixed(2) || 0}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

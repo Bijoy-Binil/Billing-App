@@ -24,3 +24,24 @@ body{
 /* Scrollbar polish (optional) */
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.35); border-radius: 9999px; }
+
+.dark-modal .ant-modal-content {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.dark-modal .ant-modal-header {
+  background-color: #1f2937 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.dark-modal .ant-modal-title {
+  color: #10b981 !important;
+}
+
+.dark-modal .ant-input,
+.dark-modal .ant-input-textarea {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
