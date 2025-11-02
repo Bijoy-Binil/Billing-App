@@ -14,6 +14,7 @@ const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/" },
   { name: "Inventory", icon: Package, path: "/inventory" },
   { name: "Billing", icon: ShoppingCart, path: "/billing" },
+  { name: "Customers", icon: ShoppingCart, path: "/customers" },
   { name: "SalesReports", icon: BarChart3, path: "/sales-report" },
   { name: "ProfitReports", icon: BarChart3, path: "/profit-report" },
   { name: "StockReports", icon: BarChart3, path: "/stock-report" },
