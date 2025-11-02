@@ -20,6 +20,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "category",
             "category_detail",
             "manufacturer",
+            "supplier",
             "quantity",
             "cost_price",
             "price",

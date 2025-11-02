@@ -86,12 +86,10 @@ const Inventory = () => {
   const handleSupplierChange = (e) => {
     const value = e.target.value;
     setForm({ ...form, supplier: value });
-    
+
     // Filter suppliers for autocomplete
     if (value.trim()) {
-      const filtered = suppliers.filter(s => 
-        s.name.toLowerCase().includes(value.toLowerCase())
-      );
+      const filtered = suppliers.filter((s) => s.name.toLowerCase().includes(value.toLowerCase()));
       setSupplierSuggestions(filtered);
     } else {
       setSupplierSuggestions([]);
@@ -151,6 +149,7 @@ const Inventory = () => {
       name: product.name,
       category: product.category || "",
       manufacturer: product.manufacturer || "",
+      supplier: product.supplier || "",
       cost_price: product.cost_price || "",
       price: product.price || "",
       quantity: product.quantity || "",
@@ -191,15 +190,10 @@ const Inventory = () => {
         >
           <div className="flex items-center justify-center gap-2 text-lg font-semibold">
             <AlertTriangle size={22} className="text-yellow-300 animate-pulse" />
-            Low Stock Alert!{" "}
-            <span className="text-yellow-200 font-bold">
-              {lowStockProducts.length} product(s)
-            </span>{" "}
-            need restocking!
+            Low Stock Alert! <span className="text-yellow-200 font-bold">{lowStockProducts.length} product(s)</span> need
+            restocking!
           </div>
-          <div className="text-sm mt-1 opacity-90">
-            {lowStockProducts.map((item) => item.name).join(", ")}
-          </div>
+          <div className="text-sm mt-1 opacity-90">{lowStockProducts.map((item) => item.name).join(", ")}</div>
         </motion.div>
       )}
 
@@ -223,6 +217,7 @@ const Inventory = () => {
                 name: "",
                 category: "",
                 manufacturer: "",
+                supplier: "",
                 cost_price: "",
                 price: "",
                 quantity: "",
@@ -244,15 +239,10 @@ const Inventory = () => {
             {editingId ? "✏️ Edit Product" : "➕ Add New Product"}
           </h2>
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-          >
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Product Name */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Product Name *
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Product Name *</label>
               <input
                 type="text"
                 name="name"
@@ -283,9 +273,7 @@ const Inventory = () => {
 
             {/* Manufacturer */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Manufacturer
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Manufacturer</label>
               <input
                 type="text"
                 name="manufacturer"
@@ -297,38 +285,26 @@ const Inventory = () => {
             </div>
 
             {/* Supplier - with autocomplete */}
-            <div className="relative">
-              <label className="block text-sm text-gray-400 mb-1">
-                Supplier
-              </label>
-              <input
-                type="text"
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Supplier</label>
+              <select
                 name="supplier"
                 value={form.supplier}
-                onChange={handleSupplierChange}
-                placeholder="Enter supplier name"
+                onChange={handleChange}
                 className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
-              />
-              {supplierSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {supplierSuggestions.map((supplier) => (
-                    <div
-                      key={supplier.id}
-                      className="px-3 py-2 hover:bg-gray-700 cursor-pointer"
-                      onClick={() => selectSupplier(supplier)}
-                    >
-                      {supplier.name}
-                    </div>
-                  ))}
-                </div>
-              )}
+              >
+                <option value="">Select supplier</option>
+                {suppliers.map((sup) => (
+                  <option key={sup.id} value={sup.id}>
+                    {sup.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Cost Price */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Cost Price (₹)
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Cost Price (₹)</label>
               <input
                 type="number"
                 name="cost_price"
@@ -341,9 +317,7 @@ const Inventory = () => {
 
             {/* Selling Price */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Selling Price (₹) *
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Selling Price (₹) *</label>
               <input
                 type="number"
                 name="price"
@@ -356,9 +330,7 @@ const Inventory = () => {
 
             {/* Quantity */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Quantity *
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Quantity *</label>
               <input
                 type="number"
                 name="quantity"
@@ -412,14 +384,9 @@ const Inventory = () => {
                   </tr>
                 )}
                 {products.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-gray-700 hover:bg-gray-700/30 transition"
-                  >
+                  <tr key={p.id} className="border-b border-gray-700 hover:bg-gray-700/30 transition">
                     <td className="py-2 px-3">{p.name}</td>
-                    <td className="py-2 px-3">
-                      {p.category_detail?.name || "-"}
-                    </td>
+                    <td className="py-2 px-3">{p.category_detail?.name || "-"}</td>
                     <td className="py-2 px-3 text-center">₹{p.price}</td>
                     <td className="py-2 px-3 text-center">{p.quantity}</td>
                     <td className="py-2 px-3 text-center">
