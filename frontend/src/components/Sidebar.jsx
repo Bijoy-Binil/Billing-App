@@ -6,6 +6,9 @@ import {
   Package,
   BarChart3,
   LogOut,
+  Truck,
+  ShoppingBag,
+  Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { AuthContext } from "../AuthProvider";
@@ -14,7 +17,9 @@ const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/" },
   { name: "Inventory", icon: Package, path: "/inventory" },
   { name: "Billing", icon: ShoppingCart, path: "/billing" },
-  { name: "Customers", icon: ShoppingCart, path: "/customers" },
+  { name: "Customers", icon: Users, path: "/customers" },
+  { name: "Suppliers", icon: Truck, path: "/suppliers" },
+  { name: "Purchase Orders", icon: ShoppingBag, path: "/purchase-orders" },
   { name: "SalesReports", icon: BarChart3, path: "/sales-report" },
   { name: "ProfitReports", icon: BarChart3, path: "/profit-report" },
   { name: "StockReports", icon: BarChart3, path: "/stock-report" },

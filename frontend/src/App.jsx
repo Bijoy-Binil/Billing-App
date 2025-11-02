@@ -17,6 +17,8 @@ import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 import ResponsiveLayout from "./ResponsiveLayout";
 import Customers from "./pages/Customers";
+import Suppliers from "./pages/Suppliers";
+import PurchaseOrders from "./pages/PurchaseOrders";
 
 const paypalOptions = {
   clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
@@ -55,6 +57,8 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/customers" element={<Customers />} />
+            <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/purchase-orders" element={<PurchaseOrders />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/stocks" element={<Stock />} />

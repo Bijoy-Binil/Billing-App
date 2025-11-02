@@ -1,6 +1,7 @@
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
+from django.db.models import Max
 from apps.accounts.models import CustomUser
 # Create your models here.
 
@@ -20,10 +21,10 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    item_id = models.CharField(max_length=50, unique=True)
+    item_id = models.CharField(max_length=50, unique=True, editable=False)
     name = models.CharField(max_length=200)
-    # ✅ Proper ForeignKey
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    supplier = models.ForeignKey("suppliers.Supplier", on_delete=models.SET_NULL, null=True, blank=True)
     manufacturer = models.CharField(max_length=100, blank=True)
     quantity = models.IntegerField(default=0)
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -31,10 +32,13 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        # Only generate a new ID if it doesn’t exist already
         if not self.item_id:
-            last = Product.objects.count() + 1
-            self.item_id = f"P-{last:04d}"   # e.g., P-0001, P-0002, etc.
+            last_item = Product.objects.aggregate(max_id=Max("id"))["max_id"] or 0
+            new_id = last_item + 1
+            self.item_id = f"P-{new_id:04d}"  # Example: P-0001, P-0002, etc.
         super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.item_id} - {self.name}"
 

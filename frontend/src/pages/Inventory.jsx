@@ -6,6 +6,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
+const API_SUPPLIERS = "http://127.0.0.1:8000/api/suppliers/";
 
 const Inventory = () => {
   const [products, setProducts] = useState([]);
@@ -13,18 +14,22 @@ const Inventory = () => {
     name: "",
     category: "",
     manufacturer: "",
+    supplier: "",
     cost_price: "",
     price: "",
     quantity: "",
   });
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [supplierSuggestions, setSupplierSuggestions] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [lowStockProducts, setLowStockProducts] = useState([]);
 
   useEffect(() => {
     fetchCategories();
     fetchProducts();
+    fetchSuppliers();
   }, []);
 
   const fetchCategories = async () => {
@@ -64,7 +69,39 @@ const Inventory = () => {
     }
   };
 
+  const fetchSuppliers = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.get(API_SUPPLIERS, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSuppliers(res.data.results || res.data || []);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+    }
+  };
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSupplierChange = (e) => {
+    const value = e.target.value;
+    setForm({ ...form, supplier: value });
+    
+    // Filter suppliers for autocomplete
+    if (value.trim()) {
+      const filtered = suppliers.filter(s => 
+        s.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setSupplierSuggestions(filtered);
+    } else {
+      setSupplierSuggestions([]);
+    }
+  };
+
+  const selectSupplier = (supplier) => {
+    setForm({ ...form, supplier: supplier.name });
+    setSupplierSuggestions([]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,6 +132,7 @@ const Inventory = () => {
         name: "",
         category: "",
         manufacturer: "",
+        supplier: "",
         cost_price: "",
         price: "",
         quantity: "",
@@ -208,47 +246,127 @@ const Inventory = () => {
 
           <form
             onSubmit={handleSubmit}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
-            {[
-              { name: "name", label: "Product Name", type: "text" },
-              { name: "manufacturer", label: "Manufacturer", type: "text" },
-              { name: "cost_price", label: "Cost Price (₹)", type: "number" },
-              { name: "price", label: "Selling Price (₹)", type: "number" },
-              { name: "quantity", label: "Quantity", type: "number" },
-            ].map((field) => (
-              <div key={field.name}>
-                <label className="block text-sm text-gray-400 mb-1">
-                  {field.label}
-                </label>
-                <input
-                  type={field.type}
-                  name={field.name}
-                  value={form[field.name]}
-                  onChange={handleChange}
-                  className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
-                />
-              </div>
-            ))}
+            {/* Product Name */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">
+                Product Name *
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Enter product name"
+                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+              />
+            </div>
 
             {/* Category */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Category
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Category</label>
               <select
                 name="category"
                 value={form.category}
                 onChange={handleChange}
                 className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
               >
-                <option value="">Select category</option>
+                <option value="">Select Category</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Manufacturer */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">
+                Manufacturer
+              </label>
+              <input
+                type="text"
+                name="manufacturer"
+                value={form.manufacturer}
+                onChange={handleChange}
+                placeholder="Enter manufacturer"
+                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+              />
+            </div>
+
+            {/* Supplier - with autocomplete */}
+            <div className="relative">
+              <label className="block text-sm text-gray-400 mb-1">
+                Supplier
+              </label>
+              <input
+                type="text"
+                name="supplier"
+                value={form.supplier}
+                onChange={handleSupplierChange}
+                placeholder="Enter supplier name"
+                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+              />
+              {supplierSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {supplierSuggestions.map((supplier) => (
+                    <div
+                      key={supplier.id}
+                      className="px-3 py-2 hover:bg-gray-700 cursor-pointer"
+                      onClick={() => selectSupplier(supplier)}
+                    >
+                      {supplier.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Cost Price */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">
+                Cost Price (₹)
+              </label>
+              <input
+                type="number"
+                name="cost_price"
+                value={form.cost_price}
+                onChange={handleChange}
+                placeholder="Enter cost price"
+                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+              />
+            </div>
+
+            {/* Selling Price */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">
+                Selling Price (₹) *
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={form.price}
+                onChange={handleChange}
+                placeholder="Enter selling price"
+                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+              />
+            </div>
+
+            {/* Quantity */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">
+                Quantity *
+              </label>
+              <input
+                type="number"
+                name="quantity"
+                value={form.quantity}
+                onChange={handleChange}
+                placeholder="Enter quantity"
+                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+              />
             </div>
 
             <div className="sm:col-span-2 lg:col-span-4 flex justify-end">

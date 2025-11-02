@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/', include("apps.payment.urls")),
     path('api/', include("apps.products.urls")),
     path('api/', include("apps.reports.urls")),
+    path('api/', include("apps.suppliers.urls")),
 
     path('api-auth/', include('rest_framework.urls')),
     

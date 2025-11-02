@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-      'rest_framework_simplejwt',
+    'rest_framework_simplejwt',
     "corsheaders",
     'apps.accounts',
     'apps.products',
@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'apps.payment',
     'apps.billing',
     'apps.reports',
+    'apps.suppliers',
 ]
 
 MIDDLEWARE = [
