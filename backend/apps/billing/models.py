@@ -30,23 +30,25 @@ class Bill(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        if not self.bill_id:
+        # ✅ Generate unique bill_id only on creation
+        is_new = self._state.adding
+        if is_new and not self.bill_id:
             timestamp = timezone.now().strftime("%Y%m%d%H%M%S")
             unique_part = uuid.uuid4().hex[:6].upper()
             self.bill_id = f"BILL-{timestamp}-{unique_part}"
+
+        # ✅ Save Bill first
         super().save(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
-        is_new = self._state.adding  # Detect first save
-        super().save(*args, **kwargs)
-
+        # ✅ Update customer loyalty points after save
         if is_new and self.customer:
             loyalty, _ = CustomerLoyalty.objects.get_or_create(customer=self.customer)
             earned_points = int(self.total // 100)  # 1 point per ₹100 spent
             loyalty.available_points += earned_points
             loyalty.lifetime_points += earned_points
             loyalty.update_tier()
-            
+            loyalty.save()
+
     def __str__(self):
         return self.bill_id
 
