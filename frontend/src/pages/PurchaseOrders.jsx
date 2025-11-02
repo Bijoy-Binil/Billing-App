@@ -15,9 +15,7 @@ const PurchaseOrders = () => {
   const [searchText, setSearchText] = useState("");
   const [formData, setFormData] = useState({
     supplier: "",
-    product: "",
-    quantity: 1,
-    cost_price: 0,
+    products: [{ product: "", quantity: 1, cost_price: 0 }],
   });
 
   const baseUrl = "http://127.0.0.1:8000/api/";
@@ -27,6 +25,7 @@ const PurchaseOrders = () => {
     fetchPurchaseOrders();
     fetchSuppliers();
     fetchProducts();
+    console.log("formData.products==>",products)
   }, []);
 
   const fetchPurchaseOrders = async () => {
@@ -34,49 +33,24 @@ const PurchaseOrders = () => {
       const res = await axios.get(`${baseUrl}purchase-orders/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPurchaseOrders(res.data.results)
-      console.log("object==>",res.data.results)
+      setPurchaseOrders(res.data.results || []);
+         console.log("formData.products==>",res.data.results)
     } catch (err) {
       console.error("Error fetching purchase orders", err);
       toast.error("Failed to fetch purchase orders");
     }
   };
-// 📄 Invoice Download
-const handleDownloadInvoice = async (purchase_id) => {
-  try {
-    const res = await axios.get(`${baseUrl}purchase-orders/${purchase_id}/invoice/`, {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    });
-
-    const blob = new Blob([res.data], { type: "application/pdf" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `invoice_${purchase_id}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    toast.success("Invoice downloaded ✅");
-  } catch (err) {
-    console.error("Error downloading invoice:", err);
-    toast.error("Failed to download invoice ❌");
-  }
-};
 
   const fetchSuppliers = async () => {
     try {
       const res = await axios.get(`${baseUrl}suppliers/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // Ensure suppliers is an array
-      setSuppliers(res.data.results)
+      setSuppliers(res.data.results || []);
     } catch (err) {
       console.error("Failed to fetch suppliers:", err);
-      setSuppliers([]); // fallback empty array
       toast.error("Failed to fetch suppliers");
+      setSuppliers([]);
     }
   };
 
@@ -85,52 +59,95 @@ const handleDownloadInvoice = async (purchase_id) => {
       const res = await axios.get(`${baseUrl}products/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // ✅ always set an array, even if API returns something else
-      setProducts(res.data.results);
-      console.log(res.data);
+      setProducts(res.data.results || []);
     } catch (err) {
       console.error("Failed to fetch products:", err);
-      setProducts([]); // prevent map() crash
       toast.error("Failed to fetch products");
+      setProducts([]);
     }
   };
 
-  const handleProductSelect = (id) => {
-    const product = products.find((p) => p.id === parseInt(id));
-    if (product) {
-      setFormData((prev) => ({
-        ...prev,
-        product: id,
-        cost_price: product.cost_price || 0,
-      }));
-    }
+  const handleProductChange = (index, field, value) => {
+    const newProducts = [...formData.products];
+    newProducts[index][field] =
+      field === "quantity" || field === "cost_price" ? Number(value) : value;
+    setFormData({ ...formData, products: newProducts });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const addProductRow = () => {
+    setFormData({
+      ...formData,
+      products: [
+        ...formData.products,
+        { product: "", quantity: 1, cost_price: 0 },
+      ],
+    });
+  };
+
+  const removeProductRow = (index) => {
+    const newProducts = formData.products.filter((_, i) => i !== index);
+    setFormData({ ...formData, products: newProducts });
+  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    for (const p of formData.products) {
+      if (!p.product || !p.cost_price) continue;
+
+      await axios.post(
+        `${baseUrl}purchase-orders/`,
+        {
+          supplier: formData.supplier,
+          product: p.product,
+          quantity: p.quantity,
+          cost_price: p.cost_price,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    }
+
+    toast.success("Purchase order(s) created successfully!");
+    setOpen(false);
+    setFormData({ supplier: "", products: [{ product: "", quantity: 1, cost_price: 0 }] });
+    fetchPurchaseOrders();
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to create purchase order");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleDownloadInvoice = async (purchase_id) => {
     try {
-      await axios.post(`${baseUrl}purchase-orders/`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Purchase order created successfully!");
-      setOpen(false);
-      setFormData({ supplier: "", product: "", quantity: 1, cost_price: 0 });
-      fetchPurchaseOrders();
-      fetchProducts();
+      const res = await axios.get(
+        `${baseUrl}purchase-orders/${purchase_id}/invoice/`,
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `invoice_${purchase_id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded ✅");
     } catch (err) {
-      toast.error("Failed to create purchase order");
-    } finally {
-      setLoading(false);
+      console.error("Error downloading invoice:", err);
+      toast.error("Failed to download invoice ❌");
     }
   };
 
   const filteredOrders = Array.isArray(purchaseOrders)
-
-    ? purchaseOrders.filter((po) => po.supplier_name?.toLowerCase().includes(searchText.toLowerCase()))
+    ? purchaseOrders.filter((po) =>
+        po.supplier_name?.toLowerCase().includes(searchText.toLowerCase())
+      )
     : [];
-
+   console.log("filteredOrders==>",filteredOrders)
   return (
     <div className="container mx-auto px-4 py-8">
       <ToastContainer position="top-right" theme="dark" />
@@ -146,7 +163,9 @@ const handleDownloadInvoice = async (purchase_id) => {
             <ShoppingBag className="h-6 w-6" />
             Purchase Orders
           </h1>
-          <p className="text-gray-400 mt-1">Track and manage all purchase orders from suppliers</p>
+          <p className="text-gray-400 mt-1">
+            Track and manage all purchase orders from suppliers
+          </p>
         </div>
 
         <motion.button
@@ -161,7 +180,12 @@ const handleDownloadInvoice = async (purchase_id) => {
       </motion.div>
 
       {/* Search */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="relative mb-6">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="relative mb-6"
+      >
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" />
         </div>
@@ -185,60 +209,70 @@ const handleDownloadInvoice = async (purchase_id) => {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-900/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  ID
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Supplier
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
-                  Product
+                  Product(s)
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">Qty</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Qty
+                </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Cost
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Total
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">Invoice</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Invoice
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
-              {loading ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-400">
-                    Loading...
-                  </td>
-                </tr>
-              ) : filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-400">
-                    No purchase orders found
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map((po) => (
-                  <tr key={po.id} className="hover:bg-gray-700/30 transition-colors">
-                    <td className="px-6 py-4 text-gray-300">{po.id}</td>
-                    <td className="px-6 py-4 text-gray-300">{po.supplier_name || "N/A"}</td>
-                    <td className="px-6 py-4 text-gray-300">{po.product_name || "N/A"}</td>
-                    <td className="px-6 py-4 text-center text-gray-200">{po.quantity}</td>
-                    <td className="px-6 py-4 text-center text-gray-200">₹{po.cost_price}</td>
-                    <td className="px-6 py-4 text-center text-emerald-400 font-medium">₹{po.total}</td>
-                    <td className="px-6 py-4 text-right text-gray-400">{moment(po.created_at).format("DD MMM YYYY")}</td>
-<td>
-  <button
-    onClick={() => handleDownloadInvoice(po.id)}
-    className="bg-blue-900 cursor-pointer mt-3 hover:bg-blue-800 px-3 py-1 rounded-xl text-sm transition-all"
-  >
-    Download
-  </button>
-</td>
+      <tbody className="divide-y divide-gray-700">
+  {loading ? (
+    <tr>
+      <td colSpan="8" className="px-6 py-4 text-center text-gray-400">
+        Loading...
+      </td>
+    </tr>
+  ) : filteredOrders.length === 0 ? (
+    <tr>
+      <td colSpan="8" className="px-6 py-4 text-center text-gray-400">
+        No purchase orders found
+      </td>
+    </tr>
+  ) : (
+    filteredOrders.map((po) => (
+      <tr key={po.id} className="hover:bg-gray-700/30 transition-colors">
+        <td className="px-6 py-4 text-gray-300">{po.id}</td>
+        <td className="px-6 py-4 text-gray-300">{po.supplier_name || "N/A"}</td>
+        <td className="px-6 py-4 text-gray-300">{po.product_name || "N/A"}</td>
+        <td className="px-6 py-4 text-center text-gray-200">{po.quantity}</td>
+        <td className="px-6 py-4 text-center text-gray-200">₹{po.cost_price}</td>
+        <td className="px-6 py-4 text-center text-emerald-400 font-medium">₹{po.total}</td>
+        <td className="px-6 py-4 text-right text-gray-400">
+          {moment(po.created_at).format("DD MMM YYYY")}
+        </td>
+        <td>
+          <button
+            onClick={() => handleDownloadInvoice(po.id)}
+            className="bg-blue-900 cursor-pointer mt-3 hover:bg-blue-800 px-3 py-1 rounded-xl text-sm transition-all"
+          >
+            Download
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
 
-                  </tr>
-                ))
-              )}
-            </tbody>
           </table>
         </div>
       </motion.div>
@@ -249,6 +283,7 @@ const handleDownloadInvoice = async (purchase_id) => {
           <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-700 shadow-xl relative">
             <h3 className="text-xl font-semibold text-emerald-400 mb-4">Create Purchase Order</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Supplier */}
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Supplier</label>
                 <select
@@ -266,51 +301,71 @@ const handleDownloadInvoice = async (purchase_id) => {
                 </select>
               </div>
 
+              {/* Products */}
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Product</label>
-                <select
-                  value={formData.product}
-                  onChange={(e) => handleProductSelect(e.target.value)}
-                  className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
-                  required
-                >
-                  <option value="">Select Product</option>
-                  {Array.isArray(products) &&
-                    products.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                </select>
+                <label className="block text-sm text-gray-300 mb-1">Products</label>
+                {formData.products.map((p, index) => (
+                  <div key={index} className="grid grid-cols-4 gap-2 mb-2 items-end">
+                    <select
+                      value={p.product}
+                      onChange={(e) => handleProductChange(index, "product", e.target.value)}
+                      className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1"
+                      required
+                    >
+                      <option value="">Select Product</option>
+                      {products.map((prod) => (
+                        <option key={prod.id} value={prod.id}>
+                          {prod.name}
+                        </option>
+                      ))}
+                    </select>
+ <label className="block text-sm text-gray-300 mb-1">Quantity</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={p.quantity}
+                      onChange={(e) => handleProductChange(index, "quantity", e.target.value)}
+                      className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1"
+                      placeholder="Qty"
+                      required
+                    />
+ <label className="block text-sm text-gray-300 mb-1">Cost</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={p.cost_price}
+                      onChange={(e) => handleProductChange(index, "cost_price", e.target.value)}
+                      className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1"
+                      placeholder="Cost ₹"
+                      required
+                    />
+
+                    <div className="flex gap-1">
+                      {index === formData.products.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={addProductRow}
+                          className="bg-emerald-600 px-2 py-1 rounded"
+                        >
+                          +
+                        </button>
+                      )}
+                      {formData.products.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeProductRow(index)}
+                          className="bg-red-600 px-2 py-1 rounded"
+                        >
+                          -
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm text-gray-300 mb-1">Quantity</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                    className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-300 mb-1">Cost Price (₹)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.cost_price}
-                    onChange={(e) => setFormData({ ...formData, cost_price: Number(e.target.value) })}
-                    className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
-                    required
-                  />
-                </div>
-              </div>
-
+              {/* Buttons */}
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -319,7 +374,10 @@ const handleDownloadInvoice = async (purchase_id) => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                >
                   {loading ? "Saving..." : "Create"}
                 </button>
               </div>
