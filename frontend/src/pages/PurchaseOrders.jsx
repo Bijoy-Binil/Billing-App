@@ -1,19 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Table, Button, Modal, Form, Input, Select, 
-  Space, Card, Typography, InputNumber, Spin, 
-  Empty, message, DatePicker
-} from 'antd';
-import { 
-  PlusOutlined, EditOutlined, DeleteOutlined, 
-  SearchOutlined, ShoppingOutlined 
-} from '@ant-design/icons';
-import axios from 'axios';
-import moment from 'moment';
-import { motion } from 'framer-motion';
-
-const { Title } = Typography;
-const { Option } = Select;
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import moment from "moment";
+import { motion } from "framer-motion";
+import { ShoppingBag, PlusCircle, Search } from "lucide-react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PurchaseOrders = () => {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -21,295 +12,289 @@ const PurchaseOrders = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [form] = Form.useForm();
-  const [searchText, setSearchText] = useState('');
-  const [filteredData, setFilteredData] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [formData, setFormData] = useState({
+    supplier: "",
+    product: "",
+    quantity: 1,
+    cost_price: 0,
+  });
 
-  // Fetch purchase orders, suppliers and products
+  const baseUrl = "http://127.0.0.1:8000/api/";
+  const token = localStorage.getItem("accessToken");
+
   useEffect(() => {
     fetchPurchaseOrders();
     fetchSuppliers();
     fetchProducts();
   }, []);
 
-  // Filter purchase orders when search text changes
-  useEffect(() => {
-    if (searchText) {
-      const filtered = purchaseOrders.filter(
-        po => 
-          po.supplier.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          po.product.name.toLowerCase().includes(searchText.toLowerCase())
-      );
-      setFilteredData(filtered);
-    } else {
-      setFilteredData(purchaseOrders);
-    }
-  }, [searchText, purchaseOrders]);
-
   const fetchPurchaseOrders = async () => {
-    setLoading(true);
     try {
-      const response = await axios.get('/api/purchase-orders/');
-      if (Array.isArray(response.data)) {
-        setPurchaseOrders(response.data);
-        setFilteredData(response.data);
-      } else if (response.data.results && Array.isArray(response.data.results)) {
-        setPurchaseOrders(response.data.results);
-        setFilteredData(response.data.results);
-      } else {
-        setPurchaseOrders([]);
-        setFilteredData([]);
-      }
-    } catch (error) {
-      console.error('Error fetching purchase orders:', error);
-      message.error('Failed to fetch purchase orders');
-      setPurchaseOrders([]);
-      setFilteredData([]);
-    } finally {
-      setLoading(false);
+      const res = await axios.get(`${baseUrl}purchase-orders/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPurchaseOrders(res.data.results)
+      console.log("object==>",res.data.results)
+    } catch (err) {
+      console.error("Error fetching purchase orders", err);
+      toast.error("Failed to fetch purchase orders");
     }
   };
 
   const fetchSuppliers = async () => {
     try {
-      const response = await axios.get('/api/suppliers/');
-      if (Array.isArray(response.data)) {
-        setSuppliers(response.data);
-      } else if (response.data.results && Array.isArray(response.data.results)) {
-        setSuppliers(response.data.results);
-      } else {
-        setSuppliers([]);
-      }
-    } catch (error) {
-      console.error('Error fetching suppliers:', error);
-      message.error('Failed to fetch suppliers');
-      setSuppliers([]);
+      const res = await axios.get(`${baseUrl}suppliers/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Ensure suppliers is an array
+      setSuppliers(res.data.results)
+    } catch (err) {
+      console.error("Failed to fetch suppliers:", err);
+      setSuppliers([]); // fallback empty array
+      toast.error("Failed to fetch suppliers");
     }
   };
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('/api/products/');
-      if (Array.isArray(response.data)) {
-        setProducts(response.data);
-      } else if (response.data.results && Array.isArray(response.data.results)) {
-        setProducts(response.data.results);
-      } else {
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      message.error('Failed to fetch products');
-      setProducts([]);
+      const res = await axios.get(`${baseUrl}products/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // ✅ always set an array, even if API returns something else
+      setProducts(res.data.results);
+      console.log(res.data);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+      setProducts([]); // prevent map() crash
+      toast.error("Failed to fetch products");
     }
   };
 
-  const handleCreatePurchaseOrder = () => {
-    form.resetFields();
-    setOpen(true);
+  const handleProductSelect = (id) => {
+    const product = products.find((p) => p.id === parseInt(id));
+    if (product) {
+      setFormData((prev) => ({
+        ...prev,
+        product: id,
+        cost_price: product.cost_price || 0,
+      }));
+    }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
     try {
-      const values = await form.validateFields();
-      setLoading(true);
-      
-      await axios.post('/api/purchase-orders/', values);
-      message.success('Purchase order created successfully');
+      await axios.post(`${baseUrl}purchase-orders/`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Purchase order created successfully!");
       setOpen(false);
+      setFormData({ supplier: "", product: "", quantity: 1, cost_price: 0 });
       fetchPurchaseOrders();
-      fetchProducts(); // Refresh products as their quantities might have changed
-    } catch (error) {
-      console.error('Error creating purchase order:', error);
-      message.error('Failed to create purchase order');
+      fetchProducts();
+    } catch (err) {
+      toast.error("Failed to create purchase order");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    setOpen(false);
-  };
+  const filteredOrders = Array.isArray(purchaseOrders)
 
-  const handleProductSelect = (productId) => {
-    const selectedProduct = products.find(p => p.id === productId);
-    if (selectedProduct) {
-      form.setFieldsValue({
-        cost_price: selectedProduct.cost_price || 0
-      });
-    }
-  };
-
-  const columns = [
-    {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 60,
-    },
-    {
-      title: 'Supplier',
-      dataIndex: ['supplier', 'name'],
-      key: 'supplier',
-      render: (text, record) => record.supplier?.name || 'N/A',
-    },
-    {
-      title: 'Product',
-      dataIndex: ['product', 'name'],
-      key: 'product',
-      render: (text, record) => record.product?.name || 'N/A',
-    },
-    {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-    },
-    {
-      title: 'Cost Price',
-      dataIndex: 'cost_price',
-      key: 'cost_price',
-      render: (text) => `₹${text.toFixed(2)}`,
-    },
-    {
-      title: 'Total',
-      dataIndex: 'total',
-      key: 'total',
-      render: (text) => `₹${text.toFixed(2)}`,
-    },
-    {
-      title: 'Date',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (text) => moment(text).format('DD/MM/YYYY HH:mm'),
-    }
-  ];
+    ? purchaseOrders.filter((po) => po.supplier_name?.toLowerCase().includes(searchText.toLowerCase()))
+    : [];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card className="shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <Title level={2} className="m-0">
-            <ShoppingOutlined className="mr-2" />
+    <div className="container mx-auto px-4 py-8">
+      <ToastContainer position="top-right" theme="dark" />
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+      >
+        <div>
+          <h1 className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
+            <ShoppingBag className="h-6 w-6" />
             Purchase Orders
-          </Title>
-          <Space>
-            <Input
-              placeholder="Search purchase orders"
-              prefix={<SearchOutlined />}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="w-64"
-            />
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreatePurchaseOrder}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              New Purchase Order
-            </Button>
-          </Space>
+          </h1>
+          <p className="text-gray-400 mt-1">Track and manage all purchase orders from suppliers</p>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center p-10">
-            <Spin size="large" />
-          </div>
-        ) : filteredData.length > 0 ? (
-          <Table
-            dataSource={filteredData}
-            columns={columns}
-            rowKey="id"
-            pagination={{ pageSize: 10 }}
-            className="shadow-sm"
-          />
-        ) : (
-          <Empty description="No purchase orders found" />
-        )}
-
-        <Modal
-          title="Create Purchase Order"
-          open={open}
-          onOk={handleSubmit}
-          onCancel={handleCancel}
-          confirmLoading={loading}
-          okText="Create"
-          okButtonProps={{ className: "bg-emerald-600 hover:bg-emerald-700" }}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setOpen(true)}
+          className="mt-4 md:mt-0 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-900/20"
         >
-          <Form
-            form={form}
-            layout="vertical"
-            name="purchase_order_form"
-          >
-            <Form.Item
-              name="supplier"
-              label="Supplier"
-              rules={[{ required: true, message: 'Please select a supplier' }]}
-            >
-              <Select
-                placeholder="Select a supplier"
-                showSearch
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                }
-              >
-                {suppliers.map(supplier => (
-                  <Option key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+          <PlusCircle className="h-5 w-5" />
+          New Order
+        </motion.button>
+      </motion.div>
 
-            <Form.Item
-              name="product"
-              label="Product"
-              rules={[{ required: true, message: 'Please select a product' }]}
-            >
-              <Select
-                placeholder="Select a product"
-                showSearch
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                }
-                onChange={handleProductSelect}
-              >
-                {products.map(product => (
-                  <Option key={product.id} value={product.id}>
-                    {product.name} (Current Stock: {product.quantity})
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+      {/* Search */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="relative mb-6">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search purchase orders..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-200 placeholder-gray-400"
+        />
+      </motion.div>
 
-            <Form.Item
-              name="quantity"
-              label="Quantity"
-              rules={[{ required: true, message: 'Please enter quantity' }]}
-            >
-              <InputNumber min={1} className="w-full" />
-            </Form.Item>
+      {/* Table */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="bg-gray-800/60 rounded-xl border border-gray-700 shadow-lg overflow-hidden"
+      >
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-700">
+            <thead className="bg-gray-900/50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Supplier
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">Qty</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Cost
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700">
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-400">
+                    Loading...
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-400">
+                    No purchase orders found
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((po) => (
+                  <tr key={po.id} className="hover:bg-gray-700/30 transition-colors">
+                    <td className="px-6 py-4 text-gray-300">{po.id}</td>
+                    <td className="px-6 py-4 text-gray-300">{po.supplier_name || "N/A"}</td>
+                    <td className="px-6 py-4 text-gray-300">{po.product_name || "N/A"}</td>
+                    <td className="px-6 py-4 text-center text-gray-200">{po.quantity}</td>
+                    <td className="px-6 py-4 text-center text-gray-200">₹{po.cost_price}</td>
+                    <td className="px-6 py-4 text-center text-emerald-400 font-medium">₹{po.total}</td>
+                    <td className="px-6 py-4 text-right text-gray-400">{moment(po.created_at).format("DD MMM YYYY")}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
 
-            <Form.Item
-              name="cost_price"
-              label="Cost Price"
-              rules={[{ required: true, message: 'Please enter cost price' }]}
-            >
-              <InputNumber
-                min={0.01}
-                step={0.01}
-                formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={value => value.replace(/₹\s?|(,*)/g, '')}
-                className="w-full"
-              />
-            </Form.Item>
-          </Form>
-        </Modal>
-      </Card>
-    </motion.div>
+      {/* Add Purchase Modal */}
+      {open && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50">
+          <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-700 shadow-xl relative">
+            <h3 className="text-xl font-semibold text-emerald-400 mb-4">Create Purchase Order</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Supplier</label>
+                <select
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
+                  required
+                >
+                  <option value="">Select Supplier</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Product</label>
+                <select
+                  value={formData.product}
+                  onChange={(e) => handleProductSelect(e.target.value)}
+                  className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
+                  required
+                >
+                  <option value="">Select Product</option>
+                  {Array.isArray(products) &&
+                    products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                    className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">Cost Price (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.cost_price}
+                    onChange={(e) => setFormData({ ...formData, cost_price: Number(e.target.value) })}
+                    className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                  {loading ? "Saving..." : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

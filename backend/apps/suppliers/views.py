@@ -4,7 +4,7 @@ from .serializers import SupplierSerializer, PurchaseOrderSerializer
 from apps.products.models import Product
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-
+from rest_framework.permissions import IsAuthenticated
 # ---- SUPPLIER VIEWS ----
 class SupplierListCreateView(generics.ListCreateAPIView):
     queryset = Supplier.objects.all().order_by('-created_at')
@@ -22,7 +22,7 @@ class SupplierDetailView(generics.RetrieveUpdateDestroyAPIView):
 class PurchaseOrderListCreateView(generics.ListCreateAPIView):
     queryset = PurchaseOrder.objects.all().order_by('-created_at')
     serializer_class = PurchaseOrderSerializer
-
+    permission_classes = [IsAuthenticated]  # ✅ add this if using JWT auth
     def perform_create(self, serializer):
         purchase_order = serializer.save()
         product = purchase_order.product
@@ -34,7 +34,7 @@ class PurchaseOrderListCreateView(generics.ListCreateAPIView):
 class PurchaseOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
-
+    permission_classes = [IsAuthenticated]  # ✅ add this if using JWT auth
 
 # ---- AUTOCOMPLETE (if needed for dropdowns) ----
 @api_view(['GET'])
