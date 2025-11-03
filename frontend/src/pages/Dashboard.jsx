@@ -68,33 +68,39 @@ const Dashboard = () => {
     }
   };
 
- const fetchLowstock = async () => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
-    try {
-      const res = await axios.get("http://127.0.0.1:8000/api/products/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+const fetchLowstock = async () => {
+  const token = localStorage.getItem("accessToken");
+  if (!token) return;
 
-      const products = res.data.results || res.data;
-      const lowStock = products.filter((p) => p.quantity < 10);
-      setStockProducts(lowStock);
+  try {
+    const res = await axios.get("http://127.0.0.1:8000/api/products/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      // ✅ Beautiful alert for low stock
-      if (lowStock.length > 0) {
-        const productNames = lowStock.map((p,idx) => p.name).slice(0, 5).join(", ");
-        toast.warning(
-          `⚠️ ${lowStock.length} items are running low: ${productNames}${
-            lowStock.length > 5 ? "..." : ""
-          }`,
-          { icon: "🚨", theme: "dark" }
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching low stock:", error);
-      setStockProducts([]);
+    const products = res.data.results || res.data;
+    const lowStock = products.filter((p) => p.quantity < 10);
+    setStockProducts(lowStock);
+  console.log("lowStock==>",lowStock)
+    // ✅ Beautiful numbered alert for low stock
+    if (lowStock.length > 0) {
+      const productNames = lowStock
+        .slice(0, 5)
+        .map((p, idx) => `${idx + 1}. ${p.name}`) // 👈 add index number
+        .join(", ");
+
+      toast.warning(
+        `⚠️ ${lowStock.length} items are running low: ${productNames}${
+          lowStock.length > 5 ? "..." : ""
+        }`,
+        { icon: "🚨", theme: "dark" }
+      );
     }
-  };
+  } catch (error) {
+    console.error("Error fetching low stock:", error);
+    setStockProducts([]);
+  }
+};
+
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 relative overflow-hidden">
