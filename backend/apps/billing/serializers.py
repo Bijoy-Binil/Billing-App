@@ -6,12 +6,14 @@ from apps.products.models import Product
 
 
 class BillingItemSerializer(serializers.ModelSerializer):
+    # Ensure we always receive a valid Product PK on write
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     product_name = serializers.CharField(source="product.name", read_only=True)
 
     class Meta:
         model = BillItem
         fields = ["id", "product", "product_name", "quantity", "price"]
-        depth=1
+        depth = 1
 
 class BillingSerializer(serializers.ModelSerializer):
     items = BillingItemSerializer(many=True)
@@ -42,21 +44,21 @@ class BillingSerializer(serializers.ModelSerializer):
 
         # Process all bill items
         for item_data in items_data:
-            product_id = item_data.get("product")
+            # With PrimaryKeyRelatedField above, DRF will pass Product instance here
+            product_value = item_data.get("product")
             quantity = item_data.get("quantity", 0)
             price = item_data.get("price", 0)
 
-            # Fetch actual product object safely
-            product = (
-                product_id
-                if isinstance(product_id, Product)
-                else Product.objects.filter(id=product_id).first()
-            )
+            # Resolve product instance robustly
+            if isinstance(product_value, Product):
+                product = product_value
+            elif product_value is not None:
+                product = Product.objects.filter(id=product_value).first()
+            else:
+                product = None
 
-            if not product:
-                raise serializers.ValidationError(
-                    {"product": f"Product with id {product_id} not found."}
-                )
+            if product is None:
+                raise serializers.ValidationError({"product": "Product is required for each item and must be valid."})
 
             # ✅ Create the BillItem
             BillItem.objects.create(
@@ -69,11 +71,11 @@ class BillingSerializer(serializers.ModelSerializer):
             # ✅ Update stock or quantity safely
             if hasattr(product, "stock"):
                 current_stock = int(product.stock or 0)
-                product.stock = max(0, current_stock - quantity)
+                product.stock = max(0, current_stock - int(quantity))
+                product.save(update_fields=["stock"])
             elif hasattr(product, "quantity"):
                 current_qty = int(product.quantity or 0)
-                product.quantity = max(0, current_qty - quantity)
-
-            product.save(update_fields=["stock" if hasattr(product, "stock") else "quantity"])
+                product.quantity = max(0, current_qty - int(quantity))
+                product.save(update_fields=["quantity"])
 
         return bill
