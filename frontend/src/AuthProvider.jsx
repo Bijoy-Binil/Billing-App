@@ -1,8 +1,8 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
   const API_URL = "http://127.0.0.1:8000/api/";
@@ -11,28 +11,23 @@ const AuthProvider = ({ children }) => {
   const [accessToken, setAccessToken] = useState(localStorage.getItem("access"));
   const [refreshToken, setRefreshToken] = useState(localStorage.getItem("refresh"));
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("isLoggedIn"));
-  const userId = localStorage.getItem("userId");
   const userName = localStorage.getItem("username");
+  const userId = localStorage.getItem("userId");
   const userEmail = localStorage.getItem("userEmail");
   const userJoined = localStorage.getItem("userJoined");
-  console.log("userAuthId==>",userName)
-
-
 
   // ---------------- Logout ----------------
   const handleLogout = () => {
     localStorage.clear();
     setIsLoggedIn(false);
-    navigate("/"); // redirect to login/home
+    navigate("/login");
   };
 
   // ---------------- Refresh Token ----------------
   const refreshAccessToken = async () => {
     if (!refreshToken) return null;
     try {
-      const res = await axios.post(`${API_URL}token/refresh/`, {
-        refresh: refreshToken,
-      });
+      const res = await axios.post(`${API_URL}token/refresh/`, { refresh: refreshToken });
       const newAccess = res.data.access;
       setAccessToken(newAccess);
       localStorage.setItem("access", newAccess);
@@ -47,12 +42,11 @@ const AuthProvider = ({ children }) => {
   // ---------------- Secure Request Wrapper ----------------
   const secureRequest = async (axiosCall) => {
     try {
-      return await axiosCall(); // try original request
+      return await axiosCall();
     } catch (error) {
       if (error.response?.status === 401) {
         const newToken = await refreshAccessToken();
         if (newToken) {
-          // retry original request with new token
           return await axiosCall(newToken);
         }
       }
@@ -65,14 +59,14 @@ const AuthProvider = ({ children }) => {
       value={{
         isLoggedIn,
         userName,
+        userEmail,
+        userId,
+        userJoined,
         handleLogout,
-        setIsLoggedIn,
         refreshAccessToken,
         secureRequest,
+        setIsLoggedIn,
         accessToken,
-        userId,
-        userEmail,
-        userJoined
       }}
     >
       {children}
@@ -81,4 +75,3 @@ const AuthProvider = ({ children }) => {
 };
 
 export default AuthProvider;
-export { AuthContext };
