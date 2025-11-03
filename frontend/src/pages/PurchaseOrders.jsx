@@ -332,17 +332,17 @@ const handleSubmit = async (e) => {
 
       {/* Add Purchase Modal */}
       {open && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-700 shadow-xl relative">
-            <h3 className="text-xl font-semibold text-emerald-400 mb-4">Create Purchase Order</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-3 sm:p-4">
+          <div className="bg-gray-800 p-4 sm:p-6 rounded-xl w-full max-w-sm sm:max-w-md border border-gray-700 shadow-xl relative max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg sm:text-xl font-semibold text-emerald-400 mb-3 sm:mb-4">Create Purchase Order</h3>
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {/* Supplier */}
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Supplier</label>
+                <label className="block text-xs sm:text-sm text-gray-300 mb-1">Supplier</label>
                 <select
                   value={formData.supplier}
                   onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 text-sm"
                   required
                 >
                   <option value="">Select Supplier</option>
@@ -356,13 +356,13 @@ const handleSubmit = async (e) => {
 
               {/* Products */}
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Products</label>
+                <label className="block text-xs sm:text-sm text-gray-300 mb-1">Products</label>
                 {formData.products.map((p, index) => (
-                  <div key={index} className="grid grid-cols-4 gap-2 mb-2 items-end">
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2 items-end">
                     <select
                       value={p.product}
                       onChange={(e) => handleProductChange(index, "product", e.target.value)}
-                      className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1"
+                      className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1 text-sm"
                       required
                     >
                       <option value="">Select Product</option>
@@ -372,34 +372,38 @@ const handleSubmit = async (e) => {
                         </option>
                       ))}
                     </select>
- <label className="block text-sm text-gray-300 mb-1">Quantity</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={p.quantity}
-                      onChange={(e) => handleProductChange(index, "quantity", e.target.value)}
-                      className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1"
-                      placeholder="Qty"
-                      required
-                    />
- <label className="block text-sm text-gray-300 mb-1">Cost</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={p.cost_price}
-                      onChange={(e) => handleProductChange(index, "cost_price", e.target.value)}
-                      className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1"
-                      placeholder="Cost ₹"
-                      required
-                    />
+                    <div>
+                      <label className="block text-xs text-gray-300 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={p.quantity}
+                        onChange={(e) => handleProductChange(index, "quantity", e.target.value)}
+                        className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1 text-sm w-full"
+                        placeholder="Qty"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-300 mb-1">Cost</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={p.cost_price}
+                        onChange={(e) => handleProductChange(index, "cost_price", e.target.value)}
+                        className="bg-gray-900 text-gray-200 border border-gray-700 rounded-lg px-2 py-1 text-sm w-full"
+                        placeholder="Cost ₹"
+                        required
+                      />
+                    </div>
 
                     <div className="flex gap-1">
                       {index === formData.products.length - 1 && (
                         <button
                           type="button"
                           onClick={addProductRow}
-                          className="bg-emerald-600 px-2 py-1 rounded"
+                          className="bg-emerald-600 px-2 py-1 rounded text-sm"
                         >
                           +
                         </button>
@@ -408,7 +412,7 @@ const handleSubmit = async (e) => {
                         <button
                           type="button"
                           onClick={() => removeProductRow(index)}
-                          className="bg-red-600 px-2 py-1 rounded"
+                          className="bg-red-600 px-2 py-1 rounded text-sm"
                         >
                           -
                         </button>
@@ -419,17 +423,17 @@ const handleSubmit = async (e) => {
               </div>
 
               {/* Buttons */}
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600"
+                  className="px-3 sm:px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                  className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm"
                 >
                   {loading ? "Saving..." : "Create"}
                 </button>
