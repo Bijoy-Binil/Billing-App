@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { PlusCircle, Edit2, Trash2, Users, Search, Eye } from "lucide-react";
+import { PlusCircle, Edit2, Trash2, Users, Search, Eye, X } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -129,22 +129,27 @@ const Customers = () => {
   );
 
   return (
-    <div className="min-h-screen  text-gray-100 p-3 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-3 sm:p-4 lg:p-6">
       <ToastContainer position="top-right" theme="dark" />
 
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 lg:mb-8 gap-3 sm:gap-4"
       >
-        <div className="mb-4 sm:mb-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2">
-            <Users className="h-5 w-5 sm:h-6 sm:w-6" /> Customer Management
-          </h1>
-          <p className="text-gray-400 mt-1 text-sm sm:text-base">
-            Manage customer profiles, loyalty, and analytics
-          </p>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-2 bg-emerald-500/20 rounded-lg">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-400" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-400">
+              Customer Management
+            </h1>
+            <p className="text-gray-400 mt-1 text-sm sm:text-base">
+              Manage customer profiles, loyalty, and analytics
+            </p>
+          </div>
         </div>
 
         {userRole === "manager" && (
@@ -152,9 +157,10 @@ const Customers = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={openAddModal}
-            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-900/20 text-sm sm:text-base"
+            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-emerald-900/20 text-sm sm:text-base font-medium"
           >
-            <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" /> Add Customer
+            <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+            Add Customer
           </motion.button>
         )}
       </motion.div>
@@ -162,87 +168,110 @@ const Customers = () => {
       {/* Search */}
       <div className="relative mb-4 sm:mb-6">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-5 text-gray-400" />
+          <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
         </div>
         <input
           type="text"
-          placeholder="Search customers..."
+          placeholder="Search customers by name or contact..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 sm:pl-10 pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-200 placeholder-gray-400 text-sm sm:text-base"
+          className="w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-200 placeholder-gray-400 text-sm sm:text-base transition-all duration-200"
         />
       </div>
 
-      {/* Table */}
-      <div className="bg-gray-800/60 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-700">
+      {/* Customers Table/Cards */}
+      <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-lg overflow-hidden">
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-700/50">
             <thead className="bg-gray-900/50">
               <tr>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Email
                 </th>
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                  Address
+                </th>
                 {userRole === "manager" && (
-                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase">
+                  <th className="px-4 lg:px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">
                     Actions
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700">
+            <tbody className="divide-y divide-gray-700/50">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-400 text-sm">
-                    Loading customers...
+                  <td colSpan={userRole === "manager" ? 5 : 4} className="text-center py-8">
+                    <div className="flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+                    </div>
+                    <p className="text-gray-400 mt-2 text-sm">Loading customers...</p>
                   </td>
                 </tr>
               ) : filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-400 text-sm">
-                    No customers found
+                  <td colSpan={userRole === "manager" ? 5 : 4} className="text-center py-8">
+                    <Users className="mx-auto h-12 w-12 text-gray-500 mb-3" />
+                    <p className="text-gray-400 text-base">No customers found</p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      {searchTerm ? "Try adjusting your search terms" : "Add your first customer to get started"}
+                    </p>
                   </td>
                 </tr>
               ) : (
                 filteredCustomers.map((c) => (
                   <tr
                     key={c.id}
-                    className="hover:bg-gray-700/30 transition-colors"
+                    className="hover:bg-gray-700/30 transition-colors duration-200"
                   >
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium text-white">
+                    <td className="px-4 lg:px-6 py-4 text-sm font-medium text-white">
                       {c.name}
                     </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-300">
+                    <td className="px-4 lg:px-6 py-4 text-sm text-gray-300">
                       {c.contact_number}
                     </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-300">
+                    <td className="px-4 lg:px-6 py-4 text-sm text-gray-300">
                       {c.email || "—"}
                     </td>
+                    <td className="px-4 lg:px-6 py-4 text-sm text-gray-300">
+                      {c.address ? (
+                        <span className="max-w-xs truncate block">{c.address}</span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     {userRole === "manager" && (
-                      <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
-                        <button
-                          onClick={() => handleView(c)}
-                          className="text-cyan-400 hover:text-cyan-300 mr-2 sm:mr-3"
-                        >
-                          <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                        <button
-                          onClick={() => openEditModal(c)}
-                          className="text-emerald-400 hover:text-emerald-300 mr-2 sm:mr-3"
-                        >
-                          <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(c.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
+                      <td className="px-4 lg:px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleView(c)}
+                            className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-all duration-200"
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditModal(c)}
+                            className="p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-all duration-200"
+                            title="Edit Customer"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(c.id)}
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                            title="Delete Customer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -250,6 +279,68 @@ const Customers = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-3 p-3 sm:p-4">
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto"></div>
+              <p className="text-gray-400 mt-2 text-sm">Loading customers...</p>
+            </div>
+          ) : filteredCustomers.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="mx-auto h-12 w-12 text-gray-500 mb-3" />
+              <p className="text-gray-400 text-base">No customers found</p>
+              <p className="text-gray-500 text-sm mt-1">
+                {searchTerm ? "Try adjusting your search terms" : "Add your first customer to get started"}
+              </p>
+            </div>
+          ) : (
+            filteredCustomers.map((c) => (
+              <div
+                key={c.id}
+                className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white text-base mb-1">{c.name}</h3>
+                    <p className="text-gray-300 text-sm">📞 {c.contact_number}</p>
+                    {c.email && (
+                      <p className="text-gray-400 text-sm mt-1">📧 {c.email}</p>
+                    )}
+                  </div>
+                  {userRole === "manager" && (
+                    <div className="flex gap-1 ml-2">
+                      <button
+                        onClick={() => handleView(c)}
+                        className="p-1.5 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-all duration-200"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => openEditModal(c)}
+                        className="p-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-all duration-200"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {c.address && (
+                  <p className="text-gray-400 text-sm mt-2">
+                    📍 {c.address}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -261,14 +352,22 @@ const Customers = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-lg sm:text-xl font-bold text-emerald-400 mb-4">
-              {editingCustomer ? "Edit Customer" : "Add New Customer"}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-bold text-emerald-400">
+                {editingCustomer ? "Edit Customer" : "Add New Customer"}
+              </h2>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {Object.keys(formData).map((key) => (
                 <div key={key}>
-                  <label className="block text-sm text-gray-300 mb-1 capitalize">
+                  <label className="block text-sm text-gray-300 mb-2 capitalize font-medium">
                     {key.replace("_", " ")}
                   </label>
                   <input
@@ -278,23 +377,24 @@ const Customers = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, [key]: e.target.value })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 text-sm"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all duration-200"
+                    placeholder={`Enter ${key.replace("_", " ")}`}
                   />
                 </div>
               ))}
-              <div className="flex justify-end mt-4 gap-2">
+              <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-3 sm:px-4 py-2 bg-gray-700 text-gray-300 rounded-lg text-sm"
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm font-medium transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-all duration-200"
                 >
-                  {editingCustomer ? "Update" : "Create"}
+                  {editingCustomer ? "Update Customer" : "Create Customer"}
                 </button>
               </div>
             </form>
@@ -305,56 +405,92 @@ const Customers = () => {
       {/* Details Drawer */}
       {detailsOpen && selectedCustomer && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm">
+          <div 
+            className="fixed inset-0"
+            onClick={() => setDetailsOpen(false)}
+          />
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 70 }}
-            className="bg-gray-800 border-l border-gray-700 w-full max-w-xs sm:max-w-md h-full p-4 sm:p-6 overflow-y-auto"
+            className="bg-gray-800 border-l border-gray-700 w-full max-w-xs sm:max-w-md lg:max-w-lg h-full p-4 sm:p-6 overflow-y-auto relative z-10"
           >
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-emerald-400">
                 Customer Details
               </h2>
               <button
                 onClick={() => setDetailsOpen(false)}
-                className="text-gray-400 hover:text-gray-200"
+                className="text-gray-400 hover:text-white transition-colors p-1"
               >
-                ✕
+                <X className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             </div>
 
-            <div className="bg-gray-700/40 p-3 sm:p-4 rounded-lg mb-4">
-              <h3 className="text-base sm:text-lg text-white font-semibold">
+            {/* Customer Info */}
+            <div className="bg-gray-700/40 p-4 rounded-lg mb-4">
+              <h3 className="text-base sm:text-lg text-white font-semibold mb-2">
                 {selectedCustomer.name}
               </h3>
-              <p className="text-gray-400 text-sm sm:text-base">{selectedCustomer.email}</p>
-              <p className="text-gray-400 text-sm sm:text-base">
-                📞 {selectedCustomer.contact_number}
-              </p>
-              <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">
-                {selectedCustomer.address || "No address"}
-              </p>
+              <div className="space-y-2 text-sm sm:text-base">
+                <p className="text-gray-300 flex items-center gap-2">
+                  <span>📧</span>
+                  {selectedCustomer.email || "No email"}
+                </p>
+                <p className="text-gray-300 flex items-center gap-2">
+                  <span>📞</span>
+                  {selectedCustomer.contact_number}
+                </p>
+                {selectedCustomer.address && (
+                  <p className="text-gray-300 flex items-center gap-2">
+                    <span>📍</span>
+                    {selectedCustomer.address}
+                  </p>
+                )}
+                {selectedCustomer.date_of_birth && (
+                  <p className="text-gray-300 flex items-center gap-2">
+                    <span>🎂</span>
+                    {new Date(selectedCustomer.date_of_birth).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="bg-gray-700/40 p-3 sm:p-4 rounded-lg mb-4">
-              <p className="text-gray-400 text-sm">Tier</p>
-              <p className="text-base sm:text-lg text-emerald-400 font-semibold">
-                {customerLoyalty?.tier || "Bronze"}
-              </p>
-              <p className="text-gray-400 text-sm mt-1">
-                Points: {customerLoyalty?.available_points || 0}
-              </p>
+            {/* Loyalty Info */}
+            <div className="bg-gray-700/40 p-4 rounded-lg mb-4">
+              <h4 className="text-gray-400 text-sm font-medium mb-2">Loyalty Status</h4>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg sm:text-xl text-emerald-400 font-semibold">
+                    {customerLoyalty?.tier || "Bronze"}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    {customerLoyalty?.available_points || 0} points
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-400">Tier Level</p>
+                  <div className="w-3 h-3 bg-emerald-400 rounded-full mt-1"></div>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-gray-700/40 p-3 sm:p-4 rounded-lg">
-              <p className="text-gray-400 text-sm">Total Spent</p>
-              <p className="text-xl sm:text-2xl font-bold text-white">
-                ₹{purchaseHistory?.total_spent || 0}
-              </p>
-              <p className="text-gray-400 text-sm">
-                Total Bills: {purchaseHistory?.total_bills || 0}
-              </p>
+            {/* Purchase History */}
+            <div className="bg-gray-700/40 p-4 rounded-lg">
+              <h4 className="text-gray-400 text-sm font-medium mb-2">Purchase Summary</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-gray-400 text-sm">Total Spent</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">
+                    ₹{purchaseHistory?.total_spent || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm">Total Bills</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">
+                    {purchaseHistory?.total_bills || 0}
+                  </p>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>

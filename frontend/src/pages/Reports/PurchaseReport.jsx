@@ -154,11 +154,11 @@ const PurchaseReport = () => {
   }, [purchases]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <motion.h1
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-3xl font-semibold mb-6 bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent"
+        className="text-2xl sm:text-3xl font-semibold mb-4 sm:mb-6 bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent text-center sm:text-left"
       >
         Purchase Report
       </motion.h1>
@@ -168,34 +168,34 @@ const PurchaseReport = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mb-6 bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 shadow-lg"
+        className="mb-6 bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
       >
-        <h2 className="text-xl font-semibold mb-4 text-emerald-400">Filters</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-emerald-400">Filters</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">From Date</label>
+            <label className="block text-xs sm:text-sm text-gray-400 mb-1">From Date</label>
             <input
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm sm:text-base text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">To Date</label>
+            <label className="block text-xs sm:text-sm text-gray-400 mb-1">To Date</label>
             <input
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm sm:text-base text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Supplier</label>
+            <label className="block text-xs sm:text-sm text-gray-400 mb-1">Supplier</label>
             <select
               value={selectedSupplier}
               onChange={(e) => setSelectedSupplier(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm sm:text-base text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">All Suppliers</option>
               {suppliers.map((supplier) => (
@@ -206,11 +206,11 @@ const PurchaseReport = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Product</label>
+            <label className="block text-xs sm:text-sm text-gray-400 mb-1">Product</label>
             <select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm sm:text-base text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">All Products</option>
               {products.map((product) => (
@@ -221,10 +221,10 @@ const PurchaseReport = () => {
             </select>
           </div>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-center sm:justify-end">
           <button
             onClick={handleFilter}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
           >
             <Filter className="w-4 h-4" />
             Apply Filters
@@ -237,36 +237,36 @@ const PurchaseReport = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6"
       >
         <SummaryCard
           title="Total Purchase Value"
           value={`₹${summary.total_purchases.toFixed(2)}`}
-          icon={<DollarSign className="w-6 h-6 text-emerald-400" />}
+          icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />}
         />
         <SummaryCard
           title="Total Quantity"
           value={summary.total_quantity}
-          icon={<Package className="w-6 h-6 text-emerald-400" />}
+          icon={<Package className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />}
         />
         <SummaryCard
           title="Purchase Orders"
           value={summary.purchase_count}
-          icon={<Truck className="w-6 h-6 text-emerald-400" />}
+          icon={<Truck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />}
         />
       </motion.div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6">
         {/* Supplier Distribution Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 shadow-lg"
+          className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
         >
-          <h2 className="text-xl font-semibold mb-4 text-emerald-400">Purchase by Supplier</h2>
-          <div className="h-80">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-emerald-400">Purchase by Supplier</h2>
+          <div className="h-64 sm:h-80">
             {loading ? (
               <LoadingShimmer />
             ) : supplierChartData.length > 0 ? (
@@ -277,7 +277,7 @@ const PurchaseReport = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    outerRadius={80}
+                    outerRadius={60}
                     fill="#8884d8"
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
@@ -290,7 +290,7 @@ const PurchaseReport = () => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm sm:text-base">
                 No data available for the selected filters
               </div>
             )}
@@ -302,24 +302,46 @@ const PurchaseReport = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 shadow-lg"
+          className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
         >
-          <h2 className="text-xl font-semibold mb-4 text-emerald-400">Purchase by Product</h2>
-          <div className="h-80">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-emerald-400">Purchase by Product</h2>
+          <div className="h-64 sm:h-80">
             {loading ? (
               <LoadingShimmer />
             ) : productChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={productChartData}>
+                <BarChart 
+                  data={productChartData}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="product" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
-                  <Tooltip contentStyle={{ backgroundColor: "#1F2937", borderColor: "#10B981" }} />
-                  <Bar dataKey="quantity" name="Quantity" fill="#10B981" barSize={35} radius={[6, 6, 0, 0]} />
+                  <XAxis 
+                    dataKey="product" 
+                    stroke="#9CA3AF" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    fontSize={12}
+                  />
+                  <YAxis stroke="#9CA3AF" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "#1F2937", 
+                      borderColor: "#10B981",
+                      fontSize: '12px'
+                    }} 
+                  />
+                  <Bar 
+                    dataKey="quantity" 
+                    name="Quantity" 
+                    fill="#10B981" 
+                    barSize={25} 
+                    radius={[4, 4, 0, 0]} 
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm sm:text-base">
                 No data available for the selected filters
               </div>
             )}
@@ -332,56 +354,56 @@ const PurchaseReport = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 shadow-lg"
+        className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
       >
-        <h2 className="text-xl font-semibold mb-4 text-emerald-400">Purchase Orders</h2>
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-emerald-400">Purchase Orders</h2>
         
         {loading ? (
           <LoadingShimmer />
         ) : purchases.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-gray-300">
+            <table className="w-full text-gray-300 min-w-[600px]">
               <thead>
                 <tr className="border-b border-gray-700">
-                  <th className="py-3 px-4 text-left">Purchase ID</th>
-                  <th className="py-3 px-4 text-left">Date</th>
-                  <th className="py-3 px-4 text-left">Supplier</th>
-                  <th className="py-3 px-4 text-left">Product</th>
-                  <th className="py-3 px-4 text-right">Quantity</th>
-                  <th className="py-3 px-4 text-right">Cost Price</th>
-                  <th className="py-3 px-4 text-right">Total</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Purchase ID</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Date</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Supplier</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Product</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-right text-xs sm:text-sm">Quantity</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-right text-xs sm:text-sm">Cost Price</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-right text-xs sm:text-sm">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {purchases.map((purchase) => (
                   <tr 
                     key={purchase.purchase_id}
-                    className="border-b border-gray-700 hover:bg-gray-700/30"
+                    className="border-b border-gray-700 hover:bg-gray-700/30 text-xs sm:text-sm"
                   >
-                    <td className="py-3 px-4">{purchase.purchase_id}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4">{purchase.purchase_id}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4">
                       {new Date(purchase.created_at).toLocaleDateString()}
                     </td>
-                    <td className="py-3 px-4">{purchase.supplier}</td>
-                    <td className="py-3 px-4">{purchase.product}</td>
-                    <td className="py-3 px-4 text-right">{purchase.quantity}</td>
-                    <td className="py-3 px-4 text-right">₹{parseFloat(purchase.cost_price).toFixed(2)}</td>
-                    <td className="py-3 px-4 text-right">₹{parseFloat(purchase.total).toFixed(2)}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 truncate max-w-[100px] sm:max-w-none">{purchase.supplier}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 truncate max-w-[100px] sm:max-w-none">{purchase.product}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">{purchase.quantity}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">₹{parseFloat(purchase.cost_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">₹{parseFloat(purchase.total).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t border-gray-700 font-semibold">
-                  <td colSpan="4" className="py-3 px-4 text-right">Total:</td>
-                  <td className="py-3 px-4 text-right">{summary.total_quantity}</td>
-                  <td className="py-3 px-4"></td>
-                  <td className="py-3 px-4 text-right">₹{summary.total_purchases.toFixed(2)}</td>
+                <tr className="border-t border-gray-700 font-semibold text-xs sm:text-sm">
+                  <td colSpan="4" className="py-2 px-2 sm:py-3 sm:px-4 text-right">Total:</td>
+                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">{summary.total_quantity}</td>
+                  <td className="py-2 px-2 sm:py-3 sm:px-4"></td>
+                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">₹{summary.total_purchases.toFixed(2)}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-6 sm:py-8 text-gray-400 text-sm sm:text-base">
             No purchase data available for the selected filters
           </div>
         )}
@@ -393,16 +415,16 @@ const PurchaseReport = () => {
 const SummaryCard = ({ title, value, icon }) => (
   <motion.div
     whileHover={{ scale: 1.03, boxShadow: "0 0 15px rgba(16,185,129,0.3)" }}
-    className="p-6 rounded-2xl bg-gray-800/60 border border-gray-700 backdrop-blur-xl shadow-inner"
+    className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-gray-800/60 border border-gray-700 backdrop-blur-xl shadow-inner"
   >
     <div className="flex justify-between items-center">
       <div>
-        <div className="text-sm text-gray-400 tracking-wide">{title}</div>
-        <div className="mt-2 text-3xl font-semibold text-emerald-400 drop-shadow-[0_0_6px_#10b981]">
+        <div className="text-xs sm:text-sm text-gray-400 tracking-wide">{title}</div>
+        <div className="mt-1 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-semibold text-emerald-400 drop-shadow-[0_0_6px_#10b981]">
           {value}
         </div>
       </div>
-      <div className="bg-gray-700/50 p-3 rounded-full">
+      <div className="bg-gray-700/50 p-2 sm:p-3 rounded-full">
         {icon}
       </div>
     </div>

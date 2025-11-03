@@ -8,7 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Billing from "./pages/Billing";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
-import Stock from "./pages/Stock";
+import Stock from "./pages/Reports/Stock";
 import ProfitReport from "./pages/Reports/ProfitReport";
 import SalesReport from "./pages/Reports/SalesReport";
 import StockReport from "./pages/Reports/StockReport";
