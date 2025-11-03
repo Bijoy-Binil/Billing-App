@@ -15,24 +15,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
-/**
- * Billing.jsx
- *
- * - Shows product list (click to add to cart)
- * - Cart -> PayPal payment -> generate bill (cashier flow)
- * - Bill history: if paid === "paid" show Invoice download; if not, show PayPal button to pay that bill
- *
- * Notes:
- * - Expects env vars:
- *   VITE_API_BASE_URL (e.g. http://127.0.0.1:8000)
- *   VITE_PAYPAL_CLIENT_ID (for PayPalScriptProvider)
- *   VITE_PAYPAL_CURRENCY (optional; defaults to "USD")
- *
- * - Make sure you wrap your app or index with <PayPalScriptProvider> OR this component will provide one.
- */
-
 const Billing = () => {
-  const API_BASE =  "http://127.0.0.1:8000";
+  const API_BASE = "http://127.0.0.1:8000";
   const API_BILLS = `${API_BASE}/api/billings/`;
   const API_PAYMENTS = `${API_BASE}/api/payments/`;
   const API_PRODUCTS = `${API_BASE}/api/products/`;
@@ -40,7 +24,7 @@ const Billing = () => {
   const API_CUSTOMERS = `${API_BASE}/api/customers/`;
 
   const token = localStorage.getItem("accessToken");
-  const role = localStorage.getItem("role"); // "manager" or "cashier"
+  const role = localStorage.getItem("role");
   const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
   const paypalCurrency = import.meta.env.VITE_PAYPAL_CURRENCY || "USD";
 
@@ -52,18 +36,17 @@ const Billing = () => {
   const [bills, setBills] = useState([]);
   const [recentBills, setRecentBills] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showPayPal, setShowPayPal] = useState(false); // cart payment
+  const [showPayPal, setShowPayPal] = useState(false);
   const [progress, setProgress] = useState(0);
   const [downloadingId, setDownloadingId] = useState(null);
-  const [isPaid, setIsPaid] = useState(false); // cart-level payment success
+  const [isPaid, setIsPaid] = useState(false);
   const [paypalOrderId, setPaypalOrderId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
 
-  // axios default headers convenience
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // Fetch products (cashier) and bills
+  // Fetch functions
   const fetchProducts = async () => {
     try {
       const res = await axios.get(API_PRODUCTS, { headers: authHeaders });
@@ -72,14 +55,6 @@ const Billing = () => {
       console.error("Error fetching products:", err);
       toast.error("Error loading products ❌");
     }
-  };
-
-  // Reset payment state function for error recovery
-  const resetPaymentState = () => {
-    setIsPaid(false);
-    setPaypalOrderId(null);
-    setShowPayPal(false);
-    toast.info("Payment state reset");
   };
 
   const fetchBills = async () => {
@@ -107,7 +82,6 @@ const Billing = () => {
     fetchBills();
     fetchRecentBills();
     if (role === "cashier") fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, role]);
 
   // Product search
@@ -124,7 +98,7 @@ const Billing = () => {
     }
   };
 
-  // Add/remove cart
+  // Cart functions
   const addToCart = (product) => {
     const exists = cart.find((c) => c.id === product.id);
     if (exists) {
@@ -140,6 +114,7 @@ const Billing = () => {
     toast.info(`${removed?.name || "Item"} removed from cart`);
   };
 
+  // Calculations
   const roundToCents = (v) => Math.round(Number(v) * 100) / 100;
   const subtotal = useMemo(
     () => roundToCents(cart.reduce((s, i) => s + roundToCents(Number(i.price) * Number(i.qty)), 0)),
@@ -149,18 +124,7 @@ const Billing = () => {
   const discount = useMemo(() => roundToCents(subtotal * 0.1), [subtotal]);
   const total = useMemo(() => roundToCents(subtotal + tax - discount), [subtotal, tax, discount]);
 
-  // Speak total (Indian English)
-  const speakTotal = (amount) => {
-    if ("speechSynthesis" in window) {
-      const utt = new SpeechSynthesisUtterance(`Your total is rupees ${amount}`);
-      utt.lang = "en-IN";
-      utt.rate = 0.95;
-      utt.pitch = 1;
-      speechSynthesis.speak(utt);
-    }
-  };
-
-  // Customer search by contact
+  // Customer search
   const handleSearchCustomer = async () => {
     if (!customer.contact_number?.trim()) return;
     setLoadingCustomer(true);
@@ -196,7 +160,6 @@ const Billing = () => {
     setProgress(0);
     try {
       toast.info("Generating invoice...");
-      // simulate generation progress
       await new Promise((resolve) => {
         let sim = 0;
         const t = setInterval(() => {
@@ -242,7 +205,7 @@ const Billing = () => {
     }
   };
 
-  // Create bill (cashier) — now creates bill with pending status, payment comes later
+  // Create bill
   const handleGenerateBill = async () => {
     if (role !== "cashier") {
       return toast.error("Only cashiers can generate bills.");
@@ -271,59 +234,41 @@ const Billing = () => {
         })),
       };
 
-      // create bill with pending status
       const billRes = await axios.post(API_BILLS, payload, { headers: authHeaders });
       const billId = billRes.data.id;
 
-      // Bill created successfully with pending status
       toast.success("Bill created successfully with Pending Payment status ✅");
       
-      // Reset cart and customer data
       setCart([]);
       setCustomer({ name: "", contact_number: "" });
       setFoundCustomer(null);
-      
-      // Reset payment state for next transaction
       setIsPaid(false);
       setPaypalOrderId(null);
       setShowPayPal(false);
       
-      // Refresh bills to show the new pending bill
       fetchBills();
       fetchRecentBills();
-
-      // Reset cart and payment state
-      setCart([]);
-      setCustomer({ name: "", contact_number: "" });
-      setFoundCustomer(null);
-      setIsPaid(false);
-      setPaypalOrderId(null);
-      fetchBills();
     } catch (err) {
       console.error("Bill creation error:", err);
       toast.error("Failed to generate bill ❌");
-      // Reset payment state on failure
       setIsPaid(false);
       setPaypalOrderId(null);
     }
   };
 
-  // Open payment modal for pending bill
+  // Payment modal functions
   const openPaymentModal = (bill) => {
     setSelectedBillForPayment(bill);
     setShowPaymentModal(true);
   };
 
-  // Close payment modal
   const closePaymentModal = () => {
     setShowPaymentModal(false);
     setSelectedBillForPayment(null);
   };
 
-  // Process payment for existing bill
   const processBillPayment = async (bill, transactionId, paymentMethod = 'paypal') => {
     try {
-      // Mark bill as paid with transaction details
       await axios.patch(
         `${API_BILLS}${bill.id}/mark_paid/`, 
         { 
@@ -343,101 +288,7 @@ const Billing = () => {
     }
   };
 
-  // Pay existing bill (bill-level PayPal button handler)
-  const handlePayExistingBill = (bill) => {
-    // returns PayPalButtons element configured for bill
-    return (
-      <PayPalButtons
-        style={{
-          layout: "horizontal",
-          color: "gold",
-          shape: "rect",
-          label: "paypal",
-          height: 36,
-        }}
-        createOrder={(data, actions) =>
-          actions.order.create({
-            purchase_units: [
-              {
-                description: `Bill #${bill.id}`,
-                amount: { currency_code: paypalCurrency, value: String(Number(bill.total).toFixed(2) || "0.01") },
-              },
-            ],
-          })
-        }
-        onApprove={async (data, actions) => {
-          try {
-            const order = await actions.order.capture();
-            
-            // Validate payment amount matches bill total
-            const paymentAmount = parseFloat(order.purchase_units[0].amount.value);
-            const billTotal = parseFloat(bill.total);
-            
-            if (Math.abs(paymentAmount - billTotal) > 0.01) {
-              toast.error(`Payment amount mismatch: ₹${paymentAmount} vs ₹${billTotal}`);
-              return;
-            }
-            
-            // Check if payment already exists for this bill
-            try {
-              const existingPaymentCheck = await axios.get(
-                `${API_PAYMENTS}?bill=${bill.id}`,
-                { headers: authHeaders }
-              );
-              
-              if (existingPaymentCheck.data && existingPaymentCheck.data.length > 0) {
-                toast.warn("Payment already exists for this bill");
-                // Mark bill as paid if not already marked
-                if (bill.payment_status !== "paid") {
-                  await axios.patch(`${API_BILLS}${bill.id}/mark_paid/`, {}, { headers: authHeaders });
-                }
-                toast.success(`Bill #${bill.id} marked as paid ✅`);
-                fetchBills();
-                return;
-              }
-            } catch (checkErr) {
-              // If check fails, continue with payment creation
-              console.warn("Payment check failed, proceeding with creation:", checkErr);
-            }
-            
-            // Process payment using the new function
-            await processBillPayment(bill, order.id, 'paypal');
-          } catch (err) {
-            console.error("Pay existing bill error:", err);
-            const errorMessage = err.response?.data?.detail || "Failed to complete payment";
-            toast.error(`❌ ${errorMessage}`);
-            
-            // Check if error is due to duplicate payment
-            if (errorMessage.toLowerCase().includes("payment with this bill already exists")) {
-              toast.info("Bill payment already exists, marking as paid...");
-              try {
-                await axios.patch(`${API_BILLS}${bill.id}/mark_paid/`, {}, { headers: authHeaders });
-                toast.success(`Bill #${bill.id} marked as paid ✅`);
-                fetchBills();
-              } catch (markErr) {
-                console.error("Failed to mark bill as paid:", markErr);
-              }
-            }
-          }
-        }}
-        onCancel={() => {
-          toast.info("Payment cancelled");
-          // Reset payment state on cancellation
-          setIsPaid(false);
-          setPaypalOrderId(null);
-        }}
-        onError={(err) => {
-          console.error("PayPal error:", err);
-          toast.error("PayPal error occurred");
-          // Reset payment state on error
-          setIsPaid(false);
-          setPaypalOrderId(null);
-        }}
-      />
-    );
-  };
-
-  // Cart-level PayPal Buttons for paying cart before bill generation
+  // PayPal Components
   const CartPaypalButtons = () => {
     return (
       <PayPalButtons
@@ -463,8 +314,6 @@ const Billing = () => {
         onApprove={async (data, actions) => {
           try {
             const order = await actions.order.capture();
-            
-            // Validate payment amount matches cart total
             const paymentAmount = parseFloat(order.purchase_units[0].amount.value);
             const cartTotal = parseFloat(total);
             
@@ -473,7 +322,6 @@ const Billing = () => {
               return;
             }
             
-            // record payment without bill (we will link the bill after bill creation)
             const paymentResponse = await axios.post(
               API_PAYMENTS,
               {
@@ -485,7 +333,6 @@ const Billing = () => {
               { headers: authHeaders }
             );
             
-            // Only set payment state if payment was successfully recorded
             if (paymentResponse.data?.id) {
               setPaypalOrderId(order.id);
               setIsPaid(true);
@@ -498,7 +345,6 @@ const Billing = () => {
             console.error("Cart payment save error:", err);
             const errorMessage = err.response?.data?.detail || "Failed to record payment";
             toast.error(`❌ ${errorMessage}`);
-            // Reset payment state on failure
             setIsPaid(false);
             setPaypalOrderId(null);
             setShowPayPal(false);
@@ -507,14 +353,12 @@ const Billing = () => {
         onCancel={() => {
           setShowPayPal(false);
           toast.info("Payment cancelled");
-          // Reset payment state on cancellation
           setIsPaid(false);
           setPaypalOrderId(null);
         }}
         onError={(err) => {
           console.error("PayPal error:", err);
           toast.error("PayPal error occurred");
-          // Reset payment state on error
           setShowPayPal(false);
           setIsPaid(false);
           setPaypalOrderId(null);
@@ -523,7 +367,6 @@ const Billing = () => {
     );
   };
 
-  // Payment Modal Component
   const PaymentModal = () => {
     if (!showPaymentModal || !selectedBillForPayment) return null;
 
@@ -603,261 +446,353 @@ const Billing = () => {
     );
   };
 
-  // Render
-  // Provide PayPalScriptProvider if no global wrapper exists (safe to include even if wrapped)
   return (
     <PayPalScriptProvider options={{ "client-id": paypalClientId, currency: paypalCurrency }}>
-      <div className="min-h-screen bg-gradient-to-br text-gray-100 p-3 sm:p-4 md:p-6 relative">
+      <div className="min-h-screen bg-gradient-to-br  text-gray-100 p-4 md:p-6">
         <PaymentModal />
         <ToastContainer position="top-right" autoClose={3000} />
-        <div className="text-2xl sm:text-3xl font-bold text-emerald-400 drop-shadow-lg mb-6">
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xl sm:text-2xl font-bold mb-4 flex items-center gap-2"
-          >
+        
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl font-bold text-emerald-400 flex items-center gap-3 mb-2">
             {role === "cashier" ? (
               <>
-                <ShoppingCart className="text-emerald-500" />
+                <ShoppingCart className="text-emerald-500" size={28} />
                 Billing System
               </>
             ) : (
               <>
-                <FileText className="text-emerald-500" />
+                <FileText className="text-emerald-500" size={28} />
                 Bill Management Dashboard
               </>
             )}
-          </motion.h1>
+          </h1>
+          <p className="text-gray-400">
+            {role === "cashier" ? "Process customer orders and payments" : "View and manage billing history"}
+          </p>
+        </motion.div>
 
-          {role === "cashier" && (
-            <>
-              {/* Customer Section */}
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6 mb-6"
-              >
-                <h2 className="text-lg sm:text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-                  <User2 size={20} /> Customer Details
-                </h2>
+        {role === "cashier" && (
+          <div className="space-y-8">
+            {/* Customer Section */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                  <User2 className="text-emerald-400" size={20} />
+                </div>
+                <h2 className="text-xl font-semibold text-emerald-400">Customer Details</h2>
+              </div>
 
-                <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start sm:items-center mb-3">
-                  <input
-                    type="text"
-                    placeholder="Contact Number"
-                    value={customer.contact_number}
-                    onChange={(e) => setCustomer({ ...customer, contact_number: e.target.value })}
-                    className="px-3 py-2 rounded-lg bg-gray-900 text-white w-full sm:w-48 border border-gray-700"
-                  />
-                  <button
-                    onClick={handleSearchCustomer}
-                    disabled={loadingCustomer}
-                    className="bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-2 rounded-lg transition-all disabled:opacity-50 text-sm sm:text-base"
-                  >
-                    {loadingCustomer ? "Searching..." : "Search"}
-                  </button>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="Contact Number"
+                      value={customer.contact_number}
+                      onChange={(e) => setCustomer({ ...customer, contact_number: e.target.value })}
+                      className="flex-1 px-4 py-3 rounded-xl bg-gray-700/50 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    />
+                    <button
+                      onClick={handleSearchCustomer}
+                      disabled={loadingCustomer}
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all duration-200 disabled:opacity-50 font-medium"
+                    >
+                      {loadingCustomer ? "Searching..." : "Search"}
+                    </button>
+                  </div>
 
-                  {foundCustomer && <p className="text-emerald-400 text-sm">Found: {foundCustomer.name}</p>}
+                  {!foundCustomer && (
+                    <input
+                      type="text"
+                      placeholder="Customer Name (for new customer)"
+                      value={customer.name}
+                      onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-gray-700/50 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    />
+                  )}
                 </div>
 
-                {!foundCustomer && (
+                {foundCustomer && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+                    <p className="text-emerald-400 font-medium">Customer Found</p>
+                    <p className="text-gray-300">{foundCustomer.name}</p>
+                    <p className="text-gray-400 text-sm">{foundCustomer.contact_number}</p>
+                  </div>
+                )}
+              </div>
+            </motion.section>
+
+            {/* Product Search & Grid */}
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="flex-1 flex gap-3">
                   <input
                     type="text"
-                    placeholder="Customer Name (for new)"
-                    value={customer.name}
-                    onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                    className="px-3 py-2 rounded-lg bg-gray-900 text-white w-full sm:w-64 border border-gray-700"
+                    placeholder="Search products by name or category..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1 px-4 py-3 rounded-xl bg-gray-700/50 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                   />
-                )}
-              </motion.section>
-
-              {/* Product Search */}
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
-                <input
-                  type="text"
-                  placeholder="Search by category or name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 w-full sm:w-64"
-                />
-                <button
-                  onClick={handleSearch}
-                  className="bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm sm:text-base"
-                >
-                  <Search size={18} /> Search
-                </button>
+                  <button
+                    onClick={handleSearch}
+                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all duration-200 flex items-center gap-2 font-medium"
+                  >
+                    <Search size={18} />
+                    Search
+                  </button>
+                </div>
                 <button
                   onClick={() => {
                     setSearchTerm("");
                     fetchProducts();
                   }}
-                  className="bg-gray-700 hover:bg-gray-600 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl transition-all duration-200 font-medium"
                 >
                   Reset
                 </button>
               </div>
 
-              {/* Products grid */}
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 mb-10"
+              {/* Products Grid */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               >
-                {products.length === 0 ? (
-                  <p className="text-gray-400 italic col-span-full">Loading products...</p>
-                ) : (
-                  products.map((p) => (
-                    <motion.div
-                      key={p.id}
-                      whileHover={{ scale: 1.03 }}
-                      className="p-3 sm:p-4 md:p-5 bg-gray-800/70 rounded-xl border border-gray-700 shadow-md hover:shadow-emerald-500/20 cursor-pointer transition-all"
-                      onClick={() => addToCart(p)}
-                    >
-                      <h3 className="text-sm sm:text-base font-medium">{p.name}</h3>
-                      <p className="text-gray-400 text-xs sm:text-sm mt-1">₹{parseFloat(p.price).toFixed(2)}</p>
-                    </motion.div>
-                  ))
-                )}
-              </motion.section>
-
-              {/* Cart */}
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6"
-              >
-                <h2 className="text-lg sm:text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-                  <ShoppingCart size={20} /> Cart ({cart.length})
-                </h2>
-
-                {cart.length === 0 ? (
-                  <p className="text-gray-400 italic">No items in cart</p>
-                ) : (
-                  <>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-gray-300 mb-4 min-w-[500px]">
-                        <thead className="border-b border-gray-700 text-gray-400 text-sm">
-                          <tr>
-                            <th className="py-2 px-2 sm:px-3">Product</th>
-                            <th className="py-2 px-2 sm:px-3">Qty</th>
-                            <th className="py-2 px-2 sm:px-3">Price</th>
-                            <th className="py-2 px-2 sm:px-3">Total</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {cart.map((i) => (
-                            <tr key={i.id} className="border-b border-gray-700/50 hover:bg-gray-700/40">
-                              <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{i.name}</td>
-                              <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{i.qty}</td>
-                              <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">₹{parseFloat(i.price).toFixed(2)}</td>
-                              <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">₹{(i.price * i.qty).toFixed(2)}</td>
-                              <td>
-                                <button onClick={() => removeFromCart(i.id)} className="text-red-400 hover:text-red-600 text-xs sm:text-sm">
-                                  ✕
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="text-right text-gray-300 space-y-1 border-t border-gray-700 pt-4">
-                      <p className="text-sm sm:text-base">Subtotal: ₹{subtotal.toFixed(2)}</p>
-                      <p className="text-sm sm:text-base">Tax (5%): +₹{tax.toFixed(2)}</p>
-                      <p className="text-sm sm:text-base">Discount (10%): -₹{discount.toFixed(2)}</p>
-                      <hr className="my-1 border-gray-700" />
-                      <p className="font-semibold text-lg text-white">Total: ₹{total.toFixed(2)}</p>
-
-                      {/* Generate Bill button - no payment required upfront */}
-                      <div className="flex gap-2 justify-end items-center">
-                        <button
-                          onClick={handleGenerateBill}
-                          className="bg-emerald-600 hover:bg-emerald-500 mt-4 px-4 sm:px-6 py-2 rounded-lg transition-all text-sm sm:text-base"
-                        >
-                          <DollarSign size={14} className="inline-block mr-2" />
-                          Generate Bill
-                        </button>
+                {products.map((product) => (
+                  <motion.div
+                    key={product.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 hover:border-emerald-500/30 cursor-pointer transition-all duration-200 group"
+                    onClick={() => addToCart(product)}
+                  >
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                        {product.name}
+                      </h3>
+                      <p className="text-gray-400 text-sm">{product.category}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold text-emerald-400">
+                          ₹{parseFloat(product.price).toFixed(2)}
+                        </span>
+                        <div className="px-2 py-1 bg-emerald-500/20 rounded-lg">
+                          <span className="text-emerald-400 text-sm font-medium">Add +</span>
+                        </div>
                       </div>
                     </div>
-                  </>
-                )}
-              </motion.section>
-            </>
-          )}
-
-          {/* Bill History */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6"
-          >
-            <h2 className="text-lg sm:text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-              <Calendar size={20} /> Bill History
-            </h2>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-gray-300 min-w-[700px]">
-                <thead className="border-b border-gray-700 text-gray-400 text-sm">
-                  <tr>
-                    <th className="py-2 px-2 sm:px-3">ID</th>
-                    <th className="py-2 px-2 sm:px-3">Customer</th>
-                    <th className="py-2 px-2 sm:px-3">Total</th>
-                    <th className="py-2 px-2 sm:px-3">Date</th>
-                    <th className="py-2 px-2 sm:px-3">Status</th>
-                    <th className="py-2 px-2 sm:px-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bills.map((bill) => (
-                    <tr key={bill.id} className="border-b border-gray-700/50 hover:bg-gray-700/40">
-                      <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{bill.id}</td>
-                      <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{bill.customer_name || "—"}</td>
-                      <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">₹{parseFloat(bill.total).toFixed(2)}</td>
-                      <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">
-                        {new Date(bill.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">
-                        {bill.payment_status === "paid" ? (
-                          <span className="px-2 py-1 rounded bg-emerald-700 text-white text-xs">🟢 Paid</span>
-                        ) : bill.payment_status === "failed" ? (
-                          <span className="px-2 py-1 rounded bg-red-700 text-white text-xs">🔴 Failed</span>
-                        ) : (
-                          <span className="px-2 py-1 rounded bg-yellow-700 text-white text-xs">🟠 Pending Payment</span>
-                        )}
-                      </td>
-
-                      <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">
-                        <div className="flex items-center gap-2">
-                          {bill.payment_status === "paid" ? (
-                            <button
-                              onClick={() => handleDownloadInvoice(bill.id)}
-                              disabled={downloadingId === bill.id}
-                              className="bg-emerald-600 hover:bg-emerald-500 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-all disabled:opacity-50 flex items-center gap-1"
-                            >
-                              <Download size={14} />
-                              {downloadingId === bill.id ? `${Math.round(progress)}%` : "Invoice"}
-                            </button>
-                          ) : bill.payment_status === "pending" ? (
-                            <button
-                              onClick={() => openPaymentModal(bill)}
-                              className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs transition-all"
-                            >
-                              Proceed to Payment
-                            </button>
-                          ) : (
-                            <span className="text-red-400 text-xs">Payment Failed</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
-          </motion.section>
-        </div>
+
+            {/* Cart Section */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                  <ShoppingCart className="text-emerald-400" size={20} />
+                </div>
+                <h2 className="text-xl font-semibold text-emerald-400">
+                  Shopping Cart ({cart.length} {cart.length === 1 ? 'item' : 'items'})
+                </h2>
+              </div>
+
+              {cart.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingCart className="mx-auto text-gray-500 mb-4" size={48} />
+                  <p className="text-gray-400 text-lg">Your cart is empty</p>
+                  <p className="text-gray-500 text-sm">Add products from above to get started</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="overflow-hidden rounded-xl border border-gray-700/50">
+                    <table className="w-full">
+                      <thead className="bg-gray-700/50">
+                        <tr>
+                          <th className="py-4 px-4 text-left font-semibold text-gray-300">Product</th>
+                          <th className="py-4 px-4 text-center font-semibold text-gray-300">Qty</th>
+                          <th className="py-4 px-4 text-right font-semibold text-gray-300">Price</th>
+                          <th className="py-4 px-4 text-right font-semibold text-gray-300">Total</th>
+                          <th className="py-4 px-4"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700/50">
+                        {cart.map((item) => (
+                          <tr key={item.id} className="hover:bg-gray-700/30 transition-colors">
+                            <td className="py-4 px-4">
+                              <div>
+                                <p className="font-medium text-white">{item.name}</p>
+                                <p className="text-sm text-gray-400">{item.category}</p>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <span className="bg-gray-700/50 px-3 py-1 rounded-lg font-medium">
+                                {item.qty}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-right text-gray-300">
+                              ₹{parseFloat(item.price).toFixed(2)}
+                            </td>
+                            <td className="py-4 px-4 text-right font-semibold text-white">
+                              ₹{(item.price * item.qty).toFixed(2)}
+                            </td>
+                            <td className="py-4 px-4">
+                              <button
+                                onClick={() => removeFromCart(item.id)}
+                                className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Cart Summary */}
+                  <div className="bg-gray-700/30 rounded-xl p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Subtotal:</span>
+                          <span className="text-white">₹{subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Tax (5%):</span>
+                          <span className="text-red-400">+₹{tax.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Discount (10%):</span>
+                          <span className="text-emerald-400">-₹{discount.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-600/30 rounded-lg p-4">
+                        <div className="flex justify-between items-center text-lg font-bold">
+                          <span className="text-white">Total:</span>
+                          <span className="text-emerald-400">₹{total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                      <button
+                        onClick={handleGenerateBill}
+                        className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all duration-200 font-semibold flex items-center gap-2"
+                      >
+                        <DollarSign size={18} />
+                        Generate Bill
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.section>
+          </div>
+        )}
+
+        {/* Bill History */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-12 bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-emerald-500/20 rounded-lg">
+              <Calendar className="text-emerald-400" size={20} />
+            </div>
+            <h2 className="text-xl font-semibold text-emerald-400">Bill History</h2>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-gray-700/50">
+            <table className="w-full">
+              <thead className="bg-gray-700/50">
+                <tr>
+                  <th className="py-4 px-4 text-left font-semibold text-gray-300">Bill ID</th>
+                  <th className="py-4 px-4 text-left font-semibold text-gray-300">Customer</th>
+                  <th className="py-4 px-4 text-right font-semibold text-gray-300">Total</th>
+                  <th className="py-4 px-4 text-left font-semibold text-gray-300">Date</th>
+                  <th className="py-4 px-4 text-center font-semibold text-gray-300">Status</th>
+                  <th className="py-4 px-4 text-center font-semibold text-gray-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-700/50">
+                {bills.map((bill) => (
+                  <tr key={bill.id} className="hover:bg-gray-700/30 transition-colors">
+                    <td className="py-4 px-4 font-medium text-white">#{bill.id}</td>
+                    <td className="py-4 px-4 text-gray-300">{bill.customer_name || "Walk-in Customer"}</td>
+                    <td className="py-4 px-4 text-right font-semibold text-white">
+                      ₹{parseFloat(bill.total).toFixed(2)}
+                    </td>
+                    <td className="py-4 px-4 text-gray-400">
+                      {new Date(bill.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex justify-center">
+                        {bill.payment_status === "paid" ? (
+                          <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-500/30">
+                            🟢 Paid
+                          </span>
+                        ) : bill.payment_status === "failed" ? (
+                          <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium border border-red-500/30">
+                            🔴 Failed
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium border border-yellow-500/30">
+                            🟠 Pending
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex justify-center gap-2">
+                        {bill.payment_status === "paid" ? (
+                          <button
+                            onClick={() => handleDownloadInvoice(bill.id)}
+                            disabled={downloadingId === bill.id}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-2 font-medium"
+                          >
+                            <Download size={16} />
+                            {downloadingId === bill.id ? `${progress}%` : "Invoice"}
+                          </button>
+                        ) : bill.payment_status === "pending" ? (
+                          <button
+                            onClick={() => openPaymentModal(bill)}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all duration-200 font-medium"
+                          >
+                            Pay Now
+                          </button>
+                        ) : (
+                          <span className="text-red-400 text-sm">Payment Failed</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {bills.length === 0 && (
+            <div className="text-center py-12">
+              <FileText className="mx-auto text-gray-500 mb-4" size={48} />
+              <p className="text-gray-400 text-lg">No bills found</p>
+              <p className="text-gray-500 text-sm">Bills will appear here once created</p>
+            </div>
+          )}
+        </motion.section>
       </div>
     </PayPalScriptProvider>
   );

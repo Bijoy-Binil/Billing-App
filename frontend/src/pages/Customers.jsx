@@ -129,7 +129,7 @@ const Customers = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 p-3 sm:p-4 md:p-6">
+    <div className="min-h-screen  text-gray-100 p-3 sm:p-4 md:p-6">
       <ToastContainer position="top-right" theme="dark" />
 
       {/* Header */}
