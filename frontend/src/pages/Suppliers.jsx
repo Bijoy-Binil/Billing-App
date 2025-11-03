@@ -115,21 +115,21 @@ const Suppliers = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <ToastContainer position="top-right" theme="dark" />
 
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-0"
       >
         <div>
-          <h1 className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
-            <Users className="h-6 w-6" />
+          <h1 className="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6" />
             Supplier Management
           </h1>
-          <p className="text-gray-400 mt-1">Manage your suppliers and vendor information</p>
+          <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage your suppliers and vendor information</p>
         </div>
 
         {/* ✅ Only Managers can Add Suppliers */}
@@ -138,25 +138,25 @@ const Suppliers = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={openAddModal}
-            className="mt-4 md:mt-0 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-900/20"
+            className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-900/20 text-sm sm:text-base"
           >
-            <PlusCircle className="h-5 w-5" />
+            <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
             Add Supplier
           </motion.button>
         )}
       </motion.div>
 
       {/* Search */}
-      <div className="relative mb-6">
+      <div className="relative mb-4 sm:mb-6">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+          <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
         </div>
         <input
           type="text"
           placeholder="Search suppliers..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-200 placeholder-gray-400"
+          className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-200 placeholder-gray-400 text-sm sm:text-base"
         />
       </div>
 
@@ -166,50 +166,50 @@ const Suppliers = () => {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-900/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">GST</th>
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Name</th>
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Contact</th>
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Phone</th>
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Email</th>
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">GST</th>
                 {userRole === "manager" && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase">Actions</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-emerald-400 uppercase">Actions</th>
                 )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-400">
+                  <td colSpan="6" className="text-center py-3 sm:py-4 text-gray-400 text-sm">
                     Loading suppliers...
                   </td>
                 </tr>
               ) : filteredSuppliers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-400">
+                  <td colSpan="6" className="text-center py-3 sm:py-4 text-gray-400 text-sm">
                     No suppliers found
                   </td>
                 </tr>
               ) : (
                 filteredSuppliers.map((supplier) => (
                   <tr key={supplier.id} className="hover:bg-gray-700/30 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-white">{supplier.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{supplier.contact_person}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{supplier.phone}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{supplier.email}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{supplier.gst_number}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium text-white">{supplier.name}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.contact_person}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.phone}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.email}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.gst_number}</td>
                     {userRole === "manager" && (
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
                         <button
                           onClick={() => openEditModal(supplier)}
-                          className="text-emerald-400 hover:text-emerald-300 mr-3"
+                          className="text-emerald-400 hover:text-emerald-300 mr-2 sm:mr-3"
                         >
-                          <Edit2 className="h-5 w-5" />
+                          <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(supplier.id)}
                           className="text-red-400 hover:text-red-300"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                       </td>
                     )}
@@ -223,20 +223,20 @@ const Suppliers = () => {
 
       {/* Modal */}
       {modalOpen && userRole === "manager" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-md"
+            className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md"
           >
-            <h2 className="text-xl font-bold text-emerald-400 mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-emerald-400 mb-3 sm:mb-4">
               {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
             </h2>
 
             <form onSubmit={handleSubmit}>
               {Object.keys(formData).map((key) => (
-                <div key={key} className="mb-3">
-                  <label className="block text-sm text-gray-300 mb-1 capitalize">
+                <div key={key} className="mb-2 sm:mb-3">
+                  <label className="block text-xs sm:text-sm text-gray-300 mb-1 capitalize">
                     {key.replace("_", " ")}
                   </label>
                   <input
@@ -244,22 +244,22 @@ const Suppliers = () => {
                     name={key}
                     value={formData[key]}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 text-sm"
                   />
                 </div>
               ))}
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                  className="px-3 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+                  className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm"
                 >
                   {editingSupplier ? "Update" : "Add"} Supplier
                 </button>

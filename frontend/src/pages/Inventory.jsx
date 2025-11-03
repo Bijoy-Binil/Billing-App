@@ -167,7 +167,7 @@ const Inventory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br  text-gray-100 p-6 relative">
+    <div className="min-h-screen bg-gradient-to-br text-gray-100 p-4 sm:p-6 relative">
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Low stock alert */}
@@ -183,8 +183,8 @@ const Inventory = () => {
 
       <div className="max-w-[1400px] mx-auto space-y-6">
         {/* Header */}
-        <header className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2">
             <Boxes size={26} /> Inventory Management
           </h1>
 
@@ -202,7 +202,7 @@ const Inventory = () => {
                   quantity: "",
                 });
               }}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg shadow-md"
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3 sm:px-4 py-2 rounded-lg shadow-md text-sm sm:text-base"
             >
               <PlusCircle size={18} /> New Product
             </button>
@@ -214,7 +214,7 @@ const Inventory = () => {
           <motion.section
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-800/70 border border-gray-700 rounded-xl p-6"
+            className="bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6"
           >
             <h2 className="text-lg font-semibold text-emerald-400 mb-3">
               {editingId ? "✏️ Edit Product" : "➕ Add Product"}
@@ -222,7 +222,7 @@ const Inventory = () => {
 
             <form
               onSubmit={handleSubmit}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
               {["name", "manufacturer"].map((field) => (
                 <div key={field}>
@@ -291,7 +291,7 @@ const Inventory = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-emerald-600 hover:bg-emerald-500 px-6 py-2 rounded-lg"
+                  className="bg-emerald-600 hover:bg-emerald-500 px-4 sm:px-6 py-2 rounded-lg"
                 >
                   {editingId ? "Update" : "Add Product"}
                 </button>
@@ -304,32 +304,34 @@ const Inventory = () => {
         <motion.section
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-800/70 border border-gray-700 rounded-xl p-6"
+          className="bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6"
         >
-          <div className="flex gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search..."
-              className="px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 w-64"
+              className="px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 w-full sm:w-64"
             />
-            <button
-              onClick={handleSearch}
-              className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg flex items-center gap-1"
-            >
-              <Search size={16} /> Search
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg"
-            >
-              Reset
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSearch}
+                className="bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1 text-sm sm:text-base"
+              >
+                <Search size={16} /> Search
+              </button>
+              <button
+                onClick={handleReset}
+                className="bg-gray-700 hover:bg-gray-600 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
+              >
+                Reset
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[600px]">
               <thead className="text-gray-400 border-b border-gray-700">
                 <tr>
                   <th className="text-left py-2 px-3">Product</th>
@@ -363,13 +365,13 @@ const Inventory = () => {
                         <>
                           <button
                             onClick={() => handleEdit(p)}
-                            className="px-3 py-1 bg-emerald-600 rounded text-xs flex items-center gap-1"
+                            className="px-2 sm:px-3 py-1 bg-emerald-600 rounded text-xs flex items-center gap-1"
                           >
                             <Edit2 size={14} /> Edit
                           </button>
                           <button
                             onClick={() => handleDelete(p.id)}
-                            className="px-3 py-1 bg-red-600 rounded text-xs flex items-center gap-1"
+                            className="px-2 sm:px-3 py-1 bg-red-600 rounded text-xs flex items-center gap-1"
                           >
                             <Trash2 size={14} /> Delete
                           </button>

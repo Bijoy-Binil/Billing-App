@@ -129,20 +129,20 @@ const Customers = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-900 text-gray-100 p-3 sm:p-4 md:p-6">
       <ToastContainer position="top-right" theme="dark" />
 
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8"
       >
-        <div>
-          <h1 className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
-            <Users className="h-6 w-6" /> Customer Management
+        <div className="mb-4 sm:mb-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6" /> Customer Management
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-gray-400 mt-1 text-sm sm:text-base">
             Manage customer profiles, loyalty, and analytics
           </p>
         </div>
@@ -152,24 +152,24 @@ const Customers = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={openAddModal}
-            className="mt-4 md:mt-0 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-900/20"
+            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-900/20 text-sm sm:text-base"
           >
-            <PlusCircle className="h-5 w-5" /> Add Customer
+            <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" /> Add Customer
           </motion.button>
         )}
       </motion.div>
 
       {/* Search */}
-      <div className="relative mb-6">
+      <div className="relative mb-4 sm:mb-6">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+          <Search className="h-4 w-5 text-gray-400" />
         </div>
         <input
           type="text"
           placeholder="Search customers..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-200 placeholder-gray-400"
+          className="w-full pl-9 sm:pl-10 pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-200 placeholder-gray-400 text-sm sm:text-base"
         />
       </div>
 
@@ -179,17 +179,17 @@ const Customers = () => {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-900/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
                   Email
                 </th>
                 {userRole === "manager" && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase">
+                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase">
                     Actions
                   </th>
                 )}
@@ -198,13 +198,13 @@ const Customers = () => {
             <tbody className="divide-y divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-400">
+                  <td colSpan="4" className="text-center py-4 text-gray-400 text-sm">
                     Loading customers...
                   </td>
                 </tr>
               ) : filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-400">
+                  <td colSpan="4" className="text-center py-4 text-gray-400 text-sm">
                     No customers found
                   </td>
                 </tr>
@@ -214,34 +214,34 @@ const Customers = () => {
                     key={c.id}
                     className="hover:bg-gray-700/30 transition-colors"
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-white">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium text-white">
                       {c.name}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-300">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-300">
                       {c.contact_number}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-300">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-300">
                       {c.email || "—"}
                     </td>
                     {userRole === "manager" && (
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
                         <button
                           onClick={() => handleView(c)}
-                          className="text-cyan-400 hover:text-cyan-300 mr-3"
+                          className="text-cyan-400 hover:text-cyan-300 mr-2 sm:mr-3"
                         >
-                          <Eye className="h-5 w-5" />
+                          <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={() => openEditModal(c)}
-                          className="text-emerald-400 hover:text-emerald-300 mr-3"
+                          className="text-emerald-400 hover:text-emerald-300 mr-2 sm:mr-3"
                         >
-                          <Edit2 className="h-5 w-5" />
+                          <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(c.id)}
                           className="text-red-400 hover:text-red-300"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                       </td>
                     )}
@@ -255,19 +255,19 @@ const Customers = () => {
 
       {/* Add/Edit Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-md"
+            className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-xl font-bold text-emerald-400 mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-emerald-400 mb-4">
               {editingCustomer ? "Edit Customer" : "Add New Customer"}
             </h2>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="space-y-3">
               {Object.keys(formData).map((key) => (
-                <div key={key} className="mb-3">
+                <div key={key}>
                   <label className="block text-sm text-gray-300 mb-1 capitalize">
                     {key.replace("_", " ")}
                   </label>
@@ -278,7 +278,7 @@ const Customers = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, [key]: e.target.value })
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 text-sm"
                   />
                 </div>
               ))}
@@ -286,13 +286,13 @@ const Customers = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg"
+                  className="px-3 sm:px-4 py-2 bg-gray-700 text-gray-300 rounded-lg text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+                  className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm"
                 >
                   {editingCustomer ? "Update" : "Create"}
                 </button>
@@ -310,10 +310,10 @@ const Customers = () => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 70 }}
-            className="bg-gray-800 border-l border-gray-700 w-full max-w-md h-full p-6 overflow-y-auto"
+            className="bg-gray-800 border-l border-gray-700 w-full max-w-xs sm:max-w-md h-full p-4 sm:p-6 overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-emerald-400">
+              <h2 className="text-lg sm:text-xl font-bold text-emerald-400">
                 Customer Details
               </h2>
               <button
@@ -324,22 +324,22 @@ const Customers = () => {
               </button>
             </div>
 
-            <div className="bg-gray-700/40 p-4 rounded-lg mb-4">
-              <h3 className="text-lg text-white font-semibold">
+            <div className="bg-gray-700/40 p-3 sm:p-4 rounded-lg mb-4">
+              <h3 className="text-base sm:text-lg text-white font-semibold">
                 {selectedCustomer.name}
               </h3>
-              <p className="text-gray-400">{selectedCustomer.email}</p>
-              <p className="text-gray-400">
+              <p className="text-gray-400 text-sm sm:text-base">{selectedCustomer.email}</p>
+              <p className="text-gray-400 text-sm sm:text-base">
                 📞 {selectedCustomer.contact_number}
               </p>
-              <p className="text-gray-400 mt-2">
+              <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">
                 {selectedCustomer.address || "No address"}
               </p>
             </div>
 
-            <div className="bg-gray-700/40 p-4 rounded-lg mb-4">
+            <div className="bg-gray-700/40 p-3 sm:p-4 rounded-lg mb-4">
               <p className="text-gray-400 text-sm">Tier</p>
-              <p className="text-lg text-emerald-400 font-semibold">
+              <p className="text-base sm:text-lg text-emerald-400 font-semibold">
                 {customerLoyalty?.tier || "Bronze"}
               </p>
               <p className="text-gray-400 text-sm mt-1">
@@ -347,9 +347,9 @@ const Customers = () => {
               </p>
             </div>
 
-            <div className="bg-gray-700/40 p-4 rounded-lg">
+            <div className="bg-gray-700/40 p-3 sm:p-4 rounded-lg">
               <p className="text-gray-400 text-sm">Total Spent</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xl sm:text-2xl font-bold text-white">
                 ₹{purchaseHistory?.total_spent || 0}
               </p>
               <p className="text-gray-400 text-sm">

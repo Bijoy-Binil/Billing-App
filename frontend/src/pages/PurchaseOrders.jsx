@@ -190,21 +190,21 @@ const handleSubmit = async (e) => {
     : [];
    console.log("filteredOrders==>",filteredOrders)
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <ToastContainer position="top-right" theme="dark" />
 
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-0"
       >
         <div>
-          <h1 className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
-            <ShoppingBag className="h-6 w-6" />
+          <h1 className="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2">
+            <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6" />
             Purchase Orders
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-gray-400 mt-1 text-sm sm:text-base">
             Track and manage all purchase orders from suppliers
           </p>
         </div>
@@ -213,9 +213,9 @@ const handleSubmit = async (e) => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpen(true)}
-          className="mt-4 md:mt-0 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-900/20"
+          className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-900/20 text-sm sm:text-base"
         >
-          <PlusCircle className="h-5 w-5" />
+          <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
           New Order
         </motion.button>
       </motion.div>
@@ -225,17 +225,17 @@ const handleSubmit = async (e) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="relative mb-6"
+        className="relative mb-4 sm:mb-6"
       >
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+          <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
         </div>
         <input
           type="text"
           placeholder="Search purchase orders..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-200 placeholder-gray-400"
+          className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-gray-200 placeholder-gray-400 text-sm sm:text-base"
         />
       </motion.div>
 
@@ -250,28 +250,28 @@ const handleSubmit = async (e) => {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-900/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Supplier
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Product(s)
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Qty
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Cost
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Total
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-emerald-400 uppercase tracking-wider">
                   Invoice
                 </th>
               </tr>
@@ -279,38 +279,38 @@ const handleSubmit = async (e) => {
       <tbody className="divide-y divide-gray-700">
   {loading ? (
     <tr>
-      <td colSpan="8" className="px-6 py-4 text-center text-gray-400">
+      <td colSpan="8" className="px-3 sm:px-6 py-3 sm:py-4 text-center text-gray-400 text-sm">
         Loading...
       </td>
     </tr>
   ) : filteredOrders.length === 0 ? (
     <tr>
-      <td colSpan="8" className="px-6 py-4 text-center text-gray-400">
+      <td colSpan="8" className="px-3 sm:px-6 py-3 sm:py-4 text-center text-gray-400 text-sm">
         No purchase orders found
       </td>
     </tr>
   ) : (
     filteredOrders.map((po) => (
       <tr key={po.id} className="hover:bg-gray-700/30 transition-colors">
-        <td className="px-6 py-4 text-gray-300">{po.id}</td>
-        <td className="px-6 py-4 text-gray-300">{po.supplier_name || "N/A"}</td>
-        <td className="px-6 py-4 text-gray-300">{po.product_name || "N/A"}</td>
-        <td className="px-6 py-4 text-center text-gray-200">{po.quantity}</td>
-        <td className="px-6 py-4 text-center text-gray-200">₹{po.cost_price}</td>
-        <td className="px-6 py-4 text-center text-emerald-400 font-medium">₹{po.total}</td>
-        <td className="px-6 py-4 text-right text-gray-400">
+        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{po.id}</td>
+        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{po.supplier_name || "N/A"}</td>
+        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{po.product_name || "N/A"}</td>
+        <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-200">{po.quantity}</td>
+        <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-200">₹{po.cost_price}</td>
+        <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-emerald-400 font-medium">₹{po.total}</td>
+        <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs sm:text-sm text-gray-400">
           {moment(po.created_at).format("DD MMM YYYY")}
         </td>
-        <td>
+        <td className="px-3 sm:px-6 py-3 sm:py-4">
           <button
             onClick={() => handleDownloadInvoice(po.id)}
-            className="bg-blue-900 cursor-pointer mt-3 hover:bg-blue-800 px-3 py-1 rounded-xl text-sm transition-all"
+            className="bg-blue-900 cursor-pointer mt-2 sm:mt-3 hover:bg-blue-800 px-2 sm:px-3 py-1 rounded-xl text-xs sm:text-sm transition-all"
             disabled={downloadingId === po.id}
           >
             {downloadingId === po.id ? "Downloading..." : "Download"}
           </button>
           {downloadingId === po.id && (
-            <div className="mt-2 w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div className="mt-1 sm:mt-2 w-24 sm:w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
               <div
                 className="h-2 bg-emerald-500 transition-all duration-300 ease-linear"
                 style={{ width: `${progress}%` }}
@@ -318,7 +318,7 @@ const handleSubmit = async (e) => {
             </div>
           )}
           {downloadingId === po.id && progress === 100 && (
-            <p className="text-emerald-400 text-xs mt-1">✅ Download Complete</p>
+            <p className="text-emerald-400 text-xs mt-1">✅ Complete</p>
           )}
         </td>
       </tr>

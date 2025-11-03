@@ -25,7 +25,7 @@ const Billing = () => {
 
   const API_BILLS = "http://127.0.0.1:8000/api/billings/";
   const token = localStorage.getItem("accessToken");
-
+console.log("bills==>",bills)
   // 🔍 Product Search
   const handleSearch = async () => {
     try {
@@ -269,14 +269,14 @@ const Billing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br   text-gray-100 p-6 relative">
+    <div className="min-h-screen bg-gradient-to-br text-gray-100 p-3 sm:p-4 md:p-6 relative">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="text-3xl font-bold  text-emerald-400 drop-shadow-lg">
+      <div className="text-2xl sm:text-3xl font-bold text-emerald-400 drop-shadow-lg mb-6">
         <motion.h1
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`text-2xl font-bold mb-4 text-emerald-400 flex items-center gap-2" ${
+          className={`text-xl sm:text-2xl font-bold mb-4 text-emerald-400 flex items-center gap-2" ${
             role === "cashier" ? "text-emerald-400" : "text-emerald-400"
           }`}
         >
@@ -299,30 +299,30 @@ const Billing = () => {
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gray-800/70 border border-gray-700 rounded-xl p-6"
+              className="bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6 mb-6"
             >
-              <h2 className="text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
                 <User2 size={20} /> Customer Details
               </h2>
 
-              <div className="flex flex-wrap gap-3 items-center mb-3">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start sm:items-center mb-3">
                 <input
                   type="text"
                   placeholder="Contact Number"
                   value={customer.contact_number}
                   onChange={(e) => setCustomer({ ...customer, contact_number: e.target.value })}
-                  className="px-3 py-2 rounded-lg bg-gray-900 text-white w-48 border border-gray-700"
+                  className="px-3 py-2 rounded-lg bg-gray-900 text-white w-full sm:w-48 border border-gray-700"
                 />
                 <button
                   onClick={handleSearchCustomer}
                   disabled={loadingCustomer}
-                  className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-all disabled:opacity-50"
+                  className="bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-2 rounded-lg transition-all disabled:opacity-50 text-sm sm:text-base"
                 >
                   {loadingCustomer ? "Searching..." : "Search"}
                 </button>
 
-                {message && <p className="text-emerald-400 text-sm">{message}</p>}
-                {errors && <p className="text-red-400 text-sm">{errors}</p>}
+                {message && <p className="text-emerald-400 text-sm w-full sm:w-auto">{message}</p>}
+                {errors && <p className="text-red-400 text-sm w-full sm:w-auto">{errors}</p>}
               </div>
 
               {!foundCustomer && (
@@ -331,23 +331,23 @@ const Billing = () => {
                   placeholder="Customer Name (for new)"
                   value={customer.name}
                   onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                  className="px-3 py-2 rounded-lg bg-gray-900 text-white w-64 border border-gray-700"
+                  className="px-3 py-2 rounded-lg bg-gray-900 text-white w-full sm:w-64 border border-gray-700"
                 />
               )}
             </motion.section>
 
             {/* 🔍 Product Search */}
-            <div className="flex flex-wrap gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
               <input
                 type="text"
                 placeholder="Search by category or name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 w-64"
+                className="px-3 py-2 rounded-lg bg-gray-900 text-white border border-gray-700 w-full sm:w-64"
               />
               <button
                 onClick={handleSearch}
-                className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg flex items-center gap-2"
+                className="bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm sm:text-base"
               >
                 <Search size={18} /> Search
               </button>
@@ -360,7 +360,7 @@ const Billing = () => {
                     })
                     .then((res) => setProducts(res.data.results || res.data || []));
                 }}
-                className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg"
+                className="bg-gray-700 hover:bg-gray-600 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
               >
                 Reset
               </button>
@@ -370,7 +370,7 @@ const Billing = () => {
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-10"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 mb-10"
             >
               {products.length === 0 ? (
                 <p className="text-gray-400 italic col-span-full">Loading products...</p>
@@ -379,11 +379,11 @@ const Billing = () => {
                   <motion.div
                     key={p.id}
                     whileHover={{ scale: 1.05 }}
-                    className="p-5 bg-gray-800/70 rounded-xl border border-gray-700 shadow-md hover:shadow-emerald-500/20 cursor-pointer transition-all"
+                    className="p-3 sm:p-4 md:p-5 bg-gray-800/70 rounded-xl border border-gray-700 shadow-md hover:shadow-emerald-500/20 cursor-pointer transition-all"
                     onClick={() => addToCart(p)}
                   >
-                    <h3 className="text-lg font-medium">{p.name}</h3>
-                    <p className="text-gray-400 text-sm mt-1">₹{parseFloat(p.price).toFixed(2)}</p>
+                    <h3 className="text-sm sm:text-base font-medium">{p.name}</h3>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-1">₹{parseFloat(p.price).toFixed(2)}</p>
                   </motion.div>
                 ))
               )}
@@ -393,46 +393,48 @@ const Billing = () => {
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gray-800/70 border border-gray-700 rounded-xl p-6"
+              className="bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6"
             >
-              <h2 className="text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
                 <ShoppingCart size={20} /> Cart ({cart.length})
               </h2>
               {cart.length === 0 ? (
                 <p className="text-gray-400 italic">No items in cart</p>
               ) : (
                 <>
-                  <table className="w-full text-left text-gray-300 mb-4">
-                    <thead className="border-b border-gray-700 text-gray-400 text-sm">
-                      <tr>
-                        <th>Product</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cart.map((i) => (
-                        <tr key={i.id} className="border-b border-gray-700/50 hover:bg-gray-700/40">
-                          <td>{i.name}</td>
-                          <td>{i.qty}</td>
-                          <td>₹{parseFloat(i.price).toFixed(2)}</td>
-                          <td>₹{(i.price * i.qty).toFixed(2)}</td>
-                          <td>
-                            <button onClick={() => removeFromCart(i.id)} className="text-red-400 hover:text-red-600">
-                              ✕
-                            </button>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-gray-300 mb-4 min-w-[500px]">
+                      <thead className="border-b border-gray-700 text-gray-400 text-sm">
+                        <tr>
+                          <th className="py-2 px-2 sm:px-3">Product</th>
+                          <th className="py-2 px-2 sm:px-3">Qty</th>
+                          <th className="py-2 px-2 sm:px-3">Price</th>
+                          <th className="py-2 px-2 sm:px-3">Total</th>
+                          <th></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {cart.map((i) => (
+                          <tr key={i.id} className="border-b border-gray-700/50 hover:bg-gray-700/40">
+                            <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{i.name}</td>
+                            <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{i.qty}</td>
+                            <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">₹{parseFloat(i.price).toFixed(2)}</td>
+                            <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">₹{(i.price * i.qty).toFixed(2)}</td>
+                            <td>
+                              <button onClick={() => removeFromCart(i.id)} className="text-red-400 hover:text-red-600 text-xs sm:text-sm">
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
                   <div className="text-right text-gray-300 space-y-1 border-t border-gray-700 pt-4">
-                    <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
-                    <p>Tax (5%): +₹{tax.toFixed(2)}</p>
-                    <p>Discount (10%): -₹{discount.toFixed(2)}</p>
+                    <p className="text-sm sm:text-base">Subtotal: ₹{subtotal.toFixed(2)}</p>
+                    <p className="text-sm sm:text-base">Tax (5%): +₹{tax.toFixed(2)}</p>
+                    <p className="text-sm sm:text-base">Discount (10%): -₹{discount.toFixed(2)}</p>
                     <hr className="my-1 border-gray-700" />
                     <p className="font-semibold text-lg text-white">Total: ₹{total.toFixed(2)}</p>
 
@@ -445,7 +447,7 @@ const Billing = () => {
                               speakTotal(total.toFixed(2));
                               setTimeout(() => setShowPayPal(true), 5000); // wait 5 seconds
                             }}
-                            className="bg-blue-600 hover:bg-blue-500 mt-4 px-6 py-2 rounded-lg transition-all"
+                            className="bg-blue-600 hover:bg-blue-500 mt-4 px-4 sm:px-6 py-2 rounded-lg transition-all text-sm sm:text-base"
                           >
                             Go to Payment 💳
                           </button>
@@ -494,24 +496,25 @@ const Billing = () => {
                                   toast.error("Failed to record payment ❌");
                                 }
                               }}
+                              onCancel={() => {
+                                setShowPayPal(false);
+                                toast.info("Payment cancelled");
+                              }}
                               onError={(err) => {
                                 console.error("PayPal error:", err);
-                                toast.error("Payment failed ❌");
+                                toast.error("PayPal error occurred");
                               }}
                             />
                           </div>
                         )}
                       </>
                     ) : (
-                      <div className="mt-6 text-center">
-                        <p className="text-green-400 font-semibold mb-2">✅ Payment successful! Now generate your bill.</p>
-                        <button
-                          onClick={handleGenerateBill}
-                          className="bg-emerald-600 hover:bg-emerald-500 mt-2 px-6 py-2 rounded-lg transition-all"
-                        >
-                          Generate Bill 🧾
-                        </button>
-                      </div>
+                      <button
+                        onClick={handleGenerateBill}
+                        className="bg-emerald-600 hover:bg-emerald-500 mt-4 px-4 sm:px-6 py-2 rounded-lg transition-all text-sm sm:text-base"
+                      >
+                        Generate Bill ✅
+                      </button>
                     )}
                   </div>
                 </>
@@ -520,109 +523,59 @@ const Billing = () => {
           </>
         )}
 
-        {/* 📜 Bill History - Enhanced for Manager */}
+        {/* 📜 Bill History */}
         <motion.section
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-800/70 border border-gray-700 rounded-xl p-6"
+          className="mt-8 bg-gray-800/70 border border-gray-700 rounded-xl p-4 sm:p-6"
         >
-          <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${
-            role === "manager" ? "text-emerald-400" : "text-emerald-400"
-          }`}>
-            <FileText size={20} /> {role === "manager" ? "All Bills Overview" : "Recent Bills"}
+          <h2 className="text-lg sm:text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+            <Calendar size={20} /> Bill History
           </h2>
-          {bills.length === 0 ? (
-            <p className="text-gray-400 italic">No bills yet. {role === "cashier" ? "Generate your first bill above!" : "No bills recorded."}</p>
-          ) : (
-            <>
-              {role === "manager" && (
-                <div className="grid grid-cols-3 gap-4 mb-6 text-center">
-                  <motion.div
-                    className="bg-emerald-900/30 border border-emerald-700/50 rounded-xl p-4"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <DollarSign className="mx-auto mb-2 text-emerald-400" size={24} />
-                    <p className="text-2xl font-bold text-emerald-300">₹{bills.reduce((sum, b) => sum + parseFloat(b.total || 0), 0).toFixed(2)}</p>
-                    <p className="text-emerald-400 text-sm">Total Revenue</p>
-                  </motion.div>
-                  <motion.div
-                    className="bg-emerald-900/30 border border-emerald-700/50 rounded-xl p-4"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <FileText className="mx-auto mb-2 text-emerald-400" size={24} />
-                    <p className="text-2xl font-bold text-emerald-300">{bills.length}</p>
-                    <p className="text-emerald-400 text-sm">Total Bills</p>
-                  </motion.div>
-                  <motion.div
-                    className="bg-emerald-900/30 border border-emerald-700/50 rounded-xl p-4"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <Calendar className="mx-auto mb-2 text-emerald-400" size={24} />
-                    <p className="text-2xl font-bold text-emerald-300">{new Date(bills[0]?.created_at).toLocaleDateString("en-IN")}</p>
-                    <p className="text-emerald-400 text-sm">Latest Bill</p>
-                  </motion.div>
-                </div>
-              )}
-              <div className="overflow-x-auto">
-                <table className={`w-full text-sm ${
-                  role === "manager" ? "text-gray-200" : "text-gray-300"
-                }`}>
-                  <thead className={`${
-                    role === "manager" ? "text-emerald-400 border-b border-emerald-700" : "text-gray-400 border-b border-gray-700"
-                  }`}>
-                    <tr>
-                      <th className="py-2 px-3 font-semibold">Bill ID</th>
-                      <th className="py-2 px-3 font-semibold">Total</th>
-                      <th className="py-2 px-3 font-semibold">Date</th>
-                      <th className="py-2 px-3 font-semibold">Customer</th>
-                      <th className="py-2 px-3 font-semibold">Invoice</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bills.map((b) => (
-                      <motion.tr
-                        key={b.id}
-                        whileHover={{ backgroundColor: role === "manager" ? "rgba(16, 185, 129, 0.1)" : "rgba(75, 85, 99, 0.3)" }}
-                        className={`border-b ${
-                          role === "manager" ? "border-emerald-700/30" : "border-gray-700/50"
-                        } transition-colors hover:bg-gray-700/40`}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-gray-300 min-w-[600px]">
+              <thead className="border-b border-gray-700 text-gray-400 text-sm">
+                <tr>
+                  <th className="py-2 px-2 sm:px-3">ID</th>
+                  <th className="py-2 px-2 sm:px-3">Customer</th>
+                  <th className="py-2 px-2 sm:px-3">Total</th>
+                  <th className="py-2 px-2 sm:px-3">Date</th>
+                  <th className="py-2 px-2 sm:px-3">Paid</th>
+                  <th className="py-2 px-2 sm:px-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bills.map((bill) => (
+                  <tr key={bill.id} className="border-b border-gray-700/50 hover:bg-gray-700/40">
+                    <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{bill.id}</td>
+                    <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{bill.customer_name}</td>
+                    <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">₹{parseFloat(bill.total).toFixed(2)}</td>
+                    <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">{new Date(bill.created_at).toLocaleDateString()}</td>
+                    <td className="py-2 px-2 sm:px-3">
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${
+                          bill.payment_status == "paid" ? "bg-green-600/30 text-green-400" : "bg-red-600/30 text-red-400"
+                        }`}
                       >
-                        <td className="py-2 px-3 font-mono text-sm bg-emerald-90/20 rounded-l-lg">{b.bill_id}</td>
-                        <td className="py-2 px-3 font-semibold text-emerald-400">₹{parseFloat(b.total || 0).toFixed(2)}</td>
-                        <td className="py-2 px-3">{new Date(b.created_at).toLocaleString("en-IN")}</td>
-                        <td className="py-2 px-3">{b.customer_name || "Walk-in"}</td>
-                        <td className="py-2 px-3">
-                          <button
-                            onClick={() => handleDownloadInvoice(b.id)}
-                            className={`${
-                              role === "manager"
-                                ? "bg-blue-900 hover:bg-blue-500 text-white"
-                                : "bg-blue-900 hover:bg-blue-800 text-gray-200"
-                            } cursor-pointer px-4 py-2 rounded-lg text-sm transition-all`}
-                          >
-                            <Download size={14} className="inline mr-1" /> Download
-                          </button>
-                          {downloadingId === b.id && (
-                            <div className="mt-2 w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
-                              <div
-                                className="h-2 bg-emerald-500 transition-all duration-300"
-                                style={{ width: `${progress}%` }}
-                              ></div>
-                            </div>
-                          )}
-                          {downloadingId === b.id && progress === 100 && (
-                            <p className={`text-xs mt-1 ${
-                              role === "manager" ? "text-emerald-400" : "text-emerald-400"
-                            }`}>✅ Download Complete</p>
-                          )}
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+                        { bill.payment_status == "paid" ? "Yes" : "No"}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 sm:px-3">
+                      <button
+                        onClick={() => handleDownloadInvoice(bill.id)}
+                        disabled={downloadingId === bill.id}
+                        className="bg-emerald-600 hover:bg-emerald-500 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-all disabled:opacity-50 flex items-center gap-1"
+                      >
+                        <Download size={14} />
+                        {downloadingId === bill.id ? `${Math.round(progress)}%` : "Invoice"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </motion.section>
       </div>
     </div>

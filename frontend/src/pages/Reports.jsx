@@ -91,11 +91,11 @@ const Reports = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 text-gray-100">
-      <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 sm:p-6 text-gray-100">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-3xl font-bold text-emerald-400 tracking-tight drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-emerald-400 tracking-tight drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]">
             Reports & Analytics
           </h2>
           <div className="text-sm text-gray-400">
@@ -104,14 +104,14 @@ const Reports = () => {
         </div>
 
         {/* 💹 Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <SummaryCard title="Today's Sales" value={`₹${dailySales.toFixed(2)}`} color="emerald" />
           <SummaryCard title="Monthly Sales" value={`₹${monthlySales.toFixed(2)}`} color="indigo" />
           <SummaryCard title="Total Profit" value={`₹${totalProfit.toFixed(2)}`} color="amber" />
         </div>
 
         {/* 3-column responsive grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {/* 📈 Sales Overview */}
           <ReportCard title="🧾 Sales Overview">
             <ResponsiveContainer width="100%" height="100%">
@@ -171,8 +171,8 @@ const Reports = () => {
 
 /** ✅ Reusable Report Card */
 const ReportCard = ({ title, children }) => (
-  <section className="group bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6 flex flex-col h-[420px] shadow-lg shadow-emerald-900/10 hover:shadow-emerald-500/20 transition-all duration-500 hover:-translate-y-1 hover:scale-[1.02]">
-    <h3 className="text-lg font-semibold mb-4 text-emerald-400 group-hover:drop-shadow-[0_0_6px_rgba(16,185,129,0.5)] transition-all duration-300">
+  <section className="group bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-4 sm:p-6 flex flex-col h-[320px] sm:h-[380px] lg:h-[420px] shadow-lg shadow-emerald-900/10 hover:shadow-emerald-500/20 transition-all duration-500 hover:-translate-y-1 hover:scale-[1.02]">
+    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-emerald-400 group-hover:drop-shadow-[0_0_6px_rgba(16,185,129,0.5)] transition-all duration-300">
       {title}
     </h3>
     <div className="flex-1">{children}</div>
@@ -189,10 +189,10 @@ const SummaryCard = ({ title, value, color }) => {
 
   return (
     <div
-      className={`p-5 border rounded-2xl bg-gray-800/60 backdrop-blur-xl shadow-inner ${colorMap[color]} transition-all duration-500 hover:shadow-lg hover:shadow-emerald-400/10 hover:-translate-y-1`}
+      className={`p-4 sm:p-5 border rounded-2xl bg-gray-800/60 backdrop-blur-xl shadow-inner ${colorMap[color]} transition-all duration-500 hover:shadow-lg hover:shadow-emerald-400/10 hover:-translate-y-1`}
     >
-      <h4 className="text-sm text-gray-400">{title}</h4>
-      <p className={`text-3xl font-semibold ${colorMap[color]} drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]`}>
+      <h4 className="text-xs sm:text-sm text-gray-400">{title}</h4>
+      <p className={`text-2xl sm:text-3xl font-semibold ${colorMap[color]} drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]`}>
         {value}
       </p>
     </div>
@@ -203,7 +203,7 @@ const SummaryCard = ({ title, value, color }) => {
 const ExpandLink = ({ to }) => (
   <Link
     to={to}
-    className="mt-4 inline-block text-sm font-medium text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-400 px-4 py-2 rounded-full transition-all duration-300 hover:bg-emerald-500/10"
+    className="mt-3 sm:mt-4 inline-block text-xs sm:text-sm font-medium text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-400 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-all duration-300 hover:bg-emerald-500/10"
   >
     Expand →
   </Link>

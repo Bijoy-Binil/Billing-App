@@ -26,7 +26,7 @@ class BillingSerializer(serializers.ModelSerializer):
         model = Bill
         fields = [
             "id", "bill_id", "customer", "cashier", "customer_name",
-            "subtotal", "tax", "discount", "total",
+            "subtotal", "tax", "discount", "total","payment_status",
             "items", "created_at"
         ]
         read_only_fields = ["bill_id", "created_at"]
