@@ -24,8 +24,9 @@ const LoginPage = () => {
         email,
         password,
       });
-
+console.log("loginRes==>",loginRes)
       localStorage.setItem("userId", loginRes.data.userId);
+      localStorage.setItem("role", loginRes.data.role);
       localStorage.setItem("username", loginRes.data.username);
       localStorage.setItem("userEmail", loginRes.data.email);
       localStorage.setItem("userJoined", loginRes.data.joined);

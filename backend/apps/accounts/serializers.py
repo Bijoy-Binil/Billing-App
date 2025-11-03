@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from typing import Any
 
 class UserSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = CustomUser
         fields = ("id", "email", "first_name", "last_name", "role")

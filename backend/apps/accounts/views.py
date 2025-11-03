@@ -39,12 +39,13 @@ def user_login(request):
         user = authenticate(email=email, password=password)
     except User.DoesNotExist:
         user = None
-
+    
     if user is not None:
         return JsonResponse({
             "user_login": True,
             "userId": user.id,
             "username": user.first_name+user.last_name,
+            "role":user.role,
             "email": user.email,
             "joined": user.date_joined.strftime("%Y-%m-%d"),
         })

@@ -6,7 +6,7 @@ import { AuthContext } from "../AuthProvider";
 const AuthStatus = () => {
   const { userName, handleLogout, isLoggedIn } = useContext(AuthContext);
   const navigate = useNavigate();
-
+const role = localStorage.getItem("role"); // "manager" or "cashier"
   const onLogout = () => {
     handleLogout();
     navigate("/login");
@@ -17,9 +17,10 @@ const AuthStatus = () => {
       {isLoggedIn && userName ? (
         <>
           <div className="text-sm text-gray-300">
-            Welcome,{" "}
+         
             <span className="font-semibold text-emerald-400 drop-shadow-[0_0_4px_#34d399]">
-              {userName}
+             {userName + " (" + role.toUpperCase() + ")"}
+
             </span>
           </div>
 

@@ -103,7 +103,7 @@ const fetchLowstock = async () => {
 
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen p-6 bg-gradient-to-br  text-gray-100 relative overflow-hidden">
      <ToastContainer
           position="top-right"
           autoClose={3000}
