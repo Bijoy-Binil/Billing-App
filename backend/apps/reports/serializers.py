@@ -24,15 +24,18 @@ class ProfitReportSerializer(serializers.Serializer):
     total_qty_sold = serializers.IntegerField()
     total_profit = serializers.DecimalField(max_digits=12, decimal_places=2)
 
+
 class StockStatementSerializer(serializers.Serializer):
     product = serializers.CharField()
     opening_stock = serializers.IntegerField()
     closing_stock = serializers.IntegerField()
     total_sold = serializers.IntegerField()
 
+
 class MarginReportSerializer(serializers.Serializer):
     product = serializers.CharField()
     margin_percent = serializers.DecimalField(max_digits=5, decimal_places=2)
+
 
 class ManufacturerStockSerializer(serializers.Serializer):
     manufacturer = serializers.CharField()

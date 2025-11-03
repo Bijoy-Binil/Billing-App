@@ -24,6 +24,9 @@ const menuItems = [
   { name: "ProfitReports", icon: BarChart3, path: "/profit-report" },
   { name: "StockReports", icon: BarChart3, path: "/stock-report" },
   { name: "StockBillsReports", icon: BarChart3, path: "/stock-bills-report" },
+  { name: "StockstatementReport", icon: BarChart3, path: "/stock-statement-report" },
+  { name: "MarginReport", icon: BarChart3, path: "/margin-report" },
+  { name: "StockManufacturerReport", icon: BarChart3, path: "stock-manufacturer-report" },
   { name: "PurchaseReports", icon: BarChart3, path: "/purchase-report" },
   { name: "OverallReports", icon: BarChart3, path: "/reports" },
 ];

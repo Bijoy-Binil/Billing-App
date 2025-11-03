@@ -21,6 +21,9 @@ import ResponsiveLayout from "./ResponsiveLayout";
 import Customers from "./pages/Customers";
 import Suppliers from "./pages/Suppliers";
 import PurchaseOrders from "./pages/PurchaseOrders";
+import StockStatementReport from "./pages/Reports/StockStatementReport";
+import MarginReport from "./pages/Reports/MarginReport";
+import StockManufacturerReport from "./pages/Reports/StockManufacturerReport";
 
 const paypalOptions = {
   clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
@@ -68,6 +71,9 @@ const App = () => (
             <Route path="/sales-report" element={<SalesReport />} />
             <Route path="/stock-report" element={<StockReport />} />
             <Route path="/stock-bills-report" element={<StockBillsReport />} />
+            <Route path="/stock-statement-report" element={<StockStatementReport />} />
+            <Route path="/margin-report" element={<MarginReport />} />
+            <Route path="/stock-manufacturer-report" element={<StockManufacturerReport />} />
             <Route path="/purchase-report" element={<PurchaseReport />} />
           </Route>
         </Routes>

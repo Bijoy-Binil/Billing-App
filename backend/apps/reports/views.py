@@ -111,6 +111,7 @@ class ProfitTrackingView(APIView):
         return Response(serializer.data)
 
 
+
 # ✅ Stock Statement Report
 class StockStatementReportView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -118,15 +119,17 @@ class StockStatementReportView(APIView):
     def get(self, request):
         data = []
         for p in Product.objects.all():
-            total_sold = BillItem.objects.filter(product=p).aggregate(Sum("qty"))["qty__sum"] or 0
-            opening_stock = p.quantity + total_sold
-            closing_stock = p.quantity
+            total_sold = BillItem.objects.filter(product=p).aggregate(Sum("quantity"))["quantity__sum"] or 0
+            opening_stock = (p.quantity or 0) + total_sold
+            closing_stock = p.quantity or 0
+
             data.append({
                 "product": p.name,
                 "opening_stock": opening_stock,
                 "closing_stock": closing_stock,
                 "total_sold": total_sold,
             })
+
         serializer = StockStatementSerializer(data, many=True)
         return Response(serializer.data)
 
@@ -138,9 +141,13 @@ class MarginReportView(APIView):
     def get(self, request):
         data = []
         for p in Product.objects.all():
-            if p.cost_price > 0:
+            if p.cost_price and p.cost_price > 0:
                 margin_percent = ((p.price - p.cost_price) / p.cost_price) * 100
-                data.append({"product": p.name, "margin_percent": round(margin_percent, 2)})
+                data.append({
+                    "product": p.name,
+                    "margin_percent": round(margin_percent, 2)
+                })
+
         serializer = MarginReportSerializer(data, many=True)
         return Response(serializer.data)
 
