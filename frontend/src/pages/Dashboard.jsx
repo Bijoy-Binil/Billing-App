@@ -82,7 +82,7 @@ const Dashboard = () => {
 
       // ✅ Beautiful alert for low stock
       if (lowStock.length > 0) {
-        const productNames = lowStock.map((p) => p.name).slice(0, 5).join(", ");
+        const productNames = lowStock.map((p,idx) => p.name).slice(0, 5).join(", ");
         toast.warning(
           `⚠️ ${lowStock.length} items are running low: ${productNames}${
             lowStock.length > 5 ? "..." : ""
