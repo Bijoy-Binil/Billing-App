@@ -8,7 +8,7 @@ from apps.customers.models import CustomerLoyalty
 
 class Bill(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
+        ('pending', 'Pending Payment'),
         ('paid', 'Paid'),
         ('failed', 'Failed'),
     ]
@@ -25,8 +25,11 @@ class Bill(models.Model):
     discount = models.DecimalField(max_digits=30, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=30, decimal_places=2)
     payment_status = models.CharField(
-        max_length=10, choices=STATUS_CHOICES, default='pending'
+        max_length=20, choices=STATUS_CHOICES, default='pending'
     )
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    payment_date = models.DateTimeField(blank=True, null=True)
+    payment_method = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):

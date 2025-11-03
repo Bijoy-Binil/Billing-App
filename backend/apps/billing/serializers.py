@@ -27,9 +27,10 @@ class BillingSerializer(serializers.ModelSerializer):
         fields = [
             "id", "bill_id", "customer", "cashier", "customer_name",
             "subtotal", "tax", "discount", "total","payment_status",
+            "transaction_id", "payment_date", "payment_method",
             "items", "created_at"
         ]
-        read_only_fields = ["bill_id", "created_at"]
+        read_only_fields = ["bill_id", "created_at", "transaction_id", "payment_date", "payment_method"]
         depth=1
     @transaction.atomic  # ✅ ensures rollback if anything fails
     def create(self, validated_data):
@@ -40,6 +41,7 @@ class BillingSerializer(serializers.ModelSerializer):
         if request and hasattr(request, "user"):
             validated_data["cashier"] = request.user
 
+        # Create bill with pending status by default (already set in model)
         bill = Bill.objects.create(**validated_data)
 
         # Process all bill items

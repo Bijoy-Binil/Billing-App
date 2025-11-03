@@ -50,12 +50,15 @@ const Billing = () => {
   const [foundCustomer, setFoundCustomer] = useState(null);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
   const [bills, setBills] = useState([]);
+  const [recentBills, setRecentBills] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showPayPal, setShowPayPal] = useState(false); // cart payment
   const [progress, setProgress] = useState(0);
   const [downloadingId, setDownloadingId] = useState(null);
   const [isPaid, setIsPaid] = useState(false); // cart-level payment success
   const [paypalOrderId, setPaypalOrderId] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
 
   // axios default headers convenience
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
@@ -89,9 +92,20 @@ const Billing = () => {
     }
   };
 
+  const fetchRecentBills = async () => {
+    try {
+      const res = await axios.get(`${API_BILLS}?recent=5`, { headers: authHeaders });
+      setRecentBills(res.data.results || res.data || []);
+    } catch (err) {
+      console.error("Error fetching recent bills:", err);
+      toast.error("Failed to fetch recent bills ❌");
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
     fetchBills();
+    fetchRecentBills();
     if (role === "cashier") fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, role]);
@@ -228,14 +242,13 @@ const Billing = () => {
     }
   };
 
-  // Create bill (cashier) — requires isPaid true and paypalOrderId set (cart payment flow)
+  // Create bill (cashier) — now creates bill with pending status, payment comes later
   const handleGenerateBill = async () => {
     if (role !== "cashier") {
       return toast.error("Only cashiers can generate bills.");
     }
     if (!cart.length) return toast.warn("Cart is empty");
     if (!token) return toast.error("Please log in");
-    if (!isPaid) return toast.warn("Please complete payment first");
 
     try {
       let customerId = foundCustomer?.id;
@@ -258,27 +271,26 @@ const Billing = () => {
         })),
       };
 
-      // create bill
+      // create bill with pending status
       const billRes = await axios.post(API_BILLS, payload, { headers: authHeaders });
       const billId = billRes.data.id;
 
-      // link payment if we have paypalOrderId recorded
-      if (paypalOrderId) {
-        try {
-          await axios.patch(`${API_PAYMENTS}${paypalOrderId}/link_bill/`, { bill_id: billId }, { headers: authHeaders });
-          // mark bill paid via API only after successful payment linking
-          await axios.patch(`${API_BILLS}${billId}/mark_paid/`, {}, { headers: authHeaders });
-          toast.success("Bill generated and marked as paid ✅");
-        } catch (err) {
-          // if payment linking fails, we should handle it properly
-          console.error("Payment linking error:", err);
-          toast.error("Payment linking failed. Bill created but not marked as paid.");
-          // Optionally: Allow retry or manual payment marking
-        }
-      } else {
-        // No payment ID available - bill created but not marked as paid
-        toast.warn("Bill created but payment not linked. Please contact support.");
-      }
+      // Bill created successfully with pending status
+      toast.success("Bill created successfully with Pending Payment status ✅");
+      
+      // Reset cart and customer data
+      setCart([]);
+      setCustomer({ name: "", contact_number: "" });
+      setFoundCustomer(null);
+      
+      // Reset payment state for next transaction
+      setIsPaid(false);
+      setPaypalOrderId(null);
+      setShowPayPal(false);
+      
+      // Refresh bills to show the new pending bill
+      fetchBills();
+      fetchRecentBills();
 
       // Reset cart and payment state
       setCart([]);
@@ -293,6 +305,41 @@ const Billing = () => {
       // Reset payment state on failure
       setIsPaid(false);
       setPaypalOrderId(null);
+    }
+  };
+
+  // Open payment modal for pending bill
+  const openPaymentModal = (bill) => {
+    setSelectedBillForPayment(bill);
+    setShowPaymentModal(true);
+  };
+
+  // Close payment modal
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setSelectedBillForPayment(null);
+  };
+
+  // Process payment for existing bill
+  const processBillPayment = async (bill, transactionId, paymentMethod = 'paypal') => {
+    try {
+      // Mark bill as paid with transaction details
+      await axios.patch(
+        `${API_BILLS}${bill.id}/mark_paid/`, 
+        { 
+          transaction_id: transactionId,
+          payment_method: paymentMethod 
+        }, 
+        { headers: authHeaders }
+      );
+      
+      toast.success("✅ Payment successful! Invoice unlocked.");
+      fetchBills();
+      fetchRecentBills();
+      closePaymentModal();
+    } catch (err) {
+      console.error("Bill payment error:", err);
+      toast.error("Failed to process payment ❌");
     }
   };
 
@@ -353,26 +400,8 @@ const Billing = () => {
               console.warn("Payment check failed, proceeding with creation:", checkErr);
             }
             
-            // record payment in backend
-            const paymentResponse = await axios.post(
-              API_PAYMENTS,
-              {
-                bill: bill.id,
-                transaction_id: order.id,
-                amount: bill.total,
-                status: "succeeded",
-              },
-              { headers: authHeaders }
-            );
-            
-            // Only mark bill as paid if payment was successfully recorded
-            if (paymentResponse.data?.id) {
-              await axios.patch(`${API_BILLS}${bill.id}/mark_paid/`, {}, { headers: authHeaders });
-              toast.success(`Bill #${bill.id} marked as paid ✅`);
-              fetchBills();
-            } else {
-              throw new Error("Payment record creation failed");
-            }
+            // Process payment using the new function
+            await processBillPayment(bill, order.id, 'paypal');
           } catch (err) {
             console.error("Pay existing bill error:", err);
             const errorMessage = err.response?.data?.detail || "Failed to complete payment";
@@ -494,11 +523,92 @@ const Billing = () => {
     );
   };
 
+  // Payment Modal Component
+  const PaymentModal = () => {
+    if (!showPaymentModal || !selectedBillForPayment) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold text-emerald-400">Process Payment</h3>
+            <button
+              onClick={closePaymentModal}
+              className="text-gray-400 hover:text-white text-xl"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="mb-6">
+            <p className="text-gray-300 mb-2">
+              <strong>Bill ID:</strong> {selectedBillForPayment.bill_id}
+            </p>
+            <p className="text-gray-300 mb-2">
+              <strong>Customer:</strong> {selectedBillForPayment.customer_name || "Walk-in Customer"}
+            </p>
+            <p className="text-gray-300 mb-4">
+              <strong>Total Amount:</strong> ₹{parseFloat(selectedBillForPayment.total).toFixed(2)}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <PayPalButtons
+              style={{
+                layout: "vertical",
+                color: "gold",
+                shape: "rect",
+                label: "paypal",
+              }}
+              createOrder={(data, actions) =>
+                actions.order.create({
+                  purchase_units: [
+                    {
+                      description: `Bill #${selectedBillForPayment.bill_id}`,
+                      amount: { 
+                        currency_code: paypalCurrency, 
+                        value: String(Number(selectedBillForPayment.total).toFixed(2) || "0.01") 
+                      },
+                    },
+                  ],
+                })
+              }
+              onApprove={async (data, actions) => {
+                try {
+                  const order = await actions.order.capture();
+                  await processBillPayment(selectedBillForPayment, order.id, 'paypal');
+                } catch (err) {
+                  console.error("PayPal payment error:", err);
+                  toast.error("Payment failed ❌");
+                }
+              }}
+              onCancel={() => {
+                toast.info("Payment cancelled");
+              }}
+              onError={(err) => {
+                console.error("PayPal error:", err);
+                toast.error("PayPal error occurred");
+              }}
+            />
+            
+            <button
+              onClick={closePaymentModal}
+              className="w-full bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded-lg transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Render
   // Provide PayPalScriptProvider if no global wrapper exists (safe to include even if wrapped)
   return (
     <PayPalScriptProvider options={{ "client-id": paypalClientId, currency: paypalCurrency }}>
       <div className="min-h-screen bg-gradient-to-br text-gray-100 p-3 sm:p-4 md:p-6 relative">
+        <PaymentModal />
         <ToastContainer position="top-right" autoClose={3000} />
         <div className="text-2xl sm:text-3xl font-bold text-emerald-400 drop-shadow-lg mb-6">
           <motion.h1
@@ -660,55 +770,16 @@ const Billing = () => {
                       <hr className="my-1 border-gray-700" />
                       <p className="font-semibold text-lg text-white">Total: ₹{total.toFixed(2)}</p>
 
-                      {/* Payment / Generate buttons */}
-                      {!isPaid ? (
-                        <>
-                          {!showPayPal ? (
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                onClick={() => {
-                                  speakTotal(total.toFixed(2));
-                                  // show PayPal after short delay (or remove timeout if undesired)
-                                  setTimeout(() => setShowPayPal(true), 700);
-                                }}
-                                className="bg-blue-600 hover:bg-blue-500 mt-4 px-4 sm:px-6 py-2 rounded-lg transition-all text-sm sm:text-base"
-                              >
-                                Go to Payment 💳
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="mt-4">
-                              <h3 className="text-emerald-400 text-sm mb-2">Proceed to Payment</h3>
-                              <CartPaypalButtons />
-                              <div className="text-right mt-2">
-                                <button
-                                  onClick={() => setShowPayPal(false)}
-                                  className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-md text-sm"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="flex gap-2 justify-end items-center">
-                          <button
-                            onClick={resetPaymentState}
-                            className="bg-red-600 hover:bg-red-500 mt-4 px-3 sm:px-4 py-2 rounded-lg transition-all text-sm"
-                            title="Reset payment state if stuck"
-                          >
-                            Reset Payment
-                          </button>
-                          <button
-                            onClick={handleGenerateBill}
-                            className="bg-emerald-600 hover:bg-emerald-500 mt-4 px-4 sm:px-6 py-2 rounded-lg transition-all text-sm sm:text-base"
-                          >
-                            <DollarSign size={14} className="inline-block mr-2" />
-                            Generate Bill ✅
-                          </button>
-                        </div>
-                      )}
+                      {/* Generate Bill button - no payment required upfront */}
+                      <div className="flex gap-2 justify-end items-center">
+                        <button
+                          onClick={handleGenerateBill}
+                          className="bg-emerald-600 hover:bg-emerald-500 mt-4 px-4 sm:px-6 py-2 rounded-lg transition-all text-sm sm:text-base"
+                        >
+                          <DollarSign size={14} className="inline-block mr-2" />
+                          Generate Bill
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -734,7 +805,7 @@ const Billing = () => {
                     <th className="py-2 px-2 sm:px-3">Customer</th>
                     <th className="py-2 px-2 sm:px-3">Total</th>
                     <th className="py-2 px-2 sm:px-3">Date</th>
-                    <th className="py-2 px-2 sm:px-3">Paid</th>
+                    <th className="py-2 px-2 sm:px-3">Status</th>
                     <th className="py-2 px-2 sm:px-3">Actions</th>
                   </tr>
                 </thead>
@@ -749,9 +820,11 @@ const Billing = () => {
                       </td>
                       <td className="py-2 px-2 sm:px-3 text-xs sm:text-sm">
                         {bill.payment_status === "paid" ? (
-                          <span className="px-2 py-1 rounded bg-emerald-700 text-white text-xs">Paid</span>
+                          <span className="px-2 py-1 rounded bg-emerald-700 text-white text-xs">🟢 Paid</span>
+                        ) : bill.payment_status === "failed" ? (
+                          <span className="px-2 py-1 rounded bg-red-700 text-white text-xs">🔴 Failed</span>
                         ) : (
-                          <span className="px-2 py-1 rounded bg-yellow-700 text-white text-xs">Pending</span>
+                          <span className="px-2 py-1 rounded bg-yellow-700 text-white text-xs">🟠 Pending Payment</span>
                         )}
                       </td>
 
@@ -766,8 +839,15 @@ const Billing = () => {
                               <Download size={14} />
                               {downloadingId === bill.id ? `${Math.round(progress)}%` : "Invoice"}
                             </button>
+                          ) : bill.payment_status === "pending" ? (
+                            <button
+                              onClick={() => openPaymentModal(bill)}
+                              className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs transition-all"
+                            >
+                              Proceed to Payment
+                            </button>
                           ) : (
-                            <div>{handlePayExistingBill(bill)}</div>
+                            <span className="text-red-400 text-xs">Payment Failed</span>
                           )}
                         </div>
                       </td>
