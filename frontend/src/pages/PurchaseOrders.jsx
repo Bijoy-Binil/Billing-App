@@ -17,6 +17,8 @@ const PurchaseOrders = () => {
     supplier: "",
     products: [{ product: "", quantity: 1, cost_price: 0 }],
   });
+  const [progress, setProgress] = useState(0);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const baseUrl = "http://127.0.0.1:8000/api/";
   const token = localStorage.getItem("accessToken");
@@ -121,11 +123,44 @@ const handleSubmit = async (e) => {
 };
 
   const handleDownloadInvoice = async (purchase_id) => {
+    setDownloadingId(purchase_id);
+    setProgress(0);
+
     try {
+      toast.info("Generating & downloading invoice... ⏳");
+
+      // Simulate "generation" phase (0-70%) – mimics backend work
+      const simulateGeneration = () => new Promise((resolve) => {
+        let simProgress = 0;
+        const interval = setInterval(() => {
+          simProgress += Math.random() * 10; // Random for realism
+          if (simProgress >= 70) {
+            simProgress = 70;
+            clearInterval(interval);
+            resolve();
+          }
+          setProgress(simProgress);
+        }, 100); // Update every 100ms
+      });
+
+      await simulateGeneration();
+
+      // Real download (70-100%) – Axios progress if available
       const res = await axios.get(
         `${baseUrl}purchase-orders/${purchase_id}/invoice/`,
-        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+        { 
+          headers: { Authorization: `Bearer ${token}` }, 
+          responseType: "blob",
+          onDownloadProgress: (event) => {
+            if (event.total) {
+              const percent = 70 + Math.round((event.loaded * 30) / event.total); // Scale to 70-100%
+              setProgress(Math.min(percent, 100));
+            }
+          }
+        }
       );
+
+      // Convert to blob and trigger download
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -135,10 +170,16 @@ const handleSubmit = async (e) => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      setProgress(100); // Ensure 100%
       toast.success("Invoice downloaded ✅");
     } catch (err) {
       console.error("Error downloading invoice:", err);
       toast.error("Failed to download invoice ❌");
+    } finally {
+      setTimeout(() => {
+        setProgress(0);
+        setDownloadingId(null);
+      }, 1000); // Brief "complete" state
     }
   };
 
@@ -264,9 +305,21 @@ const handleSubmit = async (e) => {
           <button
             onClick={() => handleDownloadInvoice(po.id)}
             className="bg-blue-900 cursor-pointer mt-3 hover:bg-blue-800 px-3 py-1 rounded-xl text-sm transition-all"
+            disabled={downloadingId === po.id}
           >
-            Download
+            {downloadingId === po.id ? "Downloading..." : "Download"}
           </button>
+          {downloadingId === po.id && (
+            <div className="mt-2 w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-emerald-500 transition-all duration-300 ease-linear"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          )}
+          {downloadingId === po.id && progress === 100 && (
+            <p className="text-emerald-400 text-xs mt-1">✅ Download Complete</p>
+          )}
         </td>
       </tr>
     ))

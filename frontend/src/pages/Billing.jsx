@@ -17,7 +17,8 @@ const Billing = () => {
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showPayPal, setShowPayPal] = useState(false);
-
+  const [progress, setProgress] = useState(0);
+  const [downloadingId, setDownloadingId] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
   const [paypalOrderId, setPaypalOrderId] = useState(null);
 
@@ -62,28 +63,64 @@ const Billing = () => {
   }, [token]);
 
   // 📄 Invoice Download
-  const handleDownloadInvoice = async (billId) => {
-    try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/billing/${billId}/invoice/`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `invoice_${billId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success("Invoice downloaded ✅");
-    } catch (err) {
-      console.error("Error downloading invoice:", err);
-      toast.error("Failed to download invoice ❌");
-    }
-  };
+// 📄 Invoice Download (Updated with simulation)
+const handleDownloadInvoice = async (billId) => {
+  setDownloadingId(billId);
+  setProgress(0);
 
+  try {
+    toast.info("Generating & downloading invoice... ⏳");
+
+    // Simulate "generation" phase (0-70%) – mimics backend work
+    const simulateGeneration = () => new Promise((resolve) => {
+      let simProgress = 0;
+      const interval = setInterval(() => {
+        simProgress += Math.random() * 10; // Random for realism
+        if (simProgress >= 70) {
+          simProgress = 70;
+          clearInterval(interval);
+          resolve();
+        }
+        setProgress(simProgress);
+      }, 100); // Update every 100ms
+    });
+
+    await simulateGeneration();
+
+    // Real download (70-100%) – Axios progress if available
+    const res = await axios.get(`http://127.0.0.1:8000/api/billing/${billId}/invoice/`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+      onDownloadProgress: (event) => {
+        if (event.total) {
+          const percent = 70 + Math.round((event.loaded * 30) / event.total); // Scale to 70-100%
+          setProgress(Math.min(percent, 100));
+        }
+      },
+    });
+
+    // Trigger download
+    const blob = new Blob([res.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `invoice_${billId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    setProgress(100); // Ensure 100%
+    toast.success("Invoice downloaded ✅");
+  } catch (err) {
+    console.error("Error downloading invoice:", err);
+    toast.error("Failed to download invoice ❌");
+  } finally {
+    setTimeout(() => {
+      setProgress(0);
+      setDownloadingId(null);
+    }, 1000); // Brief "complete" state
+  }
+};
   // 🛒 Cart
   const addToCart = (product) => {
     const exists = cart.find((item) => item.id === product.id);
@@ -191,8 +228,6 @@ const Billing = () => {
         await axios.patch(
           `${import.meta.env.VITE_API_BASE_URL}/payments/${paypalOrderId}/link_bill/`,
           { bill_id: billRes.data.id },
-          { headers: { Authorization: `Bearer ${token}` } },
-
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -373,9 +408,9 @@ const Billing = () => {
                   {!showPayPal ? (
                     <button
                       onClick={() => {
-  speakTotal(total.toFixed(2));
-  setTimeout(() => setShowPayPal(true), 5000); // wait 2 seconds
-}}
+                        speakTotal(total.toFixed(2));
+                        setTimeout(() => setShowPayPal(true), 5000); // wait 5 seconds
+                      }}
                       className="bg-blue-600 hover:bg-blue-500 mt-4 px-6 py-2 rounded-xl transition-all"
                     >
                       Go to Payment 💳
@@ -486,6 +521,17 @@ const Billing = () => {
                       >
                         Download
                       </button>
+                      {downloadingId === b.id && (
+                        <div className="mt-2 w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-2 bg-emerald-500 transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      )}
+                      {downloadingId === b.id && progress === 100 && (
+                        <p className="text-emerald-400 text-xs mt-1">✅ Download Complete</p>
+                      )}
                     </td>
                   </tr>
                 ))}
