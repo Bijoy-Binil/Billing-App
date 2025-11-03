@@ -16,6 +16,8 @@ const API_SALES = "http://127.0.0.1:8000/api/billings/";
 const SalesReport = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
@@ -41,53 +43,62 @@ const SalesReport = () => {
     };
   }, [token]);
 
-  // Aggregate daily totals for 30 days
+  // ✅ Filter bills based on date range
+  const filteredBills = useMemo(() => {
+    if (!fromDate && !toDate) return bills;
+    return bills.filter((b) => {
+      const billDate = new Date(b.created_at);
+      const from = fromDate ? new Date(fromDate) : new Date("2000-01-01");
+      const to = toDate ? new Date(toDate) : new Date();
+      return billDate >= from && billDate <= to;
+    });
+  }, [bills, fromDate, toDate]);
+
+  // ✅ Chart Data
   const chartData = useMemo(() => {
-    if (!bills.length) return [];
+    if (!filteredBills.length) return [];
     const map = {};
-    const now = new Date();
-    const days = 30;
 
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      const key = d.toLocaleDateString("en-GB");
-      map[key] = 0;
-    }
-
-    bills.forEach((b) => {
+    filteredBills.forEach((b) => {
       const dateStr = new Date(b.created_at).toLocaleDateString("en-GB");
       const total = Number(b.total) || 0;
-      if (map.hasOwnProperty(dateStr)) map[dateStr] += total;
+      map[dateStr] = (map[dateStr] || 0) + total;
     });
 
-    return Object.keys(map).map((k) => ({
-      date: k,
-      total: Number(map[k].toFixed(2)),
-    }));
-  }, [bills]);
+    return Object.keys(map)
+      .sort(
+        (a, b) =>
+          new Date(a.split("/").reverse().join("-")) -
+          new Date(b.split("/").reverse().join("-"))
+      )
+      .map((k) => ({
+        date: k,
+        total: Number(map[k].toFixed(2)),
+      }));
+  }, [filteredBills]);
 
+  // ✅ Stats
   const todayTotal = useMemo(() => {
     const today = new Date().toLocaleDateString("en-GB");
-    return bills.reduce(
+    return filteredBills.reduce(
       (s, b) =>
         new Date(b.created_at).toLocaleDateString("en-GB") === today
           ? s + (Number(b.total) || 0)
           : s,
       0
     );
-  }, [bills]);
+  }, [filteredBills]);
 
   const monthTotal = useMemo(() => {
     const curMonth = new Date().getMonth();
     const curYear = new Date().getFullYear();
-    return bills.reduce((s, b) => {
+    return filteredBills.reduce((s, b) => {
       const d = new Date(b.created_at);
       return d.getMonth() === curMonth && d.getFullYear() === curYear
         ? s + (Number(b.total) || 0)
         : s;
     }, 0);
-  }, [bills]);
+  }, [filteredBills]);
 
   return (
     <motion.div
@@ -104,11 +115,33 @@ const SalesReport = () => {
         📊 Sales Report Dashboard
       </motion.h1>
 
+      {/* ✅ Date Range Filter */}
+      <div className="flex flex-wrap justify-center gap-4 mb-8">
+        <div className="flex flex-col">
+          <label className="text-sm text-gray-400 mb-1">From</label>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-700 focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label className="text-sm text-gray-400 mb-1">To</label>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-700 focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard title="Today's Sales" value={`₹${todayTotal.toFixed(2)}`} />
         <StatCard title="This Month" value={`₹${monthTotal.toFixed(2)}`} />
-        <StatCard title="Total Bills" value={`${bills.length}`} />
+        <StatCard title="Total Bills" value={`${filteredBills.length}`} />
       </div>
 
       {/* Line Chart */}
@@ -118,7 +151,7 @@ const SalesReport = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <h2 className="text-xl font-semibold text-emerald-400 mb-4">
-          📈 Last 30 Days — Daily Totals
+          📈 Sales Trend ({fromDate || "Start"} → {toDate || "Now"})
         </h2>
         <div style={{ height: 320 }}>
           {loading ? (
@@ -159,7 +192,7 @@ const SalesReport = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <h3 className="text-xl font-semibold text-emerald-400 mb-4">
-          🧾 Recent Bills
+          🧾 Recent Bills ({filteredBills.length})
         </h3>
         <div className="overflow-x-auto">
           <table className="min-w-[640px] w-full text-left">
@@ -172,17 +205,14 @@ const SalesReport = () => {
               </tr>
             </thead>
             <tbody>
-              {bills.length === 0 ? (
+              {filteredBills.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="py-6 text-center text-gray-400"
-                  >
-                    No bills yet
+                  <td colSpan={4} className="py-6 text-center text-gray-400">
+                    No bills in selected range
                   </td>
                 </tr>
               ) : (
-                bills
+                filteredBills
                   .slice(0, 12)
                   .map((b) => (
                     <tr
@@ -225,7 +255,6 @@ const StatCard = ({ title, value }) => (
   </motion.div>
 );
 
-// Loading shimmer
 const LoadingShimmer = () => (
   <div className="w-full h-full flex items-center justify-center">
     <div className="w-2/3 h-4 bg-gray-700 rounded-full animate-pulse" />

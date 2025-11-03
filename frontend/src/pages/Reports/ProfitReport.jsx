@@ -18,6 +18,8 @@ const ProfitReport = () => {
   const [bills, setBills] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
@@ -51,14 +53,30 @@ const ProfitReport = () => {
     return () => (mounted = false);
   }, [token]);
 
-  // Product ID → cost lookup map
+  // Product ID → cost lookup
   const productMap = useMemo(() => {
     const map = {};
     products.forEach((p) => {
-      map[p.id] = { cost_price: Number(p.cost_price || p.cost || 0), name: p.name };
+      map[p.id] = {
+        cost_price: Number(p.cost_price || p.cost || 0),
+        name: p.name,
+      };
     });
     return map;
   }, [products]);
+
+  // Apply date range filter
+  const filteredBills = useMemo(() => {
+    if (!startDate && !endDate) return bills;
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    return bills.filter((b) => {
+      const d = new Date(b.created_at);
+      if (start && d < start) return false;
+      if (end && d > end) return false;
+      return true;
+    });
+  }, [bills, startDate, endDate]);
 
   // Profit computation
   const { dailyProfit, monthlyProfit, totalProfit, chartData } = useMemo(() => {
@@ -67,14 +85,14 @@ const ProfitReport = () => {
     let total = 0;
     const cd = [];
 
-    bills.forEach((b) => {
+    filteredBills.forEach((b) => {
       const date = new Date(b.created_at);
       const dateKey = date.toLocaleDateString("en-GB");
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
       let billProfit = 0;
 
       (b.items || []).forEach((it) => {
-        const qty = Number(it.quantity ?? it.qty ?? 0);
+        const qty = Number(it.quantity ?? 0);
         const price = Number(it.price || 0);
         let cost = 0;
 
@@ -97,7 +115,7 @@ const ProfitReport = () => {
     keys.forEach((k) => cd.push({ date: k, profit: Number(daily[k].toFixed(2)) }));
 
     return { dailyProfit: daily, monthlyProfit: monthly, totalProfit: total, chartData: cd };
-  }, [bills, productMap]);
+  }, [filteredBills, productMap]);
 
   return (
     <motion.div
@@ -113,6 +131,28 @@ const ProfitReport = () => {
       >
         💹 Profit Report Dashboard
       </motion.h1>
+
+      {/* Date Range Filter */}
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+        <div>
+          <label className="text-gray-300 text-sm mr-2">From:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-gray-200"
+          />
+        </div>
+        <div>
+          <label className="text-gray-300 text-sm mr-2">To:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-gray-200"
+          />
+        </div>
+      </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -212,7 +252,7 @@ const ProfitReport = () => {
   );
 };
 
-// Reusable Stat Card with animation
+// Stat card
 const StatCard = ({ title, value }) => (
   <motion.div
     whileHover={{ scale: 1.03, boxShadow: "0 0 15px rgba(16,185,129,0.3)" }}
@@ -225,7 +265,7 @@ const StatCard = ({ title, value }) => (
   </motion.div>
 );
 
-// Animated shimmer for loading state
+// Loading shimmer
 const LoadingShimmer = () => (
   <div className="w-full h-full flex items-center justify-center">
     <div className="w-2/3 h-4 bg-gray-700 rounded-full animate-pulse" />
