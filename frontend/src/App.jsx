@@ -12,6 +12,8 @@ import Stock from "./pages/Stock";
 import ProfitReport from "./pages/Reports/ProfitReport";
 import SalesReport from "./pages/Reports/SalesReport";
 import StockReport from "./pages/Reports/StockReport";
+import StockBillsReport from "./pages/Reports/StockBillsReport";
+import PurchaseReport from "./pages/Reports/PurchaseReport";
 import AuthProvider from "./AuthProvider";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
@@ -65,6 +67,8 @@ const App = () => (
             <Route path="/profit-report" element={<ProfitReport />} />
             <Route path="/sales-report" element={<SalesReport />} />
             <Route path="/stock-report" element={<StockReport />} />
+            <Route path="/stock-bills-report" element={<StockBillsReport />} />
+            <Route path="/purchase-report" element={<PurchaseReport />} />
           </Route>
         </Routes>
       </AuthProvider>

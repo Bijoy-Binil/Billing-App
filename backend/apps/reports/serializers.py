@@ -38,3 +38,20 @@ class ManufacturerStockSerializer(serializers.Serializer):
     manufacturer = serializers.CharField()
     total_products = serializers.IntegerField()
     total_stock_value = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+class StockBillsReportSerializer(serializers.Serializer):
+    bill_id = serializers.CharField()
+    bill_date = serializers.DateTimeField()
+    product = serializers.CharField()
+    quantity_sold = serializers.IntegerField()
+    stock_before = serializers.IntegerField()
+    stock_after = serializers.IntegerField()
+    
+class PurchaseReportSerializer(serializers.Serializer):
+    purchase_id = serializers.CharField()
+    supplier = serializers.CharField()
+    product = serializers.CharField()
+    quantity = serializers.IntegerField()
+    cost_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total = serializers.DecimalField(max_digits=10, decimal_places=2)
+    created_at = serializers.DateTimeField()

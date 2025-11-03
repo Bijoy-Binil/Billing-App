@@ -1,13 +1,14 @@
 # apps/reports/views.py
 
 from datetime import date
-from django.db.models import Sum, F, Count
+from django.db.models import Sum, F, Count, Q
 from django.db.models.functions import TruncDate, TruncMonth
 from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from apps.billing.models import Bill, BillItem
 from apps.products.models import Product
+from apps.suppliers.models import PurchaseOrder, Supplier
 from .serializers import (
     DailyReportSerializer,
     MonthlyReportSerializer,
@@ -16,6 +17,8 @@ from .serializers import (
     StockStatementSerializer,
     MarginReportSerializer,
     ManufacturerStockSerializer,
+    StockBillsReportSerializer,
+    PurchaseReportSerializer,
 )
 
 # ✅ Daily Report
@@ -157,3 +160,90 @@ class ManufacturerStockReportView(APIView):
         )
         serializer = ManufacturerStockSerializer(qs, many=True)
         return Response(serializer.data)
+
+
+# ✅ Stock Bills Report
+class StockBillsReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        # ✅ Safer query
+        bill_items_query = BillItem.objects.select_related("bill", "product").exclude(product=None)
+
+        if start_date and end_date:
+            bill_items_query = bill_items_query.filter(
+                bill__created_at__date__range=[start_date, end_date]
+            )
+
+        data = []
+        for item in bill_items_query:
+            # ✅ Safely handle missing product or bill
+            product = item.product
+            bill = item.bill
+            if not product or not bill:
+                continue
+
+            stock_after = int(product.quantity or 0)
+            stock_before = stock_after + int(item.quantity or 0)
+
+            data.append({
+                "bill_id": bill.bill_id,
+                "bill_date": bill.created_at,
+                "product": product.name,
+                "quantity_sold": int(item.quantity or 0),
+                "stock_before": stock_before,
+                "stock_after": stock_after,
+            })
+
+        serializer = StockBillsReportSerializer(data, many=True)
+        return Response(serializer.data)
+# ✅ Purchase Report
+class PurchaseReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        supplier_id = request.query_params.get("supplier_id")
+        product_id = request.query_params.get("product_id")
+        
+        # Start with all purchase orders
+        purchase_orders = PurchaseOrder.objects.select_related('supplier', 'product')
+        
+        # Apply filters if provided
+        if start_date and end_date:
+            purchase_orders = purchase_orders.filter(created_at__date__range=[start_date, end_date])
+        if supplier_id:
+            purchase_orders = purchase_orders.filter(supplier_id=supplier_id)
+        if product_id:
+            purchase_orders = purchase_orders.filter(product_id=product_id)
+            
+        # Prepare data for serialization
+        data = []
+        for po in purchase_orders:
+            data.append({
+                'purchase_id': po.purchase_id,
+                'supplier': po.supplier.name,
+                'product': po.product.name,
+                'quantity': po.quantity,
+                'cost_price': po.cost_price,
+                'total': po.total,
+                'created_at': po.created_at,
+            })
+            
+        # Get summary data
+        total_purchases = sum(po.total for po in purchase_orders)
+        total_quantity = sum(po.quantity for po in purchase_orders)
+        
+        serializer = PurchaseReportSerializer(data, many=True)
+        return Response({
+            'purchases': serializer.data,
+            'summary': {
+                'total_purchases': total_purchases,
+                'total_quantity': total_quantity,
+                'purchase_count': purchase_orders.count(),
+            }
+        })

@@ -23,6 +23,8 @@ const menuItems = [
   { name: "SalesReports", icon: BarChart3, path: "/sales-report" },
   { name: "ProfitReports", icon: BarChart3, path: "/profit-report" },
   { name: "StockReports", icon: BarChart3, path: "/stock-report" },
+  { name: "StockBillsReports", icon: BarChart3, path: "/stock-bills-report" },
+  { name: "PurchaseReports", icon: BarChart3, path: "/purchase-report" },
   { name: "OverallReports", icon: BarChart3, path: "/reports" },
 ];
 
