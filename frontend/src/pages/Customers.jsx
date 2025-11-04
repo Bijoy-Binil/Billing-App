@@ -90,7 +90,7 @@ const Customers = () => {
         });
         toast.success("Customer updated successfully");
       } else {
-        await axios.post(`${baseUrl}customer/`, formData, {
+        await axios.post(`${baseUrl}customers/`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success("Customer added successfully");
@@ -147,16 +147,14 @@ const Customers = () => {
           </p>
         </div>
 
-        {userRole === "manager" && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={openAddModal}
-            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-900/20 text-sm sm:text-base"
-          >
-            <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" /> Add Customer
-          </motion.button>
-        )}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={openAddModal}
+          className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-900/20 text-sm sm:text-base"
+        >
+          <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" /> Add Customer
+        </motion.button>
       </motion.div>
 
       {/* Search */}
@@ -188,11 +186,9 @@ const Customers = () => {
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-emerald-400 uppercase">
                   Email
                 </th>
-                {userRole === "manager" && (
-                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase">
-                    Actions
-                  </th>
-                )}
+                <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-emerald-400 uppercase">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -223,28 +219,26 @@ const Customers = () => {
                     <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-300">
                       {c.email || "—"}
                     </td>
-                    {userRole === "manager" && (
-                      <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
-                        <button
-                          onClick={() => handleView(c)}
-                          className="text-cyan-400 hover:text-cyan-300 mr-2 sm:mr-3"
-                        >
-                          <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                        <button
-                          onClick={() => openEditModal(c)}
-                          className="text-emerald-400 hover:text-emerald-300 mr-2 sm:mr-3"
-                        >
-                          <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(c.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                      </td>
-                    )}
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                      <button
+                        onClick={() => handleView(c)}
+                        className="text-cyan-400 hover:text-cyan-300 mr-2 sm:mr-3"
+                      >
+                        <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </button>
+                      <button
+                        onClick={() => openEditModal(c)}
+                        className="text-emerald-400 hover:text-emerald-300 mr-2 sm:mr-3"
+                      >
+                        <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

@@ -787,8 +787,7 @@ const handleDownloadInvoice = async (billId) => {
               <tbody className="divide-y divide-gray-700/50">
                 {bills.map((bill) => (
                   <tr key={bill.id} className="hover:bg-gray-700/30 transition-colors">
-                    <td className="py-3 px-3 sm:px-4 font-medium text-white text-sm">#{bill.id}</td>
-                    <td className="py-3 px-3 sm:px-4 text-gray-300 text-sm">
+<td className="py-3 px-3 sm:px-4 font-medium text-white text-sm">{bill.bill_id}</td>                    <td className="py-3 px-3 sm:px-4 text-gray-300 text-sm">
                       {bill.customer_name || "Walk-in Customer"}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-right font-semibold text-white text-sm">
