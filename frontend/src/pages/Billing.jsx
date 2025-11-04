@@ -48,7 +48,7 @@ const Billing = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-
+console.log("products==>",products)
   // Voice confirmation function
   const speakAmount = (amount, billId = null) => {
     if ('speechSynthesis' in window) {
@@ -678,7 +678,7 @@ const Billing = () => {
                       <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors text-sm sm:text-base line-clamp-2">
                         {product.name}
                       </h3>
-                      <p className="text-gray-400 text-xs sm:text-sm">{product.category}</p>
+                      <p className="text-gray-400 text-xs sm:text-sm">{product.category_detail.name}</p>
                       <div className="flex justify-between items-center">
                         <span className="text-base sm:text-lg font-bold text-emerald-400">
                           ₹{parseFloat(product.price).toFixed(2)}

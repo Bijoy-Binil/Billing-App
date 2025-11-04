@@ -349,62 +349,111 @@ const PurchaseReport = () => {
         </motion.div>
       </div>
 
-      {/* Purchase Table */}
+      {/* Purchase Table - Enhanced with better spacing */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
         className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
       >
-        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-emerald-400">Purchase Orders</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+          <h2 className="text-lg sm:text-xl font-semibold text-emerald-400">Purchase Orders</h2>
+          <div className="text-xs sm:text-sm text-gray-400 bg-gray-700/50 px-3 py-1 rounded-full">
+            Total: {purchases.length} orders
+          </div>
+        </div>
         
         {loading ? (
           <LoadingShimmer />
         ) : purchases.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-gray-300 min-w-[600px]">
+            <table className="w-full text-gray-300 min-w-[800px]">
               <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Purchase ID</th>
-                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Date</th>
-                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Supplier</th>
-                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-left text-xs sm:text-sm">Product</th>
-                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-right text-xs sm:text-sm">Quantity</th>
-                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-right text-xs sm:text-sm">Cost Price</th>
-                  <th className="py-2 px-2 sm:py-3 sm:px-4 text-right text-xs sm:text-sm">Total</th>
+                <tr className="border-b-2 border-emerald-500/30">
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-emerald-400 bg-gray-700/30 rounded-l-lg">Purchase ID</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-emerald-400 bg-gray-700/30">Date</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-emerald-400 bg-gray-700/30">Supplier</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-emerald-400 bg-gray-700/30">Product</th>
+                  <th className="py-3 px-4 text-right text-sm font-semibold text-emerald-400 bg-gray-700/30">Quantity</th>
+                  <th className="py-3 px-4 text-right text-sm font-semibold text-emerald-400 bg-gray-700/30">Cost Price</th>
+                  <th className="py-3 px-4 text-right text-sm font-semibold text-emerald-400 bg-gray-700/30 rounded-r-lg">Total Amount</th>
                 </tr>
               </thead>
-              <tbody>
-                {purchases.map((purchase) => (
+              <tbody className="divide-y divide-gray-700/50">
+                {purchases.map((purchase, index) => (
                   <tr 
                     key={purchase.purchase_id}
-                    className="border-b border-gray-700 hover:bg-gray-700/30 text-xs sm:text-sm"
+                    className="hover:bg-gray-700/30 transition-colors duration-200 group"
                   >
-                    <td className="py-2 px-2 sm:py-3 sm:px-4">{purchase.purchase_id}</td>
-                    <td className="py-2 px-2 sm:py-3 sm:px-4">
-                      {new Date(purchase.created_at).toLocaleDateString()}
+                    <td className="py-4 px-4 text-sm font-medium text-white group-hover:text-emerald-300 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        {purchase.purchase_id}
+                      </div>
                     </td>
-                    <td className="py-2 px-2 sm:py-3 sm:px-4 truncate max-w-[100px] sm:max-w-none">{purchase.supplier}</td>
-                    <td className="py-2 px-2 sm:py-3 sm:px-4 truncate max-w-[100px] sm:max-w-none">{purchase.product}</td>
-                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">{purchase.quantity}</td>
-                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">₹{parseFloat(purchase.cost_price).toFixed(2)}</td>
-                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">₹{parseFloat(purchase.total).toFixed(2)}</td>
+                    <td className="py-4 px-4 text-sm">
+                      <div className="flex flex-col">
+                        <span className="text-gray-200">{new Date(purchase.created_at).toLocaleDateString()}</span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(purchase.created_at).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="max-w-[180px]">
+                        <span className="text-sm text-gray-200 font-medium block truncate">
+                          {purchase.supplier}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="max-w-[200px]">
+                        <span className="text-sm text-gray-200 block truncate">
+                          {purchase.product}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <span className="inline-block bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-sm font-medium min-w-[60px]">
+                        {purchase.quantity}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-right text-sm font-medium text-gray-200">
+                      ₹{parseFloat(purchase.cost_price).toFixed(2)}
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <span className="text-sm font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">
+                        ₹{parseFloat(purchase.total).toFixed(2)}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t border-gray-700 font-semibold text-xs sm:text-sm">
-                  <td colSpan="4" className="py-2 px-2 sm:py-3 sm:px-4 text-right">Total:</td>
-                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">{summary.total_quantity}</td>
-                  <td className="py-2 px-2 sm:py-3 sm:px-4"></td>
-                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">₹{summary.total_purchases.toFixed(2)}</td>
+                <tr className="border-t-2 border-emerald-500/30 bg-gray-700/40">
+                  <td colSpan="4" className="py-4 px-4 text-right text-sm font-semibold text-gray-300">
+                    Grand Total:
+                  </td>
+                  <td className="py-4 px-4 text-right">
+                    <span className="text-sm font-bold text-blue-400 bg-blue-500/20 px-2 py-1 rounded-full">
+                      {summary.total_quantity}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4"></td>
+                  <td className="py-4 px-4 text-right">
+                    <span className="text-lg font-bold text-emerald-400 bg-emerald-500/20 px-4 py-2 rounded-full">
+                      ₹{summary.total_purchases.toFixed(2)}
+                    </span>
+                  </td>
                 </tr>
               </tfoot>
             </table>
           </div>
         ) : (
-          <div className="text-center py-6 sm:py-8 text-gray-400 text-sm sm:text-base">
-            No purchase data available for the selected filters
+          <div className="text-center py-12 text-gray-400">
+            <Package className="w-16 h-16 mx-auto mb-4 text-gray-500" />
+            <p className="text-lg font-medium mb-2">No purchase data available</p>
+            <p className="text-sm">Try adjusting your filters or check back later</p>
           </div>
         )}
       </motion.div>
