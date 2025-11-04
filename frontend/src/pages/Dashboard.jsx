@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AuthStatus from "../components/AuthStatus";
 
 const Dashboard = () => {
   const [bills, setBills] = useState([]);
@@ -113,7 +114,6 @@ const Dashboard = () => {
         draggable
         theme="dark"
       />
-      
       {/* Background Emerald Glow */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-1/3 left-1/4 w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-emerald-600/30 blur-[100px] sm:blur-[120px] lg:blur-[150px] rounded-full opacity-40 animate-pulse" />
@@ -128,6 +128,7 @@ const Dashboard = () => {
           className="mb-4 sm:mb-6"
         >
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 drop-shadow-lg">
+
             🧾 Dashboard Overview
           </h1>
           <p className="text-gray-400 text-sm sm:text-base mt-1">

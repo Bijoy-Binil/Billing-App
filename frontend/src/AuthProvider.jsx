@@ -12,6 +12,7 @@ const AuthProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(localStorage.getItem("refresh"));
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("isLoggedIn"));
   const userName = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
   const userId = localStorage.getItem("userId");
   const userEmail = localStorage.getItem("userEmail");
   const userJoined = localStorage.getItem("userJoined");
@@ -60,6 +61,7 @@ const AuthProvider = ({ children }) => {
         isLoggedIn,
         userName,
         userEmail,
+        role,
         userId,
         userJoined,
         handleLogout,

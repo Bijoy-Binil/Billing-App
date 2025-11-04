@@ -19,7 +19,8 @@ const role = localStorage.getItem("role"); // "manager" or "cashier"
           <div className="text-sm text-gray-300">
          
             <span className="font-semibold text-emerald-400 drop-shadow-[0_0_4px_#34d399]">
-             {userName + " (" + role.toUpperCase() + ")"}
+             {userName.replace(/([A-Z])/g, ' $1') + ' (' + role.toUpperCase() + ')'}
+
 
             </span>
           </div>

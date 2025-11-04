@@ -6,7 +6,9 @@ const BillsTable = ({ bills = [] }) => {
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     return bills.filter((bill) => bill.created_at.startsWith(today));
   }, [bills]);
-console.log("bills==>",bills)
+
+  console.log("bills==>", bills);
+
   return (
     <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-2xl">
       <div className="text-white font-semibold mb-3">Today's Bills</div>
@@ -31,11 +33,11 @@ console.log("bills==>",bills)
                 </td>
               </tr>
             ) : (
-              todayBills.slice(0,10).map((b,idx) => (
+              todayBills.slice(0, 10).map((b, idx) => (
                 <tr key={idx} className="border-t border-gray-700">
                   <td className="py-3 text-sm text-white">{b.bill_id}</td>
                   <td className="py-3 text-sm text-gray-200">
-                    {b.cashier.first_name
+                    {b.cashier && b.cashier.first_name
                       ? `${b.cashier.first_name} ${b.cashier.last_name || ""}`
                       : "—"}
                   </td>

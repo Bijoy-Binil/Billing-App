@@ -155,56 +155,80 @@ const Billing = () => {
   };
 
   // Invoice download
-  const handleDownloadInvoice = async (billId) => {
-    setDownloadingId(billId);
-    setProgress(0);
-    try {
-      toast.info("Generating invoice...");
-      await new Promise((resolve) => {
-        let sim = 0;
-        const t = setInterval(() => {
-          sim += Math.random() * 12;
-          setProgress(Math.min(sim, 70));
-          if (sim >= 70) {
-            clearInterval(t);
-            resolve();
-          }
-        }, 90);
-      });
 
-      const res = await axios.get(`${API_BILLS}${billId}/invoice/`, {
-        headers: authHeaders,
-        responseType: "blob",
-        onDownloadProgress: (ev) => {
-          if (ev.total) {
-            const pct = 70 + Math.round((ev.loaded * 30) / ev.total);
-            setProgress(Math.min(pct, 100));
-          }
-        },
-      });
+const handleDownloadInvoice = async (billId) => {
+  setDownloadingId(billId);
+  setProgress(0);
+  
+  try {
+    toast.info("Generating invoice...");
+    
+    // Improved progress simulation with smoother increments
+    await new Promise((resolve) => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        // More realistic progress simulation
+        progress += Math.random() * 8 + 4; // 4-12% increments
+        setProgress(Math.min(Math.floor(progress), 75)); // Floor to remove decimals
+        
+        if (progress >= 75) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 120); // Slightly slower for better UX
+    });
 
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `invoice_${billId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success("Invoice downloaded ✅");
-      await fetchBills();
-    } catch (err) {
-      console.error("Invoice download error:", err);
-      toast.error("Failed to download invoice ❌");
-    } finally {
+    const res = await axios.get(`${API_BILLS}${billId}/invoice/`, {
+      headers: authHeaders,
+      responseType: "blob",
+      onDownloadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const loaded = progressEvent.loaded;
+          const total = progressEvent.total;
+          const downloadProgress = 75 + Math.floor((loaded * 25) / total);
+          setProgress(Math.min(downloadProgress, 100));
+        }
+      },
+    });
+
+    // Create and trigger download
+    const blob = new Blob([res.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `invoice_${billId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    toast.success("Invoice downloaded successfully! 📄");
+    await fetchBills();
+    
+  } catch (err) {
+    console.error("Invoice download error:", err);
+    
+    if (err.response?.status === 404) {
+      toast.error("Invoice not found for this bill");
+    } else if (err.response?.status === 500) {
+      toast.error("Server error while generating invoice");
+    } else {
+      toast.error("Failed to download invoice");
+    }
+    
+  } finally {
+    // Smooth completion with brief success state
+    if (progress === 100) {
       setTimeout(() => {
         setProgress(0);
         setDownloadingId(null);
-      }, 800);
+      }, 600);
+    } else {
+      setProgress(0);
+      setDownloadingId(null);
     }
-  };
-
+  }
+};
   // Create bill
   const handleGenerateBill = async () => {
     if (role !== "cashier") {
