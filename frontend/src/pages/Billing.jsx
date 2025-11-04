@@ -10,6 +10,7 @@ import {
   Download,
   Calendar,
   DollarSign,
+  Volume2,
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -43,8 +44,34 @@ const Billing = () => {
   const [paypalOrderId, setPaypalOrderId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
+  const [contactAlreadyExist, setContactAlreadyExist] = useState("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+  // Voice confirmation function
+  const speakAmount = (amount, billId = null) => {
+    if ('speechSynthesis' in window) {
+      // Stop any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const speech = new SpeechSynthesisUtterance();
+      const message = billId 
+        ? `Payment initiated for Bill ${billId}. Total amount is ${amount} rupees.`
+        : `Total amount to pay is ${amount} rupees.`;
+      
+      speech.text = message;
+      speech.volume = 1;
+      speech.rate = 0.9;
+      speech.pitch = 1;
+      
+      speech.onstart = () => setIsSpeaking(true);
+      speech.onend = () => setIsSpeaking(false);
+      speech.onerror = () => setIsSpeaking(false);
+      
+      window.speechSynthesis.speak(speech);
+    }
+  };
 
   // Fetch functions
   const fetchProducts = async () => {
@@ -155,80 +182,80 @@ const Billing = () => {
   };
 
   // Invoice download
+  const handleDownloadInvoice = async (billId) => {
+    setDownloadingId(billId);
+    setProgress(0);
+    
+    try {
+      toast.info("Generating invoice...");
+      
+      // Improved progress simulation with smoother increments
+      await new Promise((resolve) => {
+        let progress = 0;
+        const interval = setInterval(() => {
+          // More realistic progress simulation
+          progress += Math.random() * 8 + 4; // 4-12% increments
+          setProgress(Math.min(Math.floor(progress), 75)); // Floor to remove decimals
+          
+          if (progress >= 75) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 120); // Slightly slower for better UX
+      });
 
-const handleDownloadInvoice = async (billId) => {
-  setDownloadingId(billId);
-  setProgress(0);
-  
-  try {
-    toast.info("Generating invoice...");
-    
-    // Improved progress simulation with smoother increments
-    await new Promise((resolve) => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        // More realistic progress simulation
-        progress += Math.random() * 8 + 4; // 4-12% increments
-        setProgress(Math.min(Math.floor(progress), 75)); // Floor to remove decimals
-        
-        if (progress >= 75) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 120); // Slightly slower for better UX
-    });
+      const res = await axios.get(`${API_BILLS}${billId}/invoice/`, {
+        headers: authHeaders,
+        responseType: "blob",
+        onDownloadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const loaded = progressEvent.loaded;
+            const total = progressEvent.total;
+            const downloadProgress = 75 + Math.floor((loaded * 25) / total);
+            setProgress(Math.min(downloadProgress, 100));
+          }
+        },
+      });
 
-    const res = await axios.get(`${API_BILLS}${billId}/invoice/`, {
-      headers: authHeaders,
-      responseType: "blob",
-      onDownloadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const loaded = progressEvent.loaded;
-          const total = progressEvent.total;
-          const downloadProgress = 75 + Math.floor((loaded * 25) / total);
-          setProgress(Math.min(downloadProgress, 100));
-        }
-      },
-    });
-
-    // Create and trigger download
-    const blob = new Blob([res.data], { type: "application/pdf" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `invoice_${billId}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    
-    toast.success("Invoice downloaded successfully! 📄");
-    await fetchBills();
-    
-  } catch (err) {
-    console.error("Invoice download error:", err);
-    
-    if (err.response?.status === 404) {
-      toast.error("Invoice not found for this bill");
-    } else if (err.response?.status === 500) {
-      toast.error("Server error while generating invoice");
-    } else {
-      toast.error("Failed to download invoice");
-    }
-    
-  } finally {
-    // Smooth completion with brief success state
-    if (progress === 100) {
-      setTimeout(() => {
+      // Create and trigger download
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `invoice_${billId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Invoice downloaded successfully! 📄");
+      await fetchBills();
+      
+    } catch (err) {
+      console.error("Invoice download error:", err);
+      
+      if (err.response?.status === 404) {
+        toast.error("Invoice not found for this bill");
+      } else if (err.response?.status === 500) {
+        toast.error("Server error while generating invoice");
+      } else {
+        toast.error("Failed to download invoice");
+      }
+      
+    } finally {
+      // Smooth completion with brief success state
+      if (progress === 100) {
+        setTimeout(() => {
+          setProgress(0);
+          setDownloadingId(null);
+        }, 600);
+      } else {
         setProgress(0);
         setDownloadingId(null);
-      }, 600);
-    } else {
-      setProgress(0);
-      setDownloadingId(null);
+      }
     }
-  }
-};
+  };
+
   // Create bill
   const handleGenerateBill = async () => {
     if (role !== "cashier") {
@@ -241,8 +268,19 @@ const handleDownloadInvoice = async (billId) => {
       let customerId = foundCustomer?.id;
       if (!customerId) {
         if (!customer.name?.trim()) return toast.warn("Enter new customer name");
-        const newCust = await axios.post(API_CUSTOMERS, customer, { headers: authHeaders });
-        customerId = newCust.data.id;
+        
+        // Check if customer with this contact number already exists
+        try {
+          const newCust = await axios.post(API_CUSTOMERS, customer, { headers: authHeaders });
+          customerId = newCust.data.id;
+        } catch (customerError) {
+          // Handle customer creation errors specifically
+          if (customerError.response?.data?.contact_number) {
+            toast.error(`Customer with contact number ${customer.contact_number} already exists`);
+            return; // Stop bill creation
+          }
+          throw customerError; // Re-throw other errors
+        }
       }
 
       const payload = {
@@ -263,6 +301,7 @@ const handleDownloadInvoice = async (billId) => {
 
       toast.success("Bill created successfully with Pending Payment status ✅");
       
+      // Reset form
       setCart([]);
       setCustomer({ name: "", contact_number: "" });
       setFoundCustomer(null);
@@ -270,11 +309,24 @@ const handleDownloadInvoice = async (billId) => {
       setPaypalOrderId(null);
       setShowPayPal(false);
       
+      // Refresh data
       fetchBills();
       fetchRecentBills();
+      
     } catch (err) {
       console.error("Bill creation error:", err);
-      toast.error("Failed to generate bill ❌");
+      
+      // Handle specific error cases
+      if (err.response?.data?.contact_number) {
+        toast.error(`Customer with contact number ${customer.contact_number} already exists`);
+      } else if (err.response?.data?.customer) {
+        toast.error("Customer validation failed. Please check customer details.");
+      } else if (err.response?.data?.items) {
+        toast.error("Invalid items in cart. Please refresh and try again.");
+      } else {
+        toast.error("Failed to generate bill. Please try again.");
+      }
+      
       setIsPaid(false);
       setPaypalOrderId(null);
     }
@@ -284,9 +336,18 @@ const handleDownloadInvoice = async (billId) => {
   const openPaymentModal = (bill) => {
     setSelectedBillForPayment(bill);
     setShowPaymentModal(true);
+    
+    // Voice confirmation when opening payment modal
+    const amount = parseFloat(bill.total).toFixed(2);
+    speakAmount(amount);
   };
 
   const closePaymentModal = () => {
+    // Stop any ongoing speech when closing modal
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
     setShowPaymentModal(false);
     setSelectedBillForPayment(null);
   };
@@ -398,7 +459,10 @@ const handleDownloadInvoice = async (billId) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
         <div className="bg-gray-800 rounded-xl p-4 sm:p-6 max-w-md w-full mx-auto border border-gray-700">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg sm:text-xl font-semibold text-emerald-400">Process Payment</h3>
+            <h3 className="text-lg sm:text-xl font-semibold text-emerald-400 flex items-center gap-2">
+              <Volume2 className={`h-5 w-5 ${isSpeaking ? 'text-green-400 animate-pulse' : 'text-emerald-400'}`} />
+              Process Payment
+            </h3>
             <button
               onClick={closePaymentModal}
               className="text-gray-400 hover:text-white text-xl"
@@ -417,6 +481,20 @@ const handleDownloadInvoice = async (billId) => {
             <p className="text-gray-300 mb-4 text-sm sm:text-base">
               <strong>Total Amount:</strong> ₹{parseFloat(selectedBillForPayment.total).toFixed(2)}
             </p>
+            
+            {/* Voice replay button */}
+            <div className="flex justify-center mb-2">
+              <button
+                onClick={() => {
+                  const amount = parseFloat(selectedBillForPayment.total).toFixed(2);
+                  speakAmount(amount);
+                }}
+                className="flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all text-xs text-white"
+              >
+                <Volume2 size={12} />
+                Replay Voice
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -787,7 +865,8 @@ const handleDownloadInvoice = async (billId) => {
               <tbody className="divide-y divide-gray-700/50">
                 {bills.map((bill) => (
                   <tr key={bill.id} className="hover:bg-gray-700/30 transition-colors">
-<td className="py-3 px-3 sm:px-4 font-medium text-white text-sm">{bill.bill_id}</td>                    <td className="py-3 px-3 sm:px-4 text-gray-300 text-sm">
+                    <td className="py-3 px-3 sm:px-4 font-medium text-white text-sm">{bill.bill_id}</td>
+                    <td className="py-3 px-3 sm:px-4 text-gray-300 text-sm">
                       {bill.customer_name || "Walk-in Customer"}
                     </td>
                     <td className="py-3 px-3 sm:px-4 text-right font-semibold text-white text-sm">
@@ -827,8 +906,9 @@ const handleDownloadInvoice = async (billId) => {
                         ) : bill.payment_status === "pending" ? (
                           <button
                             onClick={() => openPaymentModal(bill)}
-                            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all duration-200 text-xs font-medium"
+                            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all duration-200 text-xs font-medium flex items-center gap-1"
                           >
+                            <Volume2 size={12} />
                             Pay Now
                           </button>
                         ) : (
@@ -902,8 +982,9 @@ const handleDownloadInvoice = async (billId) => {
                     ) : bill.payment_status === "pending" ? (
                       <button
                         onClick={() => openPaymentModal(bill)}
-                        className="w-full px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium"
+                        className="w-full px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium flex items-center justify-center gap-2"
                       >
+                        <Volume2 size={14} />
                         Proceed to Payment
                       </button>
                     ) : (

@@ -23,7 +23,6 @@ const Customers = () => {
     contact_number: "",
     email: "",
     address: "",
-    date_of_birth: "",
   });
 
   const baseUrl = "http://127.0.0.1:8000/api/";
@@ -70,14 +69,18 @@ const Customers = () => {
       contact_number: "",
       email: "",
       address: "",
-      date_of_birth: "",
     });
     setModalOpen(true);
   };
 
   const openEditModal = (customer) => {
     setEditingCustomer(customer);
-    setFormData(customer);
+    setFormData({
+      name: customer.name || "",
+      contact_number: customer.contact_number || "",
+      email: customer.email || "",
+      address: customer.address || "",
+    });
     setModalOpen(true);
   };
 
@@ -266,13 +269,14 @@ const Customers = () => {
                     {key.replace("_", " ")}
                   </label>
                   <input
-                    type={key === "date_of_birth" ? "date" : "text"}
+                    type="text"
                     name={key}
                     value={formData[key] || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, [key]: e.target.value })
                     }
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 text-sm"
+                    placeholder={`Enter ${key.replace("_", " ")}`}
                   />
                 </div>
               ))}

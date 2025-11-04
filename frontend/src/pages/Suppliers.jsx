@@ -29,7 +29,9 @@ const Suppliers = () => {
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/suppliers/");
+      const response = await axios.get("http://127.0.0.1:8000/api/suppliers/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const supplierList = Array.isArray(response.data)
         ? response.data
         : response.data.results || [];
@@ -71,18 +73,22 @@ const Suppliers = () => {
     });
     setModalOpen(true);
   };
-
+  const token = localStorage.getItem("accessToken");
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editingSupplier) {
         await axios.put(
           `http://127.0.0.1:8000/api/suppliers/${editingSupplier.id}/`,
-          formData
-        );
+          formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+        
         toast.success("Supplier updated successfully");
       } else {
-        await axios.post("http://127.0.0.1:8000/api/suppliers/", formData);
+        await axios.post("http://127.0.0.1:8000/api/suppliers/", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
         toast.success("Supplier added successfully");
       }
       setModalOpen(false);
@@ -96,7 +102,9 @@ const Suppliers = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this supplier?")) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/api/suppliers/${id}/`);
+        await axios.delete(`http://127.0.0.1:8000/api/suppliers/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
         toast.success("Supplier deleted successfully");
         fetchSuppliers();
       } catch (error) {
