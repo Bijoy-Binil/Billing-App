@@ -27,13 +27,27 @@ class Payment(models.Model):
         return f"Payment {self.transaction_id} ({self.status})"
 
     def save(self, *args, **kwargs):
+        # Store the original bill status before saving
+        original_status = None
+        if self.pk:
+            try:
+                original = Payment.objects.get(pk=self.pk)
+                original_status = original.status
+            except Payment.DoesNotExist:
+                pass
+        
         super().save(*args, **kwargs)
-        # 🔄 Sync payment status with Bill
-        if self.bill:
-            if self.status == "succeeded":
-                self.bill.payment_status = "paid"
-            elif self.status == "failed":
-                self.bill.payment_status = "failed"
-            else:
-                self.bill.payment_status = "pending"
-            self.bill.save()
+        
+        # 🔄 Sync payment status with Bill (only if status changed)
+        if self.bill and original_status != self.status:
+            try:
+                if self.status == "succeeded":
+                    self.bill.payment_status = "paid"
+                elif self.status == "failed":
+                    self.bill.payment_status = "failed"
+                else:
+                    self.bill.payment_status = "pending"
+                self.bill.save(update_fields=['payment_status'])
+            except Exception as e:
+                # Log the error but don't fail the payment save
+                print(f"Error updating bill payment status: {e}")

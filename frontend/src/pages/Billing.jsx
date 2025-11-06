@@ -299,7 +299,38 @@ console.log("bills==>",bills)
       const billRes = await axios.post(API_BILLS, payload, { headers: authHeaders });
       const billId = billRes.data.id;
 
-      toast.success("Bill created successfully with Pending Payment status ✅");
+      // Link payment with bill if payment was made
+      const pendingPaymentId = localStorage.getItem('pendingPaymentId');
+      if (pendingPaymentId && paypalOrderId) {
+        try {
+          // Link the payment to the newly created bill
+          await axios.patch(
+            `${API_PAYMENTS}${paypalOrderId}/link_bill/`,
+            { bill_id: billId },
+            { headers: authHeaders }
+          );
+          
+          // Mark bill as paid
+          await axios.patch(
+            `${API_BILLS}${billId}/mark_paid/`,
+            { 
+              transaction_id: paypalOrderId,
+              payment_method: 'paypal' 
+            },
+            { headers: authHeaders }
+          );
+          
+          toast.success("Bill created and payment linked successfully! ✅");
+          
+          // Clear stored payment data
+          localStorage.removeItem('pendingPaymentId');
+        } catch (linkError) {
+          console.error("Error linking payment to bill:", linkError);
+          toast.warning("Bill created but payment linking failed. Please link manually. ⚠️");
+        }
+      } else {
+        toast.success("Bill created successfully with Pending Payment status ✅");
+      }
       
       // Reset form
       setCart([]);
@@ -354,19 +385,36 @@ console.log("bills==>",bills)
 
   const processBillPayment = async (bill, transactionId, paymentMethod = 'paypal') => {
     try {
-      await axios.patch(
-        `${API_BILLS}${bill.id}/mark_paid/`, 
-        { 
+      // First create the payment record
+      const paymentResponse = await axios.post(
+        API_PAYMENTS,
+        {
+          bill: bill.id,
           transaction_id: transactionId,
-          payment_method: paymentMethod 
-        }, 
+          amount: bill.total,
+          status: "succeeded",
+        },
         { headers: authHeaders }
       );
       
-      toast.success("✅ Payment successful! Invoice unlocked.");
-      fetchBills();
-      fetchRecentBills();
-      closePaymentModal();
+      if (paymentResponse.data?.id) {
+        // Then mark the bill as paid
+        await axios.patch(
+          `${API_BILLS}${bill.id}/mark_paid/`, 
+          { 
+            transaction_id: transactionId,
+            payment_method: paymentMethod 
+          }, 
+          { headers: authHeaders }
+        );
+        
+        toast.success("✅ Payment successful! Invoice unlocked.");
+        fetchBills();
+        fetchRecentBills();
+        closePaymentModal();
+      } else {
+        throw new Error("Payment record creation failed");
+      }
     } catch (err) {
       console.error("Bill payment error:", err);
       toast.error("Failed to process payment ❌");
@@ -410,7 +458,7 @@ console.log("bills==>",bills)
             const paymentResponse = await axios.post(
               API_PAYMENTS,
               {
-                bill: null,
+                bill: null, // Will be linked after bill creation
                 transaction_id: order.id,
                 amount: total,
                 status: "succeeded",
@@ -423,6 +471,9 @@ console.log("bills==>",bills)
               setIsPaid(true);
               setShowPayPal(false);
               toast.success("✅ Payment successful! Now generate the bill.");
+              
+              // Store payment ID for later linking
+              localStorage.setItem('pendingPaymentId', paymentResponse.data.id);
             } else {
               throw new Error("Payment record creation failed");
             }
