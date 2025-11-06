@@ -7,7 +7,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
 from . models import CustomUser
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate, get_user_model
+import json
+
 # Create your views here.
+
+
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
@@ -15,10 +22,6 @@ class RegisterView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(role=CustomUser.ROLE_CASHIER)
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, get_user_model
-import json
 
 User = get_user_model()
 

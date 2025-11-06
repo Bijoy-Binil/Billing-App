@@ -48,7 +48,7 @@ const Billing = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-console.log("products==>",products)
+console.log("bills==>",bills)
   // Voice confirmation function
   const speakAmount = (amount, billId = null) => {
     if ('speechSynthesis' in window) {

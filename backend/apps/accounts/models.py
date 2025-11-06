@@ -57,7 +57,7 @@ class CustomUser(AbstractUser):
     )
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS: list[str] = []  # no additional required fields for createsuperuser
+    REQUIRED_FIELDS: list[str] = []  
 
     objects = CustomUserManager()
 

@@ -56,6 +56,7 @@ def mark_bill_paid(request, pk: int):
     bill.payment_method = payment_method
     bill.save()
     return Response({"message": "Bill marked as paid ✅", "bill_id": bill.bill_id})
+
 class BillDetail(generics.RetrieveAPIView):
     queryset = Bill.objects.all()
     serializer_class = BillingSerializer

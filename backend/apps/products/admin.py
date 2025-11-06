@@ -1,6 +1,7 @@
 from django.contrib import admin
-from . models import Product,Category,StockEntry
-# Register your models here.
-admin.site.register(Product)
-admin.site.register(Category)
-admin.site.register(StockEntry)
+from .models import Product, Category, StockEntry
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ("item_id", "name", "category", "supplier", "price", "quantity", "created_at")
+    search_fields = ("name", "item_id", "manufacturer")  # ✅ required

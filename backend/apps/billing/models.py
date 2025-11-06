@@ -33,7 +33,6 @@ class Bill(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        # ✅ Generate unique bill_id only on creation
         is_new = self._state.adding
         if is_new and not self.bill_id:
             timestamp = timezone.now().strftime("%Y%m%d%H%M%S")

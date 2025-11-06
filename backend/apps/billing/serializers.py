@@ -32,10 +32,12 @@ class BillingSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["bill_id", "created_at", "transaction_id", "payment_date", "payment_method"]
         depth=1
+
+
     @transaction.atomic  # ✅ ensures rollback if anything fails
     def create(self, validated_data):
         request = self.context.get("request")
-        items_data = validated_data.pop("items", [])
+        items_data = validated_data.pop("items", []) # if nothing in db it shows as []
 
         # Attach cashier if available
         if request and hasattr(request, "user"):
