@@ -1,16 +1,7 @@
 // src/pages/Billing.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Search,
-  FileText,
-  ShoppingCart,
-  User2,
-  Download,
-  Calendar,
-  DollarSign,
-  Volume2,
-} from "lucide-react";
+import { Search, FileText, ShoppingCart, User2, Download, Calendar, DollarSign, Volume2 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
@@ -40,27 +31,27 @@ const Billing = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-
+  console.log("cart==>", cart);
   // Voice confirmation function
   const speakAmount = (amount, billId = null) => {
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       // Stop any ongoing speech
       window.speechSynthesis.cancel();
-      
+
       const speech = new SpeechSynthesisUtterance();
-      const message = billId 
+      const message = billId
         ? `Payment initiated for Bill ${billId}. Total amount is ${amount} rupees.`
         : `Total amount to pay is ${amount} rupees.`;
-      
+
       speech.text = message;
       speech.volume = 1;
       speech.rate = 0.9;
       speech.pitch = 1;
-      
+
       speech.onstart = () => setIsSpeaking(true);
       speech.onend = () => setIsSpeaking(false);
       speech.onerror = () => setIsSpeaking(false);
-      
+
       window.speechSynthesis.speak(speech);
     }
   };
@@ -163,10 +154,10 @@ const Billing = () => {
   const handleDownloadInvoice = async (billId) => {
     setDownloadingId(billId);
     setProgress(0);
-    
+
     try {
       toast.info("Generating invoice...");
-      
+
       // Improved progress simulation with smoother increments
       await new Promise((resolve) => {
         let progress = 0;
@@ -174,7 +165,7 @@ const Billing = () => {
           // More realistic progress simulation
           progress += Math.random() * 8 + 4; // 4-12% increments
           setProgress(Math.min(Math.floor(progress), 75)); // Floor to remove decimals
-          
+
           if (progress >= 75) {
             clearInterval(interval);
             resolve();
@@ -183,7 +174,6 @@ const Billing = () => {
       });
 
       const res = await api.get(`/billings/${billId}/invoice/`, {
-  
         responseType: "blob",
         onDownloadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -205,13 +195,12 @@ const Billing = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
+
       toast.success("Invoice downloaded successfully! 📄");
       await fetchBills();
-      
     } catch (err) {
       console.error("Invoice download error:", err);
-      
+
       if (err.response?.status === 404) {
         toast.error("Invoice not found for this bill");
       } else if (err.response?.status === 500) {
@@ -219,7 +208,6 @@ const Billing = () => {
       } else {
         toast.error("Failed to download invoice");
       }
-      
     } finally {
       // Smooth completion with brief success state
       if (progress === 100) {
@@ -256,7 +244,7 @@ const Billing = () => {
       let customerId = foundCustomer?.id;
       if (!customerId) {
         if (!customer.name?.trim()) return toast.warn("Enter new customer name");
-        
+
         // Check if customer with this contact number already exists
         try {
           const newCust = await api.post("/customers/", customer);
@@ -288,30 +276,22 @@ const Billing = () => {
       const billId = billRes.data.id;
 
       // Link payment with bill if payment was made
-      const pendingPaymentId = localStorage.getItem('pendingPaymentId');
+      const pendingPaymentId = localStorage.getItem("pendingPaymentId");
       if (pendingPaymentId && paypalOrderId) {
         try {
           // Link the payment to the newly created bill
-          await api.patch(
-            `/payments/${paypalOrderId}/link_bill/`,
-            { bill_id: billId },
-        
-          );
-          
+          await api.patch(`/payments/${paypalOrderId}/link_bill/`, { bill_id: billId });
+
           // Mark bill as paid
-          await api.patch(
-            `/billings/${billId}/mark_paid/`,
-            { 
-              transaction_id: paypalOrderId,
-              payment_method: 'paypal' 
-            },
-  
-          );
-          
+          await api.patch(`/billings/${billId}/mark_paid/`, {
+            transaction_id: paypalOrderId,
+            payment_method: "paypal",
+          });
+
           toast.success("Bill created and payment linked successfully! ✅");
-          
+
           // Clear stored payment data
-          localStorage.removeItem('pendingPaymentId');
+          localStorage.removeItem("pendingPaymentId");
         } catch (linkError) {
           console.error("Error linking payment to bill:", linkError);
           toast.warning("Bill created but payment linking failed. Please link manually. ⚠️");
@@ -319,7 +299,7 @@ const Billing = () => {
       } else {
         toast.success("Bill created successfully with Pending Payment status ✅");
       }
-      
+
       // Reset form
       setCart([]);
       setCustomer({ name: "", contact_number: "" });
@@ -327,14 +307,13 @@ const Billing = () => {
       setIsPaid(false);
       setPaypalOrderId(null);
       setShowPayPal(false);
-      
+
       // Refresh data
       fetchBills();
       fetchRecentBills();
-      
     } catch (err) {
       console.error("Bill creation error:", err);
-      
+
       // Handle specific error cases
       if (err.response?.data?.contact_number) {
         toast.error(`Customer with contact number ${customer.contact_number} already exists`);
@@ -345,7 +324,7 @@ const Billing = () => {
       } else {
         toast.error("Failed to generate bill. Please try again.");
       }
-      
+
       setIsPaid(false);
       setPaypalOrderId(null);
     }
@@ -355,7 +334,7 @@ const Billing = () => {
   const openPaymentModal = (bill) => {
     setSelectedBillForPayment(bill);
     setShowPaymentModal(true);
-    
+
     // Voice confirmation when opening payment modal
     const amount = parseFloat(bill.total).toFixed(2);
     speakAmount(amount);
@@ -363,7 +342,7 @@ const Billing = () => {
 
   const closePaymentModal = () => {
     // Stop any ongoing speech when closing modal
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     }
@@ -371,29 +350,23 @@ const Billing = () => {
     setSelectedBillForPayment(null);
   };
 
-  const processBillPayment = async (bill, transactionId, paymentMethod = 'paypal') => {
+  const processBillPayment = async (bill, transactionId, paymentMethod = "paypal") => {
     try {
       // First create the payment record
-      const paymentResponse = await api.post(
-        "/payments/",
-        {
-          bill: bill.id,
-          transaction_id: transactionId,
-          amount: bill.total,
-          status: "succeeded",
-        }
-      );
-      
+      const paymentResponse = await api.post("/payments/", {
+        bill: bill.id,
+        transaction_id: transactionId,
+        amount: bill.total,
+        status: "succeeded",
+      });
+
       if (paymentResponse.data?.id) {
         // Then mark the bill as paid
-        await api.patch(
-          `/billings/${bill.id}/mark_paid/`, 
-          { 
-            transaction_id: transactionId,
-            payment_method: paymentMethod 
-          }
-        );
-        
+        await api.patch(`/billings/${bill.id}/mark_paid/`, {
+          transaction_id: transactionId,
+          payment_method: paymentMethod,
+        });
+
         toast.success("✅ Payment successful! Invoice unlocked.");
         fetchBills();
         fetchRecentBills();
@@ -435,12 +408,12 @@ const Billing = () => {
             const order = await actions.order.capture();
             const paymentAmount = parseFloat(order.purchase_units[0].amount.value);
             const cartTotal = parseFloat(total);
-            
+
             if (Math.abs(paymentAmount - cartTotal) > 0.01) {
               toast.error(`Payment amount mismatch: ₹${paymentAmount} vs ₹${cartTotal}`);
               return;
             }
-            
+
             const paymentResponse = await api.post(
               "/payments/",
               {
@@ -451,15 +424,15 @@ const Billing = () => {
               },
               { headers: authHeaders }
             );
-            
+
             if (paymentResponse.data?.id) {
               setPaypalOrderId(order.id);
               setIsPaid(true);
               setShowPayPal(false);
               toast.success("✅ Payment successful! Now generate the bill.");
-              
+
               // Store payment ID for later linking
-              localStorage.setItem('pendingPaymentId', paymentResponse.data.id);
+              localStorage.setItem("pendingPaymentId", paymentResponse.data.id);
             } else {
               throw new Error("Payment record creation failed");
             }
@@ -497,17 +470,14 @@ const Billing = () => {
         <div className="bg-gray-800 rounded-xl p-4 sm:p-6 max-w-md w-full mx-auto border border-gray-700">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg sm:text-xl font-semibold text-emerald-400 flex items-center gap-2">
-              <Volume2 className={`h-5 w-5 ${isSpeaking ? 'text-green-400 animate-pulse' : 'text-emerald-400'}`} />
+              <Volume2 className={`h-5 w-5 ${isSpeaking ? "text-green-400 animate-pulse" : "text-emerald-400"}`} />
               Process Payment
             </h3>
-            <button
-              onClick={closePaymentModal}
-              className="text-gray-400 hover:text-white text-xl"
-            >
+            <button onClick={closePaymentModal} className="text-gray-400 hover:text-white text-xl">
               ✕
             </button>
           </div>
-          
+
           <div className="mb-4 sm:mb-6">
             <p className="text-gray-300 mb-2 text-sm sm:text-base">
               <strong>Bill ID:</strong> {selectedBillForPayment.bill_id}
@@ -518,7 +488,7 @@ const Billing = () => {
             <p className="text-gray-300 mb-4 text-sm sm:text-base">
               <strong>Total Amount:</strong> ₹{parseFloat(selectedBillForPayment.total).toFixed(2)}
             </p>
-            
+
             {/* Voice replay button */}
             <div className="flex justify-center mb-2">
               <button
@@ -547,9 +517,9 @@ const Billing = () => {
                   purchase_units: [
                     {
                       description: `Bill #${selectedBillForPayment.bill_id}`,
-                      amount: { 
-                        currency_code: paypalCurrency, 
-                        value: String(Number(selectedBillForPayment.total).toFixed(2) || "0.01") 
+                      amount: {
+                        currency_code: paypalCurrency,
+                        value: String(Number(selectedBillForPayment.total).toFixed(2) || "0.01"),
                       },
                     },
                   ],
@@ -558,7 +528,7 @@ const Billing = () => {
               onApprove={async (data, actions) => {
                 try {
                   const order = await actions.order.capture();
-                  await processBillPayment(selectedBillForPayment, order.id, 'paypal');
+                  await processBillPayment(selectedBillForPayment, order.id, "paypal");
                 } catch (err) {
                   console.error("PayPal payment error:", err);
                   toast.error("Payment failed ❌");
@@ -572,7 +542,7 @@ const Billing = () => {
                 toast.error("PayPal error occurred");
               }}
             />
-            
+
             <button
               onClick={closePaymentModal}
               className="w-full bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded-lg transition-all text-sm sm:text-base"
@@ -590,13 +560,9 @@ const Billing = () => {
       <div className="min-h-screen bg-linear-to-br from-gray-900 to-gray-800 text-gray-100 p-3 sm:p-4 lg:p-6">
         <PaymentModal />
         <ToastContainer position="top-right" autoClose={3000} />
-        
+
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 sm:mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
           <div className="flex items-center gap-2 sm:gap-3 mb-2">
             <div className="p-2 bg-emerald-500/20 rounded-lg">
               {role === "cashier" ? (
@@ -711,10 +677,14 @@ const Billing = () => {
                     className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700/50 hover:border-emerald-500/30 cursor-pointer transition-all duration-200 group"
                     onClick={() => addToCart(product)}
                   >
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors text-sm sm:text-base line-clamp-2">
-                        {product.name}
-                      </h3>
+                    <div className="space-y-2 ">
+                      <div className="flex">
+                        <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors text-sm sm:text-base line-clamp-2">
+                          {product.name}
+                        </h3>
+                        <img width={70} className="ml-14" src={product.image} alt="" />
+                      </div>
+                      <h3></h3>
                       <p className="text-gray-400 text-xs sm:text-sm">{product.category_detail.name}</p>
                       <div className="flex justify-between items-center">
                         <span className="text-base sm:text-lg font-bold text-emerald-400">
@@ -741,7 +711,7 @@ const Billing = () => {
                   <ShoppingCart className="text-emerald-400" size={16} />
                 </div>
                 <h2 className="text-lg sm:text-xl font-semibold text-emerald-400">
-                  Shopping Cart ({cart.length} {cart.length === 1 ? 'item' : 'items'})
+                  Shopping Cart ({cart.length} {cart.length === 1 ? "item" : "items"})
                 </h2>
               </div>
 
@@ -770,14 +740,17 @@ const Billing = () => {
                           <tr key={item.id} className="hover:bg-gray-700/30 transition-colors">
                             <td className="py-3 px-3 sm:px-4">
                               <div>
+                                <img 
+                                  src={item.image || "/placeholder.png"}
+                                  alt="product"
+                                  className="w-15 h-15 mb-5 object-cover rounded"
+                                />
                                 <p className="font-medium text-white text-sm">{item.name}</p>
                                 <p className="text-xs text-gray-400">{item.category}</p>
                               </div>
                             </td>
                             <td className="py-3 px-3 sm:px-4 text-center">
-                              <span className="bg-gray-700/50 px-2 py-1 rounded-lg font-medium text-sm">
-                                {item.qty}
-                              </span>
+                              <span className="bg-gray-700/50 px-2 py-1 rounded-lg font-medium text-sm">{item.qty}</span>
                             </td>
                             <td className="py-3 px-3 sm:px-4 text-right text-gray-300 text-sm">
                               ₹{parseFloat(item.price).toFixed(2)}
@@ -805,6 +778,12 @@ const Billing = () => {
                       <div key={item.id} className="bg-gray-700/30 rounded-xl p-3 border border-gray-600/50">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">
+                            <img
+                              src={item.image || "/placeholder.png"}
+                              alt="product"
+                              className="w-5 h-5 object-cover rounded"
+                            />
+
                             <p className="font-medium text-white text-sm">{item.name}</p>
                             <p className="text-xs text-gray-400">{item.category}</p>
                           </div>
@@ -817,16 +796,10 @@ const Billing = () => {
                         </div>
                         <div className="flex justify-between items-center text-sm">
                           <div className="flex items-center gap-4">
-                            <span className="bg-gray-700/50 px-2 py-1 rounded-lg font-medium">
-                              Qty: {item.qty}
-                            </span>
-                            <span className="text-gray-300">
-                              ₹{parseFloat(item.price).toFixed(2)} each
-                            </span>
+                            <span className="bg-gray-700/50 px-2 py-1 rounded-lg font-medium">Qty: {item.qty}</span>
+                            <span className="text-gray-300">₹{parseFloat(item.price).toFixed(2)} each</span>
                           </div>
-                          <span className="font-semibold text-white">
-                            ₹{(item.price * item.qty).toFixed(2)}
-                          </span>
+                          <span className="font-semibold text-white">₹{(item.price * item.qty).toFixed(2)}</span>
                         </div>
                       </div>
                     ))}
@@ -903,9 +876,7 @@ const Billing = () => {
                 {bills.map((bill) => (
                   <tr key={bill.id} className="hover:bg-gray-700/30 transition-colors">
                     <td className="py-3 px-3 sm:px-4 font-medium text-white text-sm">{bill.bill_id}</td>
-                    <td className="py-3 px-3 sm:px-4 text-gray-300 text-sm">
-                      {bill.customer_name || "Walk-in Customer"}
-                    </td>
+                    <td className="py-3 px-3 sm:px-4 text-gray-300 text-sm">{bill.customer_name || "Walk-in Customer"}</td>
                     <td className="py-3 px-3 sm:px-4 text-right font-semibold text-white text-sm">
                       ₹{parseFloat(bill.total).toFixed(2)}
                     </td>
@@ -968,9 +939,7 @@ const Billing = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-white text-sm sm:text-base">Bill #{bill.id}</h3>
-                      <p className="text-gray-300 text-xs sm:text-sm mt-1">
-                        {bill.customer_name || "Walk-in Customer"}
-                      </p>
+                      <p className="text-gray-300 text-xs sm:text-sm mt-1">{bill.customer_name || "Walk-in Customer"}</p>
                     </div>
                     <div>
                       {bill.payment_status === "paid" ? (
@@ -993,15 +962,11 @@ const Billing = () => {
                   <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                     <div>
                       <p className="text-gray-400">Total Amount</p>
-                      <p className="font-semibold text-white text-base sm:text-lg">
-                        ₹{parseFloat(bill.total).toFixed(2)}
-                      </p>
+                      <p className="font-semibold text-white text-base sm:text-lg">₹{parseFloat(bill.total).toFixed(2)}</p>
                     </div>
                     <div>
                       <p className="text-gray-400">Date</p>
-                      <p className="text-gray-300">
-                        {new Date(bill.created_at).toLocaleDateString()}
-                      </p>
+                      <p className="text-gray-300">{new Date(bill.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
 

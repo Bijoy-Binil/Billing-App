@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from .models import Product,StockEntry,Category
 from .serializers import ProductSerializer,StockEntrySerializer,CategorySerializer
 from django.db.models import Sum, F
+from rest_framework.parsers import MultiPartParser, FormParser
 from .permissions import IsManagerOrReadOnly
 
 
@@ -24,6 +25,8 @@ class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, IsManagerOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser]
+
 
     # enable search and ordering
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

@@ -1,19 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Package,
-  PlusCircle,
-  Edit2,
-  Trash2,
-  Boxes,
-  AlertTriangle,
-  Search,
-  Eye,
-} from "lucide-react";
+import { Package, PlusCircle, Edit2, Trash2, Boxes, AlertTriangle, Search, Eye } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../api";
-
 
 const token = localStorage.getItem("accessToken");
 const role = localStorage.getItem("role"); // "manager" or "cashier"
@@ -23,6 +13,7 @@ const Inventory = () => {
   const [form, setForm] = useState({
     name: "",
     category: "",
+    image: null,
     manufacturer: "",
     supplier: "",
     cost_price: "",
@@ -39,7 +30,7 @@ const Inventory = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
+  console.log("products==>", products);
   const fetchData = async () => {
     await Promise.all([fetchCategories(), fetchProducts(), fetchSuppliers()]);
   };
@@ -61,8 +52,7 @@ const Inventory = () => {
       setProducts(data);
       const low = data.filter((p) => p.quantity < 10);
       setLowStock(low);
-      if (low.length > 0)
-        toast.warning(`⚠️ ${low.length} products running low on stock!`);
+      if (low.length > 0) toast.warning(`⚠️ ${low.length} products running low on stock!`);
     } finally {
       setLoading(false);
     }
@@ -78,38 +68,52 @@ const Inventory = () => {
   };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.name || !form.price || !form.quantity)
-      return toast.warn("⚠️ Please fill all required fields");
+  if (!form.name || !form.price || !form.quantity)
+    return toast.warn("⚠️ Please fill all required fields");
 
-    try {
-      setLoading(true);
-      if (editingId) {
-        await api.put(`/products/${editingId}/`, form);
-        toast.success("✅ Product updated!");
-      } else {
-        await api.post("/api/products/", form);
-        toast.success("🎉 Product added!");
-      }
-      setForm({
-        name: "",
-        category: "",
-        manufacturer: "",
-        supplier: "",
-        cost_price: "",
-        price: "",
-        quantity: "",
+  try {
+    setLoading(true);
+
+    const formData = new FormData();
+    Object.keys(form).forEach((key) => {
+      formData.append(key, form[key]);
+    });
+
+    if (editingId) {
+      await api.put(`/products/${editingId}/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      setEditingId(null);
-      fetchProducts();
-    } catch {
-      toast.error("❌ Error saving product");
-    } finally {
-      setLoading(false);
+      toast.success("✅ Product updated!");
+    } else {
+      await api.post("/products/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("🎉 Product added!");
     }
-  };
+
+    setForm({
+      name: "",
+      category: "",
+      image: null,
+      manufacturer: "",
+      supplier: "",
+      cost_price: "",
+      price: "",
+      quantity: "",
+    });
+
+    setEditingId(null);
+    fetchProducts();
+  } catch (error) {
+    console.log(error);
+    toast.error("❌ Error saving product");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
@@ -145,6 +149,7 @@ const Inventory = () => {
     setForm({
       name: product.name,
       category: product.category || "",
+      image: product.image || "",
       manufacturer: product.manufacturer || "",
       supplier: product.supplier || "",
       cost_price: product.cost_price || "",
@@ -182,6 +187,7 @@ const Inventory = () => {
                 setForm({
                   name: "",
                   category: "",
+                  image: "",
                   manufacturer: "",
                   supplier: "",
                   cost_price: "",
@@ -189,10 +195,7 @@ const Inventory = () => {
                   quantity: "",
                 });
               }}
-             
-            >
-     
-            </button>
+            ></button>
           )}
         </header>
 
@@ -207,10 +210,7 @@ const Inventory = () => {
               {editingId ? "✏️ Edit Product" : "➕ Add Product"}
             </h2>
 
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            >
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {["name", "manufacturer"].map((field) => (
                 <div key={field}>
                   <label className="block text-sm text-gray-400 mb-1 capitalize">{field}</label>
@@ -258,12 +258,25 @@ const Inventory = () => {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Image</label>
+   <input
+  type="file"
+  name="image"
+  onChange={(e) =>
+    setForm({
+      ...form,
+      image: e.target.files[0], // ✅ File object
+    })
+  }
+  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2"
+/>
+
+              </div>
 
               {["cost_price", "price", "quantity"].map((f) => (
                 <div key={f}>
-                  <label className="block text-sm text-gray-400 mb-1 capitalize">
-                    {f.replace("_", " ")} ₹
-                  </label>
+                  <label className="block text-sm text-gray-400 mb-1 capitalize">{f.replace("_", " ")} ₹</label>
                   <input
                     type="number"
                     name={f}
@@ -321,6 +334,7 @@ const Inventory = () => {
             <table className="w-full text-sm min-w-[600px]">
               <thead className="text-gray-400 border-b border-gray-700">
                 <tr>
+                  <th className="text-left py-2 px-3">Image</th>
                   <th className="text-left py-2 px-3">Product</th>
                   <th className="text-left py-2 px-3">Category</th>
                   <th className="text-center py-2 px-3">Price ₹</th>
@@ -332,6 +346,10 @@ const Inventory = () => {
               <tbody>
                 {products.map((p) => (
                   <tr key={p.id} className="border-b border-gray-700 hover:bg-gray-700/40">
+                    <td className="px-3 py-2">
+                      {" "}
+                      <img width={43} src={p.image} alt="new" />
+                    </td>
                     <td className="px-3 py-2">{p.name}</td>
                     <td className="px-3 py-2">{p.category_detail?.name || "-"}</td>
                     <td className="px-3 py-2 text-center">₹{p.price}</td>
@@ -339,9 +357,7 @@ const Inventory = () => {
                     <td className="px-3 py-2 text-center">
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
-                          p.quantity >= 10
-                            ? "bg-emerald-600/20 text-emerald-400"
-                            : "bg-red-600/20 text-red-400"
+                          p.quantity >= 10 ? "bg-emerald-600/20 text-emerald-400" : "bg-red-600/20 text-red-400"
                         }`}
                       >
                         {p.quantity >= 10 ? "In Stock" : "Low"}
