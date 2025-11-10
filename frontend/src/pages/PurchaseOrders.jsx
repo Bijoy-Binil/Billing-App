@@ -290,6 +290,13 @@ const handleSubmit = async (e) => {
         <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{po.supplier_name || "N/A"}</td>
         <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{po.product_name || "N/A"}</td>
         <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-200">{po.quantity}</td>
+<td className="px-3 sm:px-6 py-3 sm:py-4 text-center">
+  <img
+    src={po.product?.image || "/placeholder.png"}
+    alt="product"
+    className="w-14 h-8 object-cover rounded-lg mx-auto"
+  />
+</td>
         <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-200">₹{po.cost_price}</td>
         <td className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-emerald-400 font-medium">₹{po.total}</td>
         <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs sm:text-sm text-gray-400">

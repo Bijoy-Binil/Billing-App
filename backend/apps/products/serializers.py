@@ -6,7 +6,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
-
+        depth = 1
 
 class ProductSerializer(serializers.ModelSerializer):
     # Include category detail (nested)
@@ -27,7 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "price",
         ]
         read_only_fields = ["item_id", "created_at"]
-
+        depth = 1
 # apps/stocks/serializers.py
 from rest_framework import serializers
 from .models import StockEntry

@@ -15,7 +15,8 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrder
         fields = '__all__'
-        read_only_fields = ("total", "created_at","purchase_id")     
+        read_only_fields = ("total", "created_at","purchase_id")    
+        depth = 1 
     def create(self, validated_data):
         # Calculate total automatically
         validated_data['total'] = validated_data['quantity'] * validated_data['cost_price']
