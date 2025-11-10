@@ -1,6 +1,5 @@
 // src/pages/Billing.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -15,15 +14,9 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import api from "../api";
 
 const Billing = () => {
-  const API_BASE = "http://127.0.0.1:8000";
-  const API_BILLS = `${API_BASE}/api/billings/`;
-  const API_PAYMENTS = `${API_BASE}/api/payments/`;
-  const API_PRODUCTS = `${API_BASE}/api/products/`;
-  const API_CUSTOMERS_SEARCH = `${API_BASE}/api/customers/search/`;
-  const API_CUSTOMERS = `${API_BASE}/api/customers/`;
-
   const token = localStorage.getItem("accessToken");
   const role = localStorage.getItem("role");
   const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
@@ -35,20 +28,19 @@ const Billing = () => {
   const [foundCustomer, setFoundCustomer] = useState(null);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
   const [bills, setBills] = useState([]);
-  const [recentBills, setRecentBills] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showPayPal, setShowPayPal] = useState(false);
+  const [recentBills, setRecentBills] = useState([]);
   const [progress, setProgress] = useState(0);
   const [downloadingId, setDownloadingId] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
   const [paypalOrderId, setPaypalOrderId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
-  const [contactAlreadyExist, setContactAlreadyExist] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-console.log("bills==>",bills)
+
   // Voice confirmation function
   const speakAmount = (amount, billId = null) => {
     if ('speechSynthesis' in window) {
@@ -76,7 +68,7 @@ console.log("bills==>",bills)
   // Fetch functions
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(API_PRODUCTS, { headers: authHeaders });
+      const res = await api.get("/products/");
       setProducts(res.data.results || res.data || []);
     } catch (err) {
       console.error("Error fetching products:", err);
@@ -86,7 +78,7 @@ console.log("bills==>",bills)
 
   const fetchBills = async () => {
     try {
-      const res = await axios.get(API_BILLS, { headers: authHeaders });
+      const res = await api.get("/billings/");
       setBills(res.data.results || res.data || []);
     } catch (err) {
       console.error("Error fetching bills:", err);
@@ -94,29 +86,17 @@ console.log("bills==>",bills)
     }
   };
 
-  const fetchRecentBills = async () => {
-    try {
-      const res = await axios.get(`${API_BILLS}?recent=5`, { headers: authHeaders });
-      setRecentBills(res.data.results || res.data || []);
-    } catch (err) {
-      console.error("Error fetching recent bills:", err);
-      toast.error("Failed to fetch recent bills ❌");
-    }
-  };
-
   useEffect(() => {
     if (!token) return;
     fetchBills();
-    fetchRecentBills();
+
     if (role === "cashier") fetchProducts();
   }, [token, role]);
 
   // Product search
   const handleSearch = async () => {
     try {
-      const res = await axios.get(`${API_PRODUCTS}?search=${encodeURIComponent(searchTerm)}`, {
-        headers: authHeaders,
-      });
+      const res = await api.get(`/products/?search=${encodeURIComponent(searchTerm)}`);
       setProducts(res.data.results || res.data || []);
       toast.success("Products filtered ✅");
     } catch (err) {
@@ -156,9 +136,7 @@ console.log("bills==>",bills)
     if (!customer.contact_number?.trim()) return;
     setLoadingCustomer(true);
     try {
-      const res = await axios.get(`${API_CUSTOMERS_SEARCH}?contact=${encodeURIComponent(customer.contact_number)}`, {
-        headers: authHeaders,
-      });
+      const res = await api.get(`/customers/search/?contact=${encodeURIComponent(customer.contact_number)}`);
       const found = res.data;
       if (found && found.id) {
         setFoundCustomer(found);
@@ -204,8 +182,8 @@ console.log("bills==>",bills)
         }, 120); // Slightly slower for better UX
       });
 
-      const res = await axios.get(`${API_BILLS}${billId}/invoice/`, {
-        headers: authHeaders,
+      const res = await api.get(`/billings/${billId}/invoice/`, {
+  
         responseType: "blob",
         onDownloadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -256,6 +234,16 @@ console.log("bills==>",bills)
     }
   };
 
+  const fetchRecentBills = async () => {
+    try {
+      const res = await api.get(`/billings/?recent=5`);
+      setRecentBills(res.data.results || res.data || []);
+    } catch (err) {
+      console.error("Error fetching recent bills:", err);
+      toast.error("Failed to fetch recent bills ❌");
+    }
+  };
+
   // Create bill
   const handleGenerateBill = async () => {
     if (role !== "cashier") {
@@ -271,7 +259,7 @@ console.log("bills==>",bills)
         
         // Check if customer with this contact number already exists
         try {
-          const newCust = await axios.post(API_CUSTOMERS, customer, { headers: authHeaders });
+          const newCust = await api.post("/customers/", customer);
           customerId = newCust.data.id;
         } catch (customerError) {
           // Handle customer creation errors specifically
@@ -296,7 +284,7 @@ console.log("bills==>",bills)
         })),
       };
 
-      const billRes = await axios.post(API_BILLS, payload, { headers: authHeaders });
+      const billRes = await api.post("/billings/", payload);
       const billId = billRes.data.id;
 
       // Link payment with bill if payment was made
@@ -304,20 +292,20 @@ console.log("bills==>",bills)
       if (pendingPaymentId && paypalOrderId) {
         try {
           // Link the payment to the newly created bill
-          await axios.patch(
-            `${API_PAYMENTS}${paypalOrderId}/link_bill/`,
+          await api.patch(
+            `/payments/${paypalOrderId}/link_bill/`,
             { bill_id: billId },
-            { headers: authHeaders }
+        
           );
           
           // Mark bill as paid
-          await axios.patch(
-            `${API_BILLS}${billId}/mark_paid/`,
+          await api.patch(
+            `/billings/${billId}/mark_paid/`,
             { 
               transaction_id: paypalOrderId,
               payment_method: 'paypal' 
             },
-            { headers: authHeaders }
+  
           );
           
           toast.success("Bill created and payment linked successfully! ✅");
@@ -386,26 +374,24 @@ console.log("bills==>",bills)
   const processBillPayment = async (bill, transactionId, paymentMethod = 'paypal') => {
     try {
       // First create the payment record
-      const paymentResponse = await axios.post(
-        API_PAYMENTS,
+      const paymentResponse = await api.post(
+        "/payments/",
         {
           bill: bill.id,
           transaction_id: transactionId,
           amount: bill.total,
           status: "succeeded",
-        },
-        { headers: authHeaders }
+        }
       );
       
       if (paymentResponse.data?.id) {
         // Then mark the bill as paid
-        await axios.patch(
-          `${API_BILLS}${bill.id}/mark_paid/`, 
+        await api.patch(
+          `/billings/${bill.id}/mark_paid/`, 
           { 
             transaction_id: transactionId,
             payment_method: paymentMethod 
-          }, 
-          { headers: authHeaders }
+          }
         );
         
         toast.success("✅ Payment successful! Invoice unlocked.");
@@ -455,8 +441,8 @@ console.log("bills==>",bills)
               return;
             }
             
-            const paymentResponse = await axios.post(
-              API_PAYMENTS,
+            const paymentResponse = await api.post(
+              "/payments/",
               {
                 bill: null, // Will be linked after bill creation
                 transaction_id: order.id,
@@ -601,7 +587,7 @@ console.log("bills==>",bills)
 
   return (
     <PayPalScriptProvider options={{ "client-id": paypalClientId, currency: paypalCurrency }}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-3 sm:p-4 lg:p-6">
+      <div className="min-h-screen bg-linear-to-br from-gray-900 to-gray-800 text-gray-100 p-3 sm:p-4 lg:p-6">
         <PaymentModal />
         <ToastContainer position="top-right" autoClose={3000} />
         

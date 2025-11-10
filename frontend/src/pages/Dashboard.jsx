@@ -1,6 +1,5 @@
 // src/pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import SummaryCard from "../components/SummaryCard";
 import BillsTable from "../components/BillsTable";
 import StockSummary from "../components/StockSummary";
@@ -10,6 +9,7 @@ import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AuthStatus from "../components/AuthStatus";
+import api from "../api";
 
 const Dashboard = () => {
   const [bills, setBills] = useState([]);
@@ -31,9 +31,7 @@ const Dashboard = () => {
     if (!token) return;
 
     try {
-      const res = await axios.get("http://127.0.0.1:8000/api/billings/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/billings/");
       const allBills = res.data.results || res.data;
       setBills(allBills);
 
@@ -75,9 +73,7 @@ const Dashboard = () => {
     if (!token) return;
 
     try {
-      const res = await axios.get("http://127.0.0.1:8000/api/products/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/products/");
 
       const products = res.data.results || res.data;
       const lowStock = products.filter((p) => p.quantity < 10);
@@ -103,7 +99,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen p-3 sm:p-4 lg:p-6 bg-linear-to-br from-gray-900 to-gray-800 text-gray-100 relative overflow-hidden">
       <ToastContainer
         position="top-right"
         autoClose={3000}

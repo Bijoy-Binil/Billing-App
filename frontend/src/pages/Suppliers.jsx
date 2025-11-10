@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { PlusCircle, Edit2, Trash2, Users, Search } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../api";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -29,9 +30,7 @@ const Suppliers = () => {
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/suppliers/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get("/suppliers/");
       const supplierList = Array.isArray(response.data)
         ? response.data
         : response.data.results || [];
@@ -78,17 +77,16 @@ const Suppliers = () => {
     e.preventDefault();
     try {
       if (editingSupplier) {
-        await axios.put(
-          `http://127.0.0.1:8000/api/suppliers/${editingSupplier.id}/`,
+        await api.put(
+          `/suppliers/${editingSupplier.id}/`,
           formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
         
         toast.success("Supplier updated successfully");
       } else {
-        await axios.post("http://127.0.0.1:8000/api/suppliers/", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+        await api.post("/suppliers/", formData
+      );
         toast.success("Supplier added successfully");
       }
       setModalOpen(false);
@@ -102,9 +100,7 @@ const Suppliers = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this supplier?")) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/api/suppliers/${id}/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+        await api.delete(`/suppliers/${id}/`);
         toast.success("Supplier deleted successfully");
         fetchSuppliers();
       } catch (error) {

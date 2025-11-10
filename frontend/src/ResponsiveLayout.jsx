@@ -26,7 +26,7 @@ const {userName,role,handleLogout}=useContext(AuthContext)
           </motion.button>
         </header>
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-gray-900 to-gray-800">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 bg-linear-to-br from-gray-900 to-gray-800">
           <AnimatePresence mode="wait">
       
             <div className="flex justify-end ">      <AuthStatus/></div>

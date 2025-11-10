@@ -11,7 +11,7 @@ const SummaryCard = ({ title, value, sub, icon }) => {
           {sub && <div className="mt-1 text-sm text-gray-400">{sub}</div>}
         </div>
         <div className="ml-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#00FF88]/30 to-[#00BFFF]/20">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-linear-to-br from-[#00FF88]/30 to-[#00BFFF]/20">
             {icon}
           </div>
         </div>

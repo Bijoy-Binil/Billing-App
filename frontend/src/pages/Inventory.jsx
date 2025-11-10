@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
 import {
   Package,
@@ -13,9 +12,9 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../api";
 
-const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
-const API_SUPPLIERS = "http://127.0.0.1:8000/api/suppliers/";
+
 const token = localStorage.getItem("accessToken");
 const role = localStorage.getItem("role"); // "manager" or "cashier"
 
@@ -47,9 +46,7 @@ const Inventory = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/api/categories/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/categories/");
       setCategories(res.data.results || res.data);
     } catch (err) {
       console.error(err);
@@ -59,9 +56,7 @@ const Inventory = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_PRODUCTS, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/products/");
       const data = res.data.results || res.data;
       setProducts(data);
       const low = data.filter((p) => p.quantity < 10);
@@ -75,9 +70,7 @@ const Inventory = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await axios.get(API_SUPPLIERS, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/suppliers/");
       setSuppliers(res.data.results || res.data);
     } catch (err) {
       console.error(err);
@@ -94,14 +87,10 @@ const Inventory = () => {
     try {
       setLoading(true);
       if (editingId) {
-        await axios.put(`${API_PRODUCTS}${editingId}/`, form, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await api.put(`/products/${editingId}/`, form);
         toast.success("✅ Product updated!");
       } else {
-        await axios.post(API_PRODUCTS, form, {
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        });
+        await api.post("/api/products/", form);
         toast.success("🎉 Product added!");
       }
       setForm({
@@ -125,9 +114,7 @@ const Inventory = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
     try {
-      await axios.delete(`${API_PRODUCTS}${id}/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/products/${id}/`);
       toast.info("🗑️ Product deleted");
       fetchProducts();
     } catch {
@@ -138,7 +125,7 @@ const Inventory = () => {
   const handleSearch = async () => {
     if (!searchTerm.trim()) return toast.info("Enter search term 🔍");
     try {
-      const res = await axios.get(`${API_PRODUCTS}?search=${searchTerm}`, {
+      const res = await api.get(`products/?search=${searchTerm}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = res.data.results || res.data;
@@ -167,7 +154,7 @@ const Inventory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br text-gray-100 p-4 sm:p-6 relative">
+    <div className="min-h-screen bg-linear-to-br text-gray-100 p-4 sm:p-6 relative">
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Low stock alert */}

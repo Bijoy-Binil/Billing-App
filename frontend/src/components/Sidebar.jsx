@@ -34,8 +34,8 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
 
   const mainMenu = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/" },
-    { name: "Inventory", icon: Package, path: "/inventory" },
     { name: "Billing", icon: ShoppingCart, path: "/billing" },
+    { name: "Inventory", icon: Package, path: "/inventory" },
     { name: "Customers", icon: Users, path: "/customers" },
     { name: "Suppliers", icon: Truck, path: "/suppliers" },
     { name: "Purchase Orders", icon: ShoppingBag, path: "/purchase-orders" },
@@ -60,7 +60,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-2xl font-extrabold bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent tracking-wide"
+          className="text-2xl font-extrabold bg-linear-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent tracking-wide"
         >
           🧾 SuperBill
         </motion.h1>
@@ -160,7 +160,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
     <>
       {/* 🖥️ Desktop Sidebar */}
       <motion.aside
-        className="hidden md:flex md:flex-col w-64 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 border-r border-gray-700 flex-shrink-0 overflow-y-auto shadow-[inset_0_0_12px_rgba(16,185,129,0.15)] backdrop-blur-xl"
+        className="hidden md:flex md:flex-col w-64 bg-linear-to-b from-gray-900 via-gray-800 to-gray-900 border-r border-gray-700 flex-shrink-0 overflow-y-auto shadow-[inset_0_0_12px_rgba(16,185,129,0.15)] backdrop-blur-xl"
         initial={{ x: -50, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
       >
@@ -187,7 +187,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed top-0 left-0 h-full w-72 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 border-r border-gray-700 flex flex-col z-50"
+              className="fixed top-0 left-0 h-full w-72 bg-linear-to-b from-gray-900 via-gray-800 to-gray-900 border-r border-gray-700 flex flex-col z-50"
             >
               {sidebarContent}
             </motion.aside>

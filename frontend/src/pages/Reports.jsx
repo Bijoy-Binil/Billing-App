@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Link } from "react-router-dom";
+import api from "../api";
 
 const Reports = () => {
   const [salesData, setSalesData] = useState([]);
@@ -39,8 +40,8 @@ const Reports = () => {
 
     try {
       const [salesRes, productRes] = await Promise.all([
-        axios.get(API_SALES, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(API_PRODUCTS, { headers: { Authorization: `Bearer ${token}` } }),
+        api.get("/billings/"),
+        api.get("/products/"),
       ]);
 
       const sales = (salesRes.data.results || salesRes.data || []).map((bill) => ({
@@ -91,7 +92,7 @@ const Reports = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 sm:p-6 text-gray-100">
+    <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-4 sm:p-6 text-gray-100">
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -145,10 +146,10 @@ const Reports = () => {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={profitData}>
                 <defs>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                  <linearlinear id="colorProfit" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
                     <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                  </linearGradient>
+                  </linearlinear>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="date" stroke="#9CA3AF" />

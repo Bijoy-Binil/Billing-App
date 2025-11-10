@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+
 import moment from "moment";
 import { motion } from "framer-motion";
 import { ShoppingBag, PlusCircle, Search } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../api";
 
 const PurchaseOrders = () => {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -20,7 +21,7 @@ const PurchaseOrders = () => {
   const [progress, setProgress] = useState(0);
   const [downloadingId, setDownloadingId] = useState(null);
 
-  const baseUrl = "http://127.0.0.1:8000/api/";
+
   const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
@@ -32,9 +33,7 @@ const PurchaseOrders = () => {
 
   const fetchPurchaseOrders = async () => {
     try {
-      const res = await axios.get(`${baseUrl}purchase-orders/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/purchase-orders/`);
       setPurchaseOrders(res.data.results || []);
          console.log("formData.products==>",res.data.results)
     } catch (err) {
@@ -45,9 +44,7 @@ const PurchaseOrders = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await axios.get(`${baseUrl}suppliers/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/suppliers/`);
       setSuppliers(res.data.results || []);
     } catch (err) {
       console.error("Failed to fetch suppliers:", err);
@@ -58,9 +55,7 @@ const PurchaseOrders = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`${baseUrl}products/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/products/`);
       setProducts(res.data.results || []);
     } catch (err) {
       console.error("Failed to fetch products:", err);
@@ -98,15 +93,14 @@ const handleSubmit = async (e) => {
     for (const p of formData.products) {
       if (!p.product || !p.cost_price) continue;
 
-      await axios.post(
-        `${baseUrl}purchase-orders/`,
+      await api.post(
+        `/purchase-orders/`,
         {
           supplier: formData.supplier,
           product: p.product,
           quantity: p.quantity,
           cost_price: p.cost_price,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
     }
 
@@ -146,10 +140,10 @@ const handleSubmit = async (e) => {
       await simulateGeneration();
 
       // Real download (70-100%) – Axios progress if available
-      const res = await axios.get(
-        `${baseUrl}purchase-orders/${purchase_id}/invoice/`,
+      const res = await api.get(
+        `/purchase-orders/${purchase_id}/invoice/`,
         { 
-          headers: { Authorization: `Bearer ${token}` }, 
+         
           responseType: "blob",
           onDownloadProgress: (event) => {
             if (event.total) {

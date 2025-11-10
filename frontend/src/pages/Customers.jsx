@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+
 import { motion } from "framer-motion";
 import { PlusCircle, Edit2, Trash2, Users, Search, Eye } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../api";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -25,7 +26,6 @@ const Customers = () => {
     address: "",
   });
 
-  const baseUrl = "http://127.0.0.1:8000/api/";
 
   useEffect(() => {
     fetchCustomers();
@@ -34,9 +34,7 @@ const Customers = () => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${baseUrl}customers/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/customers/`);
       setCustomers(Array.isArray(res.data) ? res.data : res.data.results || []);
     } catch (error) {
       toast.error("Failed to fetch customers");
@@ -48,12 +46,8 @@ const Customers = () => {
   const fetchCustomerDetails = async (id) => {
     try {
       const [loyaltyRes, historyRes] = await Promise.all([
-        axios.get(`${baseUrl}customer-loyalty/${id}/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${baseUrl}customer-analytics/${id}/purchase-history/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        api.get(`/customer-loyalty/${id}/`),
+        api.get(`/customer-analytics/${id}/purchase-history/`),
       ]);
       setCustomerLoyalty(loyaltyRes.data);
       setPurchaseHistory(historyRes.data);
@@ -88,14 +82,10 @@ const Customers = () => {
     e.preventDefault();
     try {
       if (editingCustomer) {
-        await axios.put(`${baseUrl}customer/${editingCustomer.id}/`, formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await api.put(`/customer/${editingCustomer.id}/`, formData);
         toast.success("Customer updated successfully");
       } else {
-        await axios.post(`${baseUrl}customers/`, formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await api.post(`/customers/`, formData);
         toast.success("Customer added successfully");
       }
       setModalOpen(false);
@@ -108,7 +98,7 @@ const Customers = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Delete this customer?")) {
       try {
-        await axios.delete(`${baseUrl}customer/${id}/`, {
+        await api.delete(`/customer/${id}/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success("Customer deleted");

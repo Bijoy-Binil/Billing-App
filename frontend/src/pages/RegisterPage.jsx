@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import api from "../api";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      await axios.post("http://127.0.0.1:8000/api/register/", formData);
+      await api.post("/register/", formData);
       setSuccess("✅ Registration successful! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
@@ -36,7 +36,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 lg:p-6 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
@@ -52,11 +52,11 @@ const RegisterPage = () => {
         {/* Logo/Header */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-linear-to-r from-emerald-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">🧾</span>
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-linear-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
             SuperBill Register
           </h1>
           <p className="text-gray-400 text-sm sm:text-base mt-2">
@@ -157,7 +157,7 @@ const RegisterPage = () => {
             transition={{ type: "spring", stiffness: 300 }}
             type="submit"
             disabled={loading}
-            className="w-full py-3 sm:py-4 font-semibold rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-400 hover:from-cyan-400 hover:to-emerald-500 text-gray-900 shadow-lg shadow-emerald-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full py-3 sm:py-4 font-semibold rounded-lg bg-linear-to-r from-emerald-500 to-cyan-400 hover:from-cyan-400 hover:to-emerald-500 text-gray-900 shadow-lg shadow-emerald-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             {loading ? (
               <>
@@ -209,7 +209,7 @@ const RegisterPage = () => {
       </motion.div>
 
       {/* Mobile Optimized Background */}
-      <div className="fixed bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none sm:hidden"></div>
+      <div className="fixed bottom-0 left-0 right-0 h-20 bg-linear-to-t from-gray-900 to-transparent pointer-events-none sm:hidden"></div>
     </div>
   );
 };
