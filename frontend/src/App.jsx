@@ -24,6 +24,7 @@ import PurchaseOrders from "./pages/PurchaseOrders";
 import StockStatementReport from "./pages/Reports/StockStatementReport";
 import MarginReport from "./pages/Reports/MarginReport";
 import StockManufacturerReport from "./pages/Reports/StockManufacturerReport";
+import QuickAccess from "./pages/QuickAccess";
 
 const paypalOptions = {
   clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
@@ -59,7 +60,8 @@ const App = () => (
               </PrivateRoute>
             }
           >
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<QuickAccess />} />
+            <Route path="/real-time-dashboard" element={<Dashboard />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/suppliers" element={<Suppliers />} />

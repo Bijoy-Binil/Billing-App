@@ -29,7 +29,8 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
   }, [location.pathname]);
 
   const mainMenu = [
-    { name: "Dashboard", icon: LayoutDashboard, path: "/" },
+    { name: "Quick Access", icon: LayoutDashboard, path: "/" },
+    { name: "Dashboard", icon: LayoutDashboard, path: "/real-time-dashboard" },
     { name: "Billing", icon: ShoppingCart, path: "/billing" },
     { name: "Inventory", icon: Package, path: "/inventory" },
     { name: "Customers", icon: Users, path: "/customers" },
