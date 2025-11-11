@@ -94,44 +94,44 @@ const Reports = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
         >
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-r from-emerald-400 to-green-400 rounded-2xl shadow-lg">
-              <BarChart3 className="w-6 h-6 text-white" />
+            <div className="p-2 sm:p-3 bg-gradient-to-r from-emerald-400 to-green-400 rounded-xl sm:rounded-2xl shadow-lg">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                 Reports & Analytics
               </h2>
-              <p className="text-gray-600 text-sm mt-1">
+              <p className="text-gray-600 text-xs sm:text-sm mt-1">
                 Comprehensive business insights and performance metrics
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-4 py-2 rounded-xl shadow-lg font-semibold">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-lg font-semibold text-xs sm:text-sm">
               {salesData.length ? `${salesData.length} data points` : "No data yet"}
             </div>
             <button
               onClick={fetchReports}
               disabled={loading}
-              className="p-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl border border-gray-300 shadow-sm transition-all"
+              className="p-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-lg sm:rounded-xl border border-gray-300 shadow-sm transition-all"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
         </motion.div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <KpiCard 
             title="Today's Sales" 
             value={` ₹${dailySales.toFixed(2)}`} 
@@ -153,11 +153,11 @@ const Reports = () => {
         </div>
 
         {/* 3-column responsive grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {/* Sales Overview */}
           <ReportCard 
             title="Sales Overview" 
-            icon={<TrendingUp className="w-5 h-5 text-white" />}
+            icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
             gradient="from-blue-500 to-blue-600"
             to="/sales-report"
           >
@@ -173,12 +173,12 @@ const Reports = () => {
                 <XAxis 
                   dataKey="date" 
                   stroke="#6B7280" 
-                  fontSize={12}
+                  fontSize={10}
                   axisLine={{ stroke: "#E5E7EB" }}
                 />
                 <YAxis 
                   stroke="#6B7280" 
-                  fontSize={12}
+                  fontSize={10}
                   axisLine={{ stroke: "#E5E7EB" }}
                 />
                 <Tooltip
@@ -195,8 +195,8 @@ const Reports = () => {
                   dataKey="total" 
                   stroke="url(#salesLine)" 
                   strokeWidth={2.5} 
-                  dot={{ r: 4, fill: "#3B82F6", stroke: "#FFFFFF", strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: "#3B82F6", stroke: "#FFFFFF", strokeWidth: 2 }}
+                  dot={{ r: 3, fill: "#3B82F6", stroke: "#FFFFFF", strokeWidth: 1.5 }}
+                  activeDot={{ r: 5, fill: "#3B82F6", stroke: "#FFFFFF", strokeWidth: 1.5 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -205,7 +205,7 @@ const Reports = () => {
           {/* Stock Summary */}
           <ReportCard 
             title="Stock Summary" 
-            icon={<PieChart className="w-5 h-5 text-white" />}
+            icon={<PieChart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
             gradient="from-emerald-400 to-green-400"
             to="/stock-report"
           >
@@ -221,13 +221,13 @@ const Reports = () => {
                 <XAxis 
                   dataKey="name" 
                   stroke="#6B7280" 
-                  fontSize={12}
+                  fontSize={10}
                   axisLine={{ stroke: "#E5E7EB" }}
                   hide
                 />
                 <YAxis 
                   stroke="#6B7280" 
-                  fontSize={12}
+                  fontSize={10}
                   axisLine={{ stroke: "#E5E7EB" }}
                 />
                 <Tooltip
@@ -242,8 +242,8 @@ const Reports = () => {
                 <Bar 
                   dataKey="quantity" 
                   fill="url(#stockBar)" 
-                  barSize={28} 
-                  radius={[6, 6, 0, 0]} 
+                  barSize={24} 
+                  radius={[4, 4, 0, 0]} 
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -252,7 +252,7 @@ const Reports = () => {
           {/* Profit Report */}
           <ReportCard 
             title="Profit Report" 
-            icon={<TrendingUp className="w-5 h-5 text-white" />}
+            icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
             gradient="from-purple-500 to-purple-600"
             to="/profit-report"
           >
@@ -272,12 +272,12 @@ const Reports = () => {
                 <XAxis 
                   dataKey="date" 
                   stroke="#6B7280" 
-                  fontSize={12}
+                  fontSize={10}
                   axisLine={{ stroke: "#E5E7EB" }}
                 />
                 <YAxis 
                   stroke="#6B7280" 
-                  fontSize={12}
+                  fontSize={10}
                   axisLine={{ stroke: "#E5E7EB" }}
                 />
                 <Tooltip
@@ -306,7 +306,7 @@ const Reports = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
         >
           <ReportLink to="/stock-bills-report" title="Stock Bills" description="Reconciliation" />
           <ReportLink to="/stock-statement-report" title="Stock Statement" description="Inventory movement" />
@@ -315,7 +315,7 @@ const Reports = () => {
         </motion.div>
 
         <div className="text-center">
-          <p className="text-gray-500 text-sm italic">
+          <p className="text-gray-500 text-xs sm:text-sm italic">
             Tip: Click on any chart to explore detailed reports with advanced analytics ✨
           </p>
         </div>
@@ -328,22 +328,22 @@ const Reports = () => {
 const ReportCard = ({ title, icon, gradient, children, to }) => (
   <motion.section
     whileHover={{ scale: 1.02, y: -2 }}
-    className="group bg-gradient-to-br from-white to-blue-50 border border-blue-200 rounded-2xl p-6 flex flex-col h-[320px] sm:h-[380px] lg:h-[400px] shadow-lg hover:shadow-xl transition-all duration-300"
+    className="group bg-gradient-to-br from-white to-blue-50 border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col h-[280px] sm:h-[340px] lg:h-[380px] shadow-lg hover:shadow-xl transition-all duration-300"
   >
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-3">
-        <div className={`p-2 bg-gradient-to-r ${gradient} rounded-xl shadow-sm`}>
+    <div className="flex items-center justify-between mb-3 sm:mb-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className={`p-1.5 sm:p-2 bg-gradient-to-r ${gradient} rounded-lg sm:rounded-xl shadow-sm`}>
           {icon}
         </div>
-        <h3 className="text-lg font-bold text-gray-900">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900">
           {title}
         </h3>
       </div>
       <Link
         to={to}
-        className="p-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl border border-gray-300 shadow-sm transition-all group-hover:scale-110"
+        className="p-1.5 sm:p-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-lg sm:rounded-xl border border-gray-300 shadow-sm transition-all group-hover:scale-110"
       >
-        <ArrowRight className="w-4 h-4" />
+        <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
       </Link>
     </div>
     <div className="flex-1">{children}</div>
@@ -354,14 +354,14 @@ const ReportCard = ({ title, icon, gradient, children, to }) => (
 const KpiCard = ({ title, value, gradient, icon }) => (
   <motion.div
     whileHover={{ scale: 1.02, y: -2 }}
-    className={`bg-gradient-to-r ${gradient} rounded-2xl p-6 shadow-lg text-white`}
+    className={`bg-gradient-to-r ${gradient} rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white`}
   >
     <div className="flex items-center justify-between">
       <div>
-        <div className="text-sm font-medium opacity-90">{title}</div>
-        <div className="text-2xl font-bold mt-2">{value}</div>
+        <div className="text-xs sm:text-sm font-medium opacity-90">{title}</div>
+        <div className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{value}</div>
       </div>
-      <div className="text-2xl">{icon}</div>
+      <div className="text-xl sm:text-2xl">{icon}</div>
     </div>
   </motion.div>
 );
@@ -374,15 +374,15 @@ const ReportLink = ({ to, title, description }) => (
   >
     <Link
       to={to}
-      className="block bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:border-blue-300"
+      className="block bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:border-blue-300"
     >
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="font-semibold text-gray-900 text-lg">{title}</h4>
-          <p className="text-gray-600 text-sm mt-1">{description}</p>
+          <h4 className="font-semibold text-gray-900 text-sm sm:text-base lg:text-lg">{title}</h4>
+          <p className="text-gray-600 text-xs sm:text-sm mt-1">{description}</p>
         </div>
-        <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 group-hover:from-blue-600 group-hover:to-blue-700 text-white rounded-xl shadow-sm transition-all">
-          <ArrowRight className="w-4 h-4" />
+        <div className="p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-blue-600 group-hover:from-blue-600 group-hover:to-blue-700 text-white rounded-lg sm:rounded-xl shadow-sm transition-all">
+          <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
         </div>
       </div>
     </Link>

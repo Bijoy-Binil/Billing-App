@@ -2,87 +2,363 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Invoice - {{ purchase_order.purchase_id }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchase Order Invoice - PO-2023-001</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @page { size: A4; margin: 25mm; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(145deg, #0f172a, #1e293b);
-      color: #e5e7eb;
-      padding: 0;
+    /* === GLOBAL STYLES === */
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
     .invoice-container {
-      background: rgba(17, 24, 39, 0.75);
-      border: 1px solid rgba(52, 211, 153, 0.2);
+      background: white;
       border-radius: 20px;
-      padding: 30px 40px;
-      max-width: 760px;
-      margin: 40px auto;
-      box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
-      backdrop-filter: blur(10px);
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
     }
-    .header { text-align: center; margin-bottom: 25px; }
-    .header h1 { color: #34d399; font-size: 26px; margin-bottom: 5px; }
-    .header p { color: #9ca3af; font-size: 13px; }
-    .meta { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(52, 211, 153, 0.2); }
-    .meta div { font-size: 14px; line-height: 1.6; }
-    .meta strong { color: #a7f3d0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid rgba(52, 211, 153, 0.15); }
-    th { text-transform: uppercase; font-size: 12px; color: #6ee7b7; }
-    tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
-    .total { margin-top: 25px; text-align: right; }
-    .total p { margin: 4px 0; font-size: 14px; }
-    .total h3 { color: #34d399; font-size: 18px; margin-top: 10px; border-top: 1px solid rgba(52, 211, 153, 0.25); padding-top: 8px; }
-    .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #94a3b8; border-top: 1px dashed rgba(52, 211, 153, 0.3); padding-top: 12px; }
-    .footer span { color: #10b981; font-weight: 500; }
+    
+    .invoice-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 50%, #a1c4fd 100%);
+    }
+    
+    /* === HEADER === */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    
+    .header h1 {
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #6c757d;
+      font-size: 16px;
+      font-weight: 400;
+    }
+    
+    .header-decoration {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      border-radius: 50%;
+      z-index: -1;
+      opacity: 0.7;
+    }
+    
+    /* === BILL META === */
+    .meta-container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .meta-card {
+      flex: 1;
+      min-width: 200px;
+      background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .meta-card:nth-child(2) {
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    
+    .meta-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #333;
+      border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+      padding-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .meta-card h3 i {
+      color: #667eea;
+    }
+    
+    .meta-card p {
+      margin: 8px 0;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .meta-card strong {
+      color: #444;
+    }
+    
+    /* === TABLE === */
+    .table-container {
+      margin: 30px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    thead {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    th {
+      padding: 16px 12px;
+      text-align: left;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    tbody tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s;
+    }
+    
+    tbody tr:hover {
+      background-color: #f9f9f9;
+    }
+    
+    tbody tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    
+    tbody tr:nth-child(even):hover {
+      background-color: #f1f5f9;
+    }
+    
+    td {
+      padding: 16px 12px;
+      color: #555;
+    }
+    
+    /* === TOTAL SECTION === */
+    .total-container {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 25px;
+      color: white;
+      margin-top: 30px;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .total-text {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .total-amount {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    
+    /* === STATUS BADGE === */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    
+    /* === FOOTER === */
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px dashed #ddd;
+      color: #6c757d;
+      font-size: 14px;
+    }
+    
+    .footer span {
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 600;
+    }
+    
+    /* === DECORATIVE ELEMENTS === */
+    .decoration-circle {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      z-index: -1;
+      opacity: 0.5;
+    }
+    
+    .circle-1 {
+      background: radial-gradient(circle, #ff9a9e 0%, #fad0c4 100%);
+      bottom: -50px;
+      left: -50px;
+    }
+    
+    .circle-2 {
+      background: radial-gradient(circle, #a1c4fd 0%, #c2e9fb 100%);
+      top: -50px;
+      right: -50px;
+    }
+    
+    /* === RESPONSIVE ADJUSTMENTS === */
+    @media (max-width: 768px) {
+      .invoice-container {
+        padding: 25px;
+      }
+      
+      .meta-container {
+        flex-direction: column;
+      }
+      
+      .header h1 {
+        font-size: 28px;
+      }
+      
+      th, td {
+        padding: 12px 8px;
+      }
+      
+      .total-container {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+      
+      .invoice-container {
+        padding: 20px;
+      }
+      
+      .header h1 {
+        font-size: 24px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="invoice-container">
     <div class="header">
+      <div class="header-decoration"></div>
       <h1>Purchase Order Invoice</h1>
-      <p>Generated by Your Company</p>
+      <p>Generated by FreshMart Suppliers</p>
     </div>
-
-    <div class="meta">
-      <div>
-        <p><strong>PO ID:</strong> {{ purchase_order.purchase_id }}</p>
-        <p><strong>Date:</strong> {{ purchase_order.created_at|date:"M d, Y H:i" }}</p>
+    
+    <div class="meta-container">
+      <div class="meta-card">
+        <h3><i class="fas fa-file-invoice"></i> Order Information</h3>
+        <p><strong>PO ID:</strong> PO-2023-001</p>
+        <p><strong>Date:</strong> Oct 15, 2023 14:30</p>
+        <div class="status-badge">
+          <i class="fas fa-check-circle"></i>
+          <span>Approved</span>
+        </div>
       </div>
-      <div>
-        <p><strong>Supplier:</strong> {{ purchase_order.supplier.name|default:"N/A" }}</p>
-        <p><strong>Contact:</strong> {{ purchase_order.supplier.phone|default:"N/A" }}</p>
+      <div class="meta-card">
+        <h3><i class="fas fa-truck"></i> Supplier Details</h3>
+        <p><strong>Name:</strong> Fresh Produce Co.</p>
+        <p><strong>Contact:</strong> +91 98765 43210</p>
+        <p><strong>Email:</strong> contact@freshproduce.co</p>
       </div>
     </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Qty</th>
-          <th>Cost Price</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ purchase_order.product.name|default:"N/A" }}</td>
-          <td>{{ purchase_order.quantity }}</td>
-          <td>₹{{ purchase_order.cost_price }}</td>
-          <td>₹{{ purchase_order.total }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="total">
-      <h3>Grand Total: ₹{{ purchase_order.total }}</h3>
+    
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Cost Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Organic Apples (1kg)</td>
+            <td>50</td>
+            <td>₹120</td>
+            <td>₹6,000</td>
+          </tr>
+          <tr>
+            <td>Fresh Carrots (1kg)</td>
+            <td>30</td>
+            <td>₹40</td>
+            <td>₹1,200</td>
+          </tr>
+          <tr>
+            <td>Premium Tomatoes (1kg)</td>
+            <td>40</td>
+            <td>₹60</td>
+            <td>₹2,400</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="total-container">
+      <div class="total-text">Grand Total:</div>
+      <div class="total-amount">₹9,600</div>
     </div>
 
-    <div class="footer">
-      <p>Thank you for doing business with us! <span>🌿 Stay Fresh, Stay Green 🌿</span></p>
-    </div>
   </div>
 </body>
 </html>
