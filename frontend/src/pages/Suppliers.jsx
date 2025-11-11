@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
 import { PlusCircle, Edit2, Trash2, Users, Search } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
@@ -21,8 +20,10 @@ const Suppliers = () => {
     gst_number: "",
   });
 
-  const userRole = localStorage.getItem("role"); // ✅ get user role
+  const userRole = localStorage.getItem("role");
+  const token = localStorage.getItem("accessToken");
 
+  // Fetch all suppliers
   useEffect(() => {
     fetchSuppliers();
   }, []);
@@ -37,15 +38,14 @@ const Suppliers = () => {
       setSuppliers(supplierList);
     } catch (error) {
       toast.error("Failed to fetch suppliers");
-      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
+  // Handlers
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const openAddModal = () => {
     setEditingSupplier(null);
@@ -62,185 +62,224 @@ const Suppliers = () => {
 
   const openEditModal = (supplier) => {
     setEditingSupplier(supplier);
-    setFormData({
-      name: supplier.name,
-      contact_person: supplier.contact_person,
-      phone: supplier.phone,
-      email: supplier.email,
-      address: supplier.address,
-      gst_number: supplier.gst_number,
-    });
+    setFormData({ ...supplier });
     setModalOpen(true);
   };
-  const token = localStorage.getItem("accessToken");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editingSupplier) {
-        await api.put(
-          `/suppliers/${editingSupplier.id}/`,
-          formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-        
+        await api.put(`/suppliers/${editingSupplier.id}/`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         toast.success("Supplier updated successfully");
       } else {
-        await api.post("/suppliers/", formData
-      );
+        await api.post("/suppliers/", formData);
         toast.success("Supplier added successfully");
       }
       setModalOpen(false);
       fetchSuppliers();
     } catch (error) {
       toast.error("Error saving supplier");
-      console.error(error);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this supplier?")) {
-      try {
-        await api.delete(`/suppliers/${id}/`);
-        toast.success("Supplier deleted successfully");
-        fetchSuppliers();
-      } catch (error) {
-        toast.error("Failed to delete supplier");
-        console.error(error);
-      }
+    if (!window.confirm("Delete this supplier?")) return;
+    try {
+      await api.delete(`/suppliers/${id}/`);
+      toast.success("Supplier deleted");
+      fetchSuppliers();
+    } catch {
+      toast.error("Failed to delete supplier");
     }
   };
 
-  const filteredSuppliers = suppliers.filter(
-    (supplier) =>
-      supplier.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supplier.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supplier.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supplier.gst_number?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSuppliers = suppliers.filter((s) =>
+    `${s.name} ${s.contact_person} ${s.email} ${s.gst_number}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      <ToastContainer position="top-right" theme="dark" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 p-4 sm:p-6">
+      <ToastContainer position="top-right" />
 
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-0"
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8"
       >
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2">
-            <Users className="h-5 w-5 sm:h-6 sm:w-6" />
-            Supplier Management
-          </h1>
-          <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage your suppliers and vendor information</p>
+        <div className="flex items-center gap-3 mb-4 sm:mb-0">
+          <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl shadow-lg">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Supplier Management
+            </h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
+              Manage supplier details & vendor information
+            </p>
+          </div>
         </div>
 
-        {/* ✅ Only Managers can Add Suppliers */}
         {userRole === "manager" && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={openAddModal}
-            className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-900/20 text-sm sm:text-base"
+            className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl shadow-lg flex items-center justify-center gap-2 font-semibold transition-all"
           >
-            <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+            <PlusCircle className="w-5 h-5" />
             Add Supplier
           </motion.button>
         )}
       </motion.div>
 
-      {/* Search */}
-      <div className="relative mb-4 sm:mb-6">
+      {/* Search Bar */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative mb-6 sm:mb-8"
+      >
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+          <Search className="text-gray-400 w-5 h-5" />
         </div>
         <input
           type="text"
-          placeholder="Search suppliers..."
+          placeholder="Search suppliers by name, contact, email, or GST..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-200 placeholder-gray-400 text-sm sm:text-base"
+          className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white border border-blue-300 rounded-2xl text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all placeholder-gray-400"
         />
-      </div>
+      </motion.div>
 
       {/* Table */}
-      <div className="bg-gray-800/60 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gray-900/50">
-              <tr>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Name</th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Contact</th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Phone</th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">Email</th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-emerald-400 uppercase">GST</th>
-                {userRole === "manager" && (
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-emerald-400 uppercase">Actions</th>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl shadow-lg overflow-hidden"
+>
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-blue-100">
+      <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+        <tr>
+          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Name</th>
+          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Contact</th>
+          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Phone</th>
+          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Email</th>
+          <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">GST</th>
+          {userRole === "manager" && (
+            <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wide">
+              Actions
+            </th>
+          )}
+        </tr>
+      </thead>
+
+      <tbody className="divide-y divide-blue-100">
+        {loading ? (
+          <tr>
+            <td colSpan={userRole === "manager" ? "6" : "5"} className="text-center py-8">
+              <div className="flex flex-col items-center justify-center">
+                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
+                <p className="text-gray-500 text-sm">Loading suppliers...</p>
+              </div>
+            </td>
+          </tr>
+        ) : filteredSuppliers.length === 0 ? (
+          <tr>
+            <td colSpan={userRole === "manager" ? "6" : "5"} className="text-center py-12">
+              <div className="flex flex-col items-center justify-center">
+                <Users className="w-12 h-12 text-gray-400 mb-3" />
+                <p className="text-gray-500 text-lg font-medium">No suppliers found</p>
+                <p className="text-gray-400 text-sm mt-1">Add suppliers to get started</p>
+              </div>
+            </td>
+          </tr>
+        ) : (
+          filteredSuppliers.map((supplier) => (
+            <tr
+              key={supplier.id}
+              className="hover:bg-blue-50 transition-colors duration-200"
+            >
+              <td className="px-4 sm:px-6 py-4 font-semibold text-gray-900">
+                {supplier.name}
+              </td>
+              <td className="px-4 sm:px-6 py-4 text-gray-700">
+                {supplier.contact_person}
+              </td>
+              <td className="px-4 sm:px-6 py-4 text-gray-700">
+                {supplier.phone}
+              </td>
+              <td className="px-4 sm:px-6 py-4 text-gray-700">
+                {supplier.email || (
+                  <span className="text-gray-400 italic">—</span>
                 )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-3 sm:py-4 text-gray-400 text-sm">
-                    Loading suppliers...
-                  </td>
-                </tr>
-              ) : filteredSuppliers.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-3 sm:py-4 text-gray-400 text-sm">
-                    No suppliers found
-                  </td>
-                </tr>
-              ) : (
-                filteredSuppliers.map((supplier) => (
-                  <tr key={supplier.id} className="hover:bg-gray-700/30 transition-colors">
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium text-white">{supplier.name}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.contact_person}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.phone}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.email}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-300">{supplier.gst_number}</td>
-                    {userRole === "manager" && (
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
-                        <button
-                          onClick={() => openEditModal(supplier)}
-                          className="text-emerald-400 hover:text-emerald-300 mr-2 sm:mr-3"
-                        >
-                          <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(supplier.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))
+              </td>
+              <td className="px-4 sm:px-6 py-4">
+                <span className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-200">
+                  {supplier.gst_number || "—"}
+                </span>
+              </td>
+
+              {userRole === "manager" && (
+                <td className="px-4 sm:px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => openEditModal(supplier)}
+                      className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl transition-all shadow-sm"
+                      title="Edit supplier"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(supplier.id)}
+                      className="p-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl transition-all shadow-sm"
+                      title="Delete supplier"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+</motion.div>
+
 
       {/* Modal */}
-      {modalOpen && userRole === "manager" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md"
+            className="bg-gradient-to-br from-white to-blue-50 w-full max-w-md rounded-2xl shadow-xl border border-blue-200 p-6"
           >
-            <h2 className="text-lg sm:text-xl font-bold text-emerald-400 mb-3 sm:mb-4">
-              {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
-            </h2>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gradient-to-r from-amber-400 to-orange-400 rounded-xl shadow-sm">
+                {editingSupplier ? (
+                  <Edit2 className="w-5 h-5 text-white" />
+                ) : (
+                  <PlusCircle className="w-5 h-5 text-white" />
+                )}
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
+              </h2>
+            </div>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="space-y-4">
               {Object.keys(formData).map((key) => (
-                <div key={key} className="mb-2 sm:mb-3">
-                  <label className="block text-xs sm:text-sm text-gray-300 mb-1 capitalize">
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
                     {key.replace("_", " ")}
                   </label>
                   <input
@@ -248,24 +287,26 @@ const Suppliers = () => {
                     name={key}
                     value={formData[key]}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 text-sm"
+                    className="w-full px-4 py-3 bg-white border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all placeholder-gray-400"
+                    placeholder={`Enter ${key.replace("_", " ")}`}
                   />
                 </div>
               ))}
 
-              <div className="flex justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
+              <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-3 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm"
+                  className="px-5 py-2.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl font-medium border border-gray-300 shadow-sm transition-all"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
-                  className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm"
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl font-semibold shadow-lg transition-all"
                 >
-                  {editingSupplier ? "Update" : "Add"} Supplier
+                  {editingSupplier ? "Update Supplier" : "Add Supplier"}
                 </button>
               </div>
             </form>

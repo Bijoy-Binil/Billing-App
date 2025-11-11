@@ -1,47 +1,30 @@
 @import "tailwindcss";
 
 /* Theme tokens fallbacks */
-:root{
-  --emerald-400: #34d399;
-  --border: #374151;
+:root {
+  --emerald-400: #10b981;
+  --border: #e5e7eb;
 }
 
 /* Global page background (fills viewport) */
-html,body,#root{
+html, body, #root {
   height: 100%;
 }
-body{
-  @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100;
+
+body {
+  @apply bg-white text-gray-900;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* Utility helper for panels */
-.panel { @apply bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-6; }
-.panel-compact { @apply p-4 rounded-xl; }
+.panel { @apply bg-white border border-gray-200 rounded-2xl p-6; }
+.panel-compact { @apply bg-white border border-gray-200 p-4 rounded-xl; }
 
 /* Scrollbar polish (optional) */
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.35); border-radius: 9999px; }
-
-.dark-modal .ant-modal-content {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-}
-
-.dark-modal .ant-modal-header {
-  background-color: #1f2937 !important;
-  border-bottom: 1px solid #374151 !important;
-}
-
-.dark-modal .ant-modal-title {
-  color: #10b981 !important;
-}
-
-.dark-modal .ant-input,
-.dark-modal .ant-input-textarea {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
-  border-color: #374151 !important;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16,185,129,0.35);
+  border-radius: 9999px;
 }

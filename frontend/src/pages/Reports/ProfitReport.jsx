@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { TrendingUp, Calendar, Filter, DollarSign } from "lucide-react";
 
 const API_SALES = "http://127.0.0.1:8000/api/billings/";
 const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
@@ -25,26 +26,19 @@ const ProfitReport = () => {
   useEffect(() => {
     let mounted = true;
     const fetchAll = async () => {
-      setLoading(true);
       try {
         const [bRes, pRes] = await Promise.all([
-          axios.get(API_SALES, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(API_PRODUCTS, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          axios.get(API_SALES, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(API_PRODUCTS, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
+
         if (mounted) {
           setBills(bRes.data.results || bRes.data || []);
           setProducts(pRes.data.results || pRes.data || []);
         }
       } catch (err) {
-        console.error("Error fetching profit data:", err);
-        if (mounted) {
-          setBills([]);
-          setProducts([]);
-        }
+        setBills([]);
+        setProducts([]);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -53,339 +47,307 @@ const ProfitReport = () => {
     return () => (mounted = false);
   }, [token]);
 
-  // Product ID → cost lookup
-  const productMap = useMemo(() => {
+  const productLookup = useMemo(() => {
     const map = {};
     products.forEach((p) => {
-      map[p.id] = {
-        cost_price: Number(p.cost_price || p.cost || 0),
-        name: p.name,
-      };
+      map[p.id] = Number(p.cost_price || p.cost || 0);
     });
     return map;
   }, [products]);
 
-  // Apply date range filter
   const filteredBills = useMemo(() => {
-    if (!startDate && !endDate) return bills;
-    const start = startDate ? new Date(startDate) : null;
-    const end = endDate ? new Date(endDate) : null;
     return bills.filter((b) => {
       const d = new Date(b.created_at);
-      if (start && d < start) return false;
-      if (end && d > end) return false;
+      if (startDate && d < new Date(startDate)) return false;
+      if (endDate && d > new Date(endDate)) return false;
       return true;
     });
   }, [bills, startDate, endDate]);
 
-  // Profit computation
-  const { dailyProfit, monthlyProfit, totalProfit, chartData } = useMemo(() => {
+  const chartData = useMemo(() => {
     const daily = {};
-    const monthly = {};
-    let total = 0;
-    const cd = [];
 
     filteredBills.forEach((b) => {
-      const date = new Date(b.created_at);
-      const dateKey = date.toLocaleDateString("en-GB");
-      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-      let billProfit = 0;
+      const dateStr = new Date(b.created_at).toLocaleDateString("en-GB");
+      let profit = 0;
 
-      (b.items || []).forEach((it) => {
-        const qty = Number(it.quantity ?? 0);
-        const price = Number(it.price || 0);
+      (b.items || []).forEach((item) => {
+        const qty = Number(item.quantity || 0);
+        const price = Number(item.price || 0);
+
         let cost = 0;
-
-        if (typeof it.product === "object" && it.product !== null) {
-          cost = Number(it.product.cost_price || it.product.cost || 0);
+        if (item.product && typeof item.product === "object") {
+          cost = Number(item.product.cost_price || 0);
         } else {
-          cost = Number(productMap[it.product]?.cost_price || 0);
+          cost = Number(productLookup[item.product] || price * 0.8);
         }
-        if (!cost) cost = price * 0.8;
 
-        billProfit += qty * (price - cost);
+        profit += qty * (price - cost);
       });
 
-      total += billProfit;
-      daily[dateKey] = (daily[dateKey] || 0) + billProfit;
-      monthly[monthKey] = (monthly[monthKey] || 0) + billProfit;
+      daily[dateStr] = (daily[dateStr] || 0) + profit;
     });
 
-    const keys = Object.keys(daily).sort((a, b) => new Date(a) - new Date(b));
-    keys.forEach((k) => cd.push({ date: k, profit: Number(daily[k].toFixed(2)) }));
+    return Object.keys(daily)
+      .sort((a, b) => new Date(a) - new Date(b))
+      .map((d) => ({
+        date: d,
+        profit: Number(daily[d].toFixed(2)),
+      }));
+  }, [filteredBills, productLookup]);
 
-    return { dailyProfit: daily, monthlyProfit: monthly, totalProfit: total, chartData: cd };
-  }, [filteredBills, productMap]);
+  const totalProfit = useMemo(() => {
+    return chartData.reduce((s, d) => s + d.profit, 0);
+  }, [chartData]);
 
   return (
-    <motion.div
-      className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-3 sm:p-4 lg:p-6"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+
         {/* Header */}
         <motion.div
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start justify-between"
         >
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-2 bg-emerald-500/20 rounded-lg">
-              <span className="text-emerald-400 text-lg">💹</span>
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-r from-emerald-400 to-green-400 rounded-2xl shadow-lg">
+              <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-400">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Profit Report Dashboard
               </h1>
-              <p className="text-gray-400 text-sm sm:text-base mt-1">
-                Track profit margins and revenue performance
+              <p className="text-gray-600 text-sm mt-1">
+                Track daily and monthly profit performance
               </p>
             </div>
           </div>
-          <div className="text-xs sm:text-sm text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full">
+
+          <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-4 py-2 rounded-xl shadow-lg font-semibold">
             {filteredBills.length} bills analyzed
           </div>
         </motion.div>
 
-        {/* Date Range Filter */}
-        <motion.div
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-start sm:items-end"
-          initial={{ opacity: 0, y: 20 }}
+        {/* Filters */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          className="flex flex-col md:flex-row gap-4 bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg"
         >
-          <div className="flex-1 w-full sm:w-auto">
-            <label className="block text-sm text-gray-400 mb-2 font-medium">From Date</label>
+          <div className="flex-1">
+            <label className="text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              From Date
+            </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 sm:px-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 text-sm sm:text-base"
+              className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 mt-1 shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
             />
           </div>
-          <div className="flex-1 w-full sm:w-auto">
-            <label className="block text-sm text-gray-400 mb-2 font-medium">To Date</label>
+
+          <div className="flex-1">
+            <label className="text-gray-700 text-sm font-medium mb-2 flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              To Date
+            </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 sm:px-4 py-2 bg-gray-800/60 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 text-sm sm:text-base"
+              className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 mt-1 shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
             />
           </div>
-          <button
-            onClick={() => { setStartDate(""); setEndDate(""); }}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm font-medium transition-all duration-200 w-full sm:w-auto mt-2 sm:mt-0"
-          >
-            Clear Filters
-          </button>
+
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+              }}
+              className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl border border-gray-300 shadow-sm transition-all font-medium flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Clear Filters
+            </button>
+          </div>
         </motion.div>
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-          <StatCard 
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <KpiCard 
             title="Total Profit" 
-            value={`₹${Number(totalProfit || 0).toFixed(2)}`} 
-            subtitle="All time profit"
+            value={` ₹${totalProfit.toFixed(2)}`} 
+            gradient="from-emerald-400 to-green-400"
+            icon="💰"
           />
-          <StatCard
-            title="Today's Profit"
-            value={`₹${Number(
-              Object.values(dailyProfit || {}).reduce((s, v) => s + (v || 0), 0)
-            ).toFixed(2)}`}
-            subtitle="Current day"
+          <KpiCard 
+            title="Daily Average" 
+            value={` ₹${(totalProfit / (chartData.length || 1)).toFixed(2)}`} 
+            gradient="from-blue-500 to-blue-600"
+            icon="📊"
           />
-          <StatCard 
-            title="Months Tracked" 
-            value={Object.keys(monthlyProfit || {}).length} 
-            subtitle="Active months"
+          <KpiCard 
+            title="Days Counted" 
+            value={chartData.length} 
+            gradient="from-amber-400 to-orange-400"
+            icon="📅"
           />
         </div>
 
-        {/* Chart Section */}
-        <motion.section
-          className="bg-gray-800/60 backdrop-blur-xl border border-gray-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300"
-          initial={{ opacity: 0, y: 30 }}
+        {/* Profit Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg"
         >
-          <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <span className="text-lg">📈</span>
-            <h2 className="text-lg sm:text-xl font-semibold text-emerald-400">
-              Daily Profit Overview
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-sm">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Profit Trend (Start → Now)
             </h2>
           </div>
-          
-          <div className="h-64 sm:h-72 lg:h-80">
+
+          <div className="h-72">
             {loading ? (
-              <LoadingShimmer />
+              <div className="flex items-center justify-center h-full">
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
+                  <p className="text-gray-500 text-sm">Loading profit data...</p>
+                </div>
+              </div>
             ) : chartData.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                <div className="text-4xl mb-2">📊</div>
-                <p className="text-sm sm:text-base">No profit data available</p>
-                <p className="text-xs text-gray-500 mt-1">Profits will appear here once sales are generated</p>
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <div className="text-center">
+                  <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p>No profit data available</p>
+                </div>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
-                    <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.6} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                    <linearGradient id="profitArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.05} />
+                    </linearGradient>
+                    <linearGradient id="profitLine" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#059669" />
+                      <stop offset="95%" stopColor="#10B981" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
+
+                  <CartesianGrid stroke="#E5E7EB" strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 11, fill: "#9CA3AF" }} 
-                    angle={-45}
-                    textAnchor="end"
-                    height={50}
+                    tick={{ fontSize: 12, fill: "#6B7280" }}
+                    axisLine={{ stroke: "#E5E7EB" }}
                   />
                   <YAxis 
-                    tick={{ fill: "#9CA3AF", fontSize: 11 }} 
-                    width={60}
+                    tick={{ fontSize: 12, fill: "#6B7280" }}
+                    axisLine={{ stroke: "#E5E7EB" }}
                   />
                   <Tooltip 
-                    formatter={(v) => [`₹${Number(v).toFixed(2)}`, "Profit"]}
                     contentStyle={{ 
-                      backgroundColor: "#1F2937", 
-                      borderColor: "#10B981",
-                      borderRadius: '8px',
-                      fontSize: '12px'
+                      backgroundColor: 'white', 
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
                   />
+
                   <Area
                     type="monotone"
                     dataKey="profit"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    fill="url(#profitGradient)"
+                    fill="url(#profitArea)"
+                    stroke="url(#profitLine)"
+                    strokeWidth={3}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
-        </motion.section>
+        </motion.div>
 
         {/* Monthly Table */}
-        <motion.section
-          className="bg-gray-800/60 backdrop-blur-xl border border-gray-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300"
-          initial={{ opacity: 0, y: 30 }}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl shadow-lg p-6"
         >
-          <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <span className="text-lg">🧾</span>
-            <h3 className="text-lg sm:text-xl font-semibold text-emerald-400">
-              Monthly Profit Breakdown
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 rounded-xl shadow-sm">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">
+              Monthly Profit Summary
             </h3>
           </div>
 
-          {/* Desktop Table */}
-          <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="text-gray-400 text-sm border-b border-gray-700/50">
+          <div className="overflow-x-auto rounded-xl border border-blue-200 shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <tr>
-                  <th className="py-3 px-4 font-medium">Month</th>
-                  <th className="py-3 px-4 font-medium text-right">Profit</th>
+                  <th className="py-4 px-4 text-left font-bold text-gray-700 uppercase tracking-wide text-xs">Month</th>
+                  <th className="py-4 px-4 text-right font-bold text-gray-700 uppercase tracking-wide text-xs">Profit</th>
                 </tr>
               </thead>
-              <tbody>
-                {Object.entries(monthlyProfit).length === 0 ? (
+
+              <tbody className="divide-y divide-blue-100">
+                {Object.keys(chartData).length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="py-8 text-center text-gray-400">
-                      <div className="flex flex-col items-center">
-                        <div className="text-3xl mb-2">📄</div>
-                        <p>No monthly profit data available</p>
-                        <p className="text-sm text-gray-500 mt-1">Profits will appear after sales analysis</p>
+                    <td className="py-8 text-center" colSpan={2}>
+                      <div className="flex flex-col items-center justify-center">
+                        <DollarSign className="w-8 h-8 text-gray-400 mb-2" />
+                        <p className="text-gray-500">No monthly data available</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  Object.entries(monthlyProfit)
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([m, val]) => (
-                      <tr
-                        key={m}
-                        className="border-t border-gray-700/50 hover:bg-gray-700/30 transition-colors duration-200"
-                      >
-                        <td className="py-3 px-4 text-sm text-gray-200">
-                          {new Date(m + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-emerald-400 font-semibold text-right">
-                          ₹{Number(val || 0).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))
+                  Object.entries(
+                    chartData.reduce((acc, d) => {
+                      const m = d.date.slice(3); // "11/2025"
+                      acc[m] = (acc[m] || 0) + d.profit;
+                      return acc;
+                    }, {})
+                  ).map(([m, val]) => (
+                    <tr key={m} className="hover:bg-blue-50 transition-colors duration-200">
+                      <td className="py-4 px-4 font-medium text-gray-900">
+                        {m}
+                      </td>
+                      <td className="py-4 px-4 text-right font-bold text-emerald-600 text-lg">
+                         ₹{Number(val).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
           </div>
+        </motion.div>
 
-          {/* Mobile Cards */}
-          <div className="lg:hidden space-y-3">
-            {Object.entries(monthlyProfit).length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <div className="text-3xl mb-2">📄</div>
-                <p>No monthly profit data available</p>
-                <p className="text-sm text-gray-500 mt-1">Profits will appear after sales analysis</p>
-              </div>
-            ) : (
-              Object.entries(monthlyProfit)
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .slice(0, 6)
-                .map(([m, val]) => (
-                  <div
-                    key={m}
-                    className="bg-gray-700/30 rounded-xl p-4 border border-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-semibold text-white text-sm">
-                          {new Date(m + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                        </h4>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-emerald-400 font-semibold text-sm">
-                          ₹{Number(val || 0).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-            )}
-          </div>
-        </motion.section>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-// Stat Card component
-const StatCard = ({ title, value, subtitle }) => (
+const KpiCard = ({ title, value, gradient, icon }) => (
   <motion.div
-    whileHover={{ scale: 1.03 }}
-    className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-gray-800/60 border border-gray-700/50 backdrop-blur-xl shadow-inner hover:shadow-emerald-500/10 transition-all duration-300"
+    whileHover={{ scale: 1.02, y: -2 }}
+    className={`bg-gradient-to-r ${gradient} rounded-2xl p-6 shadow-lg text-white`}
   >
-    <div className="text-xs sm:text-sm text-gray-400 font-medium mb-1">{title}</div>
-    <div className="text-xl sm:text-2xl lg:text-3xl font-semibold text-emerald-400 truncate">
-      {value}
+    <div className="flex items-center justify-between">
+      <div>
+        <div className="text-sm font-medium opacity-90">{title}</div>
+        <div className="text-2xl font-bold mt-2">{value}</div>
+      </div>
+      <div className="text-2xl">{icon}</div>
     </div>
-    {subtitle && (
-      <div className="text-xs text-gray-500 mt-1">{subtitle}</div>
-    )}
   </motion.div>
-);
-
-const LoadingShimmer = () => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="flex flex-col items-center gap-3">
-      <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-gray-400 text-sm">Analyzing profit data...</p>
-    </div>
-  </div>
 );
 
 export default ProfitReport;

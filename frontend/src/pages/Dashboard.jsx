@@ -99,195 +99,137 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 lg:p-6 bg-linear-to-br from-gray-900 to-gray-800 text-gray-100 relative overflow-hidden">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        theme="dark"
-      />
-      {/* Background Emerald Glow */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-emerald-600/30 blur-[100px] sm:blur-[120px] lg:blur-[150px] rounded-full opacity-40 animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/3 w-56 h-56 sm:w-64 sm:h-64 lg:w-80 lg:h-80 bg-emerald-500/20 blur-[80px] sm:blur-[100px] lg:blur-[120px] rounded-full opacity-30 animate-pulse delay-700" />
+<div className="w-full min-h-screen p-6 bg-[#E7F0FF]">
+  {/* Header */}
+  <div className="mb-6">
+    <h1 className="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
+    <p className="text-gray-500 mt-1">Your business insights at a glance</p>
+  </div>
+
+  {/* TOP SUMMARY ROW */}
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+    {/* Today's Sales */}
+    <div className="rounded-xl bg-[#e4c99f] border border-[#F5DAB1] p-5 shadow-sm flex justify-between items-start">
+      <div>
+        <p className="text-gray-700 font-medium">Today's Sales</p>
+        <h2 className="text-2xl font-bold text-gray-900 mt-1">
+          ₹{salesToday.toFixed(2)}
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">{billCountToday} bills</p>
       </div>
-
-      <div className="max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
-        {/* Title */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 sm:mb-6"
-        >
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-400 drop-shadow-lg">
-
-            🧾 Dashboard Overview
-          </h1>
-          <p className="text-gray-400 text-sm sm:text-base mt-1">
-            Your business insights at a glance
-          </p>
-        </motion.header>
-
-        {/* ✅ Summary cards */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, staggerChildren: 0.1 }}
-        >
-          <motion.div whileHover={{ scale: 1.03 }} className="min-w-0">
-            <SummaryCard
-              title="Today's Sales"
-              value={`₹${salesToday.toFixed(2)}`}
-              sub={`${billCountToday} bills`}
-              icon={<ChartBarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />}
-            />
-          </motion.div>
-
-          <motion.div whileHover={{ scale: 1.03 }} className="min-w-0">
-            <SummaryCard
-              title="Low Stock Items"
-              value={stockProducts.length}
-              sub="Critical stock alerts"
-              icon={<CubeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />}
-            />
-          </motion.div>
-
-          <motion.div whileHover={{ scale: 1.03 }} className="min-w-0 sm:col-span-2 lg:col-span-1">
-            <SummaryCard
-              title="Top Selling"
-              value={mostSold.length ? `${mostSold[0].product}` : "—"}
-              sub={mostSold.length ? `${mostSold[0].total_qty} sold` : "No data"}
-              icon={<ReceiptTaxIcon className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />}
-            />
-          </motion.div>
-        </motion.div>
-
-        {/* ✅ Main grid */}
-        <motion.div
-          className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          {/* Bills Table */}
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-600/10 p-3 sm:p-4 lg:p-6 min-w-0"
-          >
-            <div className="mb-3 sm:mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
-                📋 Today's Bills
-                <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full">
-                  {todayBills.length} bills
-                </span>
-              </h2>
-              <p className="text-gray-400 text-sm">Recent transactions for today</p>
-            </div>
-            <div className="overflow-hidden">
-              <BillsTable bills={todayBills} />
-            </div>
-          </motion.div>
-
-          {/* Stock + Most Sold */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* Stock Summary */}
-            <motion.div
-              whileHover={{ scale: 1.01 }}
-              className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-600/10 p-3 sm:p-4 lg:p-6"
-            >
-              <div className="mb-3 sm:mb-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
-                  ⚠️ Low Stock Alert
-                  <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
-                    {stockProducts.length} items
-                  </span>
-                </h2>
-                <p className="text-gray-400 text-sm">Items needing restock</p>
-              </div>
-              <div className="max-h-60 sm:max-h-72 overflow-y-auto">
-                <StockSummary products={stockProducts} />
-              </div>
-            </motion.div>
-
-            {/* Most Sold Items */}
-            <motion.div
-              whileHover={{ scale: 1.01 }}
-              className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-lg shadow-emerald-600/10"
-            >
-              <div className="text-white font-semibold mb-3 sm:mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🔥 Most Sold Items</span>
-                  <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded-full">
-                    Top 5
-                  </span>
-                </div>
-                <span className="text-xs text-gray-400 hidden sm:inline">Last 7 days</span>
-              </div>
-
-              <div className="space-y-2 sm:space-y-3">
-                {mostSold.length === 0 && (
-                  <div className="text-center py-4">
-                    <p className="text-gray-400 text-sm">No sales data available</p>
-                    <p className="text-gray-500 text-xs mt-1">Sales will appear here</p>
-                  </div>
-                )}
-                {mostSold.slice(0, 5).map((m, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center p-2 sm:p-3 rounded-lg bg-gray-900/30 border border-gray-700 hover:border-emerald-600/40 hover:bg-gray-800/50 transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <div className="flex-shrink-0 w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                        <span className="text-emerald-400 text-xs font-bold">{idx + 1}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-100 truncate">
-                          {m.product}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {m.total_qty} pcs sold
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-emerald-400 font-semibold text-sm sm:text-base whitespace-nowrap ml-2">
-                      ₹{Number(m.total_sales || 0).toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Loading / Error */}
-        {loading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-pulse text-center">
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <ChartBarIcon className="w-6 h-6 text-emerald-400" />
-              </div>
-              <p className="text-gray-400">Loading dashboard data...</p>
-            </div>
-          </div>
-        )}
-        {err && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
-            <p className="text-red-400 font-medium">{err}</p>
-            <button
-              onClick={fetchAll}
-              className="mt-2 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg text-white text-sm transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        )}
+      <div className="w-10 h-10 rounded-xl bg-[#F4C78A] flex justify-center items-center">
+        <ChartBarIcon className="w-6 h-6 text-white" />
       </div>
     </div>
+
+    {/* Low Stock Items */}
+    <div className="rounded-xl bg-[#f3c6c1] border border-[#FFBDB8] p-5 shadow-sm flex justify-between items-start">
+      <div>
+        <p className="text-gray-700 font-medium">Low Stock Items</p>
+        <h2 className="text-2xl font-bold text-gray-900 mt-1">
+          {stockProducts.length}
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">Critical stock alerts</p>
+      </div>
+      <div className="w-10 h-10 rounded-xl bg-[#FFAAA1] flex justify-center items-center">
+        <CubeIcon className="w-6 h-6 text-white" />
+      </div>
+    </div>
+
+    {/* Top Selling */}
+    <div className="rounded-xl bg-[#bfeece] border border-[#A2EAB9] p-5 shadow-sm flex justify-between items-start">
+      <div>
+        <p className="text-gray-700 font-medium">Top Selling</p>
+        <h2 className="text-xl font-bold text-gray-900 mt-1 truncate">
+          {mostSold.length ? mostSold[0].product : "—"}
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">
+          {mostSold.length ? `${mostSold[0].total_qty} sold` : "No data"}
+        </p>
+      </div>
+      <div className="w-10 h-10 rounded-xl bg-[#7FDFA1] flex justify-center items-center">
+        <ReceiptTaxIcon className="w-6 h-6 text-white" />
+      </div>
+    </div>
+  </div>
+
+  {/* MIDDLE ROW */}
+  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    {/* Today's Bills Table */}
+    <div className="bg-[#c6d8f1] rounded-2xl shadow-sm border border-gray-200 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-xl">🧾</span>
+        <h2 className="text-xl font-semibold text-gray-800">
+          Today's Bills
+        </h2>
+        <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full">
+          {todayBills.length} bills
+        </span>
+      </div>
+
+      <BillsTable bills={todayBills} />
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="space-y-6">
+
+      {/* Low Stock Alert */}
+      <div className="bg-[#bfc4ca] rounded-2xl border border-[#DCECCD] p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <span>⚠️</span>
+          <h2 className="text-lg font-semibold text-gray-800">
+            Low Stock Alert
+          </h2>
+          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
+            {stockProducts.length} items
+          </span>
+        </div>
+
+        <div className="max-h-60 overflow-y-auto">
+          <StockSummary products={stockProducts} />
+        </div>
+      </div>
+
+      {/* MOST SOLD ITEMS */}
+      <div className="bg-[#d3c5a7] rounded-2xl border border-[#FFC4B6] p-5 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <span>🔥</span>
+            <h2 className="text-lg font-semibold text-gray-800">Most Sold Items</h2>
+            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
+              Top 3
+            </span>
+          </div>
+          <span className="text-xs text-gray-500">Last 7 days</span>
+        </div>
+
+        <div className="space-y-2">
+          {mostSold.slice(0, 3).map((p, idx) => (
+            <div
+              key={idx}
+              className="flex justify-between items-center bg-[#d3c5a7] border border-gray-200 rounded-xl p-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                  {idx + 1}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">{p.product}</p>
+                  <p className="text-xs text-gray-500">{p.total_qty} pcs sold</p>
+                </div>
+              </div>
+              <p className="font-semibold text-emerald-600">
+                ₹{Number(p.total_sales).toFixed(2)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
   );
 };
 

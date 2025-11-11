@@ -6,40 +6,48 @@ import { AuthContext } from "../AuthProvider";
 const AuthStatus = () => {
   const { userName, handleLogout, isLoggedIn } = useContext(AuthContext);
   const navigate = useNavigate();
-const role = localStorage.getItem("role"); // "manager" or "cashier"
+  const role = localStorage.getItem("role");
+
   const onLogout = () => {
     handleLogout();
     navigate("/login");
   };
 
+  const formattedName =
+    userName?.replace(/([A-Z])/g, " $1").trim() || "User";
+
   return (
     <div className="flex items-center gap-4">
       {isLoggedIn && userName ? (
         <>
-          <div className="text-sm text-gray-300">
-         
-            <span className="font-semibold text-emerald-400 drop-shadow-[0_0_4px_#34d399]">
-             {userName.replace(/([A-Z])/g, ' $1') + ' (' + role.toUpperCase() + ')'}
-
-
+          {/* Username + Role */}
+          <div className="text-sm font-medium text-gray-800">
+            <span className="text-blue-600 lineartext-lg font-semibold">
+              {formattedName.toUpperCase()}
+            </span>{" "}
+            <span className="text-purple-600 lineartext-lg font-semibold">
+              ({role?.toUpperCase()})
             </span>
           </div>
 
+          {/* Avatar */}
           <motion.div
             whileHover={{ scale: 1.1 }}
             className="relative group cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-emerald-500/30 to-cyan-500/30 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-transform duration-300">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br lineartext-lg from-blue-500/30 to-purple-500/30 flex items-center justify-center text-white font-bold  shadow-[0_0_10px_rgba(59,130,246,0.4)] transition">
               {userName.charAt(0).toUpperCase()}
             </div>
-            <div className="absolute -inset-[2px] rounded-full bg-linear-to-tr from-emerald-400/40 to-cyan-400/40 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+            <div className="absolute -inset-[3px] rounded-full bg-linear-to-tr from-blue-400/40 to-purple-400/40 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </motion.div>
 
+          {/* Logout Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onLogout}
-            className="px-3 py-1.5 bg-emerald-500/20 text-emerald-300 text-sm rounded-lg border border-emerald-400/40 hover:bg-emerald-500/30 transition-all duration-300"
+            className="px-3 py-1.5 lineartext-lg bg-blue-500/10 text-blue-600  rounded-lg border border-blue-400/40 hover:bg-blue-500/20 transition-all duration-300 font-medium"
           >
             Logout
           </motion.button>
@@ -48,13 +56,13 @@ const role = localStorage.getItem("role"); // "manager" or "cashier"
         <>
           <Link
             to="/login"
-            className="text-sm text-emerald-400 hover:underline transition-all duration-300"
+            className="text-sm text-blue-600 hover:underline transition duration-300"
           >
             Login
           </Link>
           <Link
             to="/register"
-            className="text-sm text-emerald-400 hover:underline transition-all duration-300"
+            className="text-sm text-blue-600 hover:underline transition duration-300"
           >
             Register
           </Link>

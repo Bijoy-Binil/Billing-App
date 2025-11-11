@@ -17,7 +17,7 @@ const Stock = () => {
     try {
       setLoading(true);
       const res = await axios.get(API_PRODUCTS);
-      setProducts(res.data);
+      setProducts(res.data.results || res.data || []);
     } catch (error) {
       console.error("Error fetching stock:", error);
     } finally {
@@ -63,7 +63,7 @@ const Stock = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    if (!window.confirm("Are you sure?")) return;
     try {
       await axios.delete(`${API_PRODUCTS}${id}/`);
       fetchProducts();
@@ -73,61 +73,66 @@ const Stock = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 sm:p-6 text-gray-100">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-emerald-400">📦 Stock Management</h1>
+    <div className="min-h-screen bg-[#EEF3FA] p-4 sm:p-6 text-gray-800">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-green-700">Stock Management</h1>
+          <p className="text-gray-500 text-sm">Manage product inventory & quantities</p>
+        </div>
 
         {/* Add / Edit Form */}
-        <div className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-semibold text-emerald-400 mb-3 sm:mb-4">
-            {editingId ? "✏️ Edit Product" : "➕ Add New Product"}
+        <div className="bg-white border rounded-xl shadow-sm p-5">
+          <h2 className="text-lg font-semibold text-blue-700 mb-4">
+            {editingId ? "Edit Product" : "Add New Product"}
           </h2>
 
           <form
             onSubmit={handleSubmit}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-end"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <div>
-              <label className="block text-xs sm:text-sm text-gray-400 mb-1">Product Name</label>
+              <label className="text-sm text-gray-600">Product Name</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Enter product name"
-                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+                placeholder="e.g., Parle G"
+                className="w-full mt-1 px-3 py-2 border bg-white rounded-lg shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm text-gray-400 mb-1">Price (₹)</label>
+              <label className="text-sm text-gray-600">Price (₹)</label>
               <input
                 type="number"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="Enter price"
-                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+                placeholder="e.g., 10"
+                className="w-full mt-1 px-3 py-2 border bg-white rounded-lg shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm text-gray-400 mb-1">Quantity</label>
+              <label className="text-sm text-gray-600">Quantity</label>
               <input
                 type="number"
                 name="quantity"
                 value={formData.quantity}
                 onChange={handleChange}
-                placeholder="Enter quantity"
-                className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 focus:ring-1 outline-none"
+                placeholder="e.g., 50"
+                className="w-full mt-1 px-3 py-2 border bg-white rounded-lg shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
               />
             </div>
 
-            <div className="sm:col-span-2 lg:col-span-3 flex justify-end mt-2">
+            <div className="col-span-full flex justify-end pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-semibold shadow transition disabled:opacity-50"
               >
                 {editingId ? "Update Product" : "Add Product"}
               </button>
@@ -136,54 +141,57 @@ const Stock = () => {
         </div>
 
         {/* Stock Table */}
-        <div className="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-2xl p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-semibold text-emerald-400 mb-3 sm:mb-4">📊 Current Stock</h2>
+        <div className="bg-[#E7F1FB] border border-[#D3E3F5] rounded-2xl shadow-sm p-5">
+          <h2 className="text-lg font-semibold text-blue-700 mb-4">Current Stock</h2>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-xs sm:text-sm min-w-[600px]">
-              <thead className="text-gray-400 border-b border-gray-700">
-                <tr>
-                  <th className="text-left py-2 px-2 sm:px-3">Name</th>
-                  <th className="py-2 px-2 sm:px-3">Price (₹)</th>
-                  <th className="py-2 px-2 sm:px-3">Quantity</th>
-                  <th className="py-2 px-2 sm:px-3">Actions</th>
+            <table className="w-full min-w-[600px] text-sm">
+              <thead>
+                <tr className="bg-[#DCE7F5] border-b">
+                  <th className="py-3 px-4 text-left">Name</th>
+                  <th className="py-3 px-4 text-center">Price (₹)</th>
+                  <th className="py-3 px-4 text-center">Quantity</th>
+                  <th className="py-3 px-4 text-center">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
-                {products.length === 0 && (
+                {products.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center text-gray-500 py-3 sm:py-4">
+                    <td colSpan={4} className="py-4 text-center text-gray-500">
                       No products found
                     </td>
                   </tr>
+                ) : (
+                  products.map((p) => (
+                    <tr
+                      key={p.id}
+                      className="border-b hover:bg-[#D6E3F4] transition"
+                    >
+                      <td className="py-3 px-4">{p.name}</td>
+                      <td className="py-3 px-4 text-center">{p.price}</td>
+                      <td className="py-3 px-4 text-center">{p.quantity}</td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-4 text-sm">
+                          <button
+                            onClick={() => handleEdit(p)}
+                            className="text-blue-600 hover:text-blue-500"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(p.id)}
+                            className="text-red-600 hover:text-red-500"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
-                {products.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-gray-700 hover:bg-gray-700/30 transition"
-                  >
-                    <td className="py-2 px-2 sm:px-3">{p.name}</td>
-                    <td className="py-2 px-2 sm:px-3 text-center">{p.price}</td>
-                    <td className="py-2 px-2 sm:px-3 text-center">{p.quantity}</td>
-                    <td className="py-2 px-2 sm:px-3 text-center">
-                      <div className="flex justify-center gap-2 sm:gap-3">
-                        <button
-                          onClick={() => handleEdit(p)}
-                          className="text-emerald-400 hover:text-emerald-300 text-xs sm:text-sm"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          className="text-red-400 hover:text-red-300 text-xs sm:text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
               </tbody>
+
             </table>
           </div>
         </div>

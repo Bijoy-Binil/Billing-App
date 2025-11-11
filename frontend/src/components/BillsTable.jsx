@@ -1,64 +1,64 @@
+// src/components/BillsTable.jsx
 import React, { useMemo } from "react";
 
 const BillsTable = ({ bills = [] }) => {
-  // ✅ Get today's date (ignoring time)
   const todayBills = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const today = new Date().toISOString().slice(0, 10);
     return bills.filter((bill) => bill.created_at.startsWith(today));
   }, [bills]);
 
-  console.log("bills==>", bills);
-
   return (
-    <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-2xl">
-      <div className="text-white font-semibold mb-3">Today's Bills</div>
+    <div className="overflow-x-auto rounded-xl border border-gray-200">
+      <table className="w-full text-left">
+        <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-600 text-sm">
+          <tr>
+            <th className="py-4 px-4 font-semibold">Bill ID</th>
+            <th className="py-4 px-4 font-semibold">Cashier</th>
+            <th className="py-4 px-4 font-semibold">Customer</th>
+            <th className="py-4 px-4 font-semibold text-right">Total</th>
+          </tr>
+        </thead>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-[640px] text-left">
-          <thead className="text-gray-400 text-sm">
+        <tbody className="divide-y divide-gray-100">
+          {todayBills.length === 0 ? (
             <tr>
-              <th className="py-2">Bill ID</th>
-              <th className="py-2">Cashier</th>
-              <th className="py-2">Customer</th>
-              <th className="py-2">Total</th>
-              <th className="py-2">Time</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {todayBills.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-6 text-center text-gray-400">
+              <td
+                colSpan={4}
+                className="py-8 text-center text-gray-500 text-sm"
+              >
+                <div className="flex flex-col items-center justify-center">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-2">
+                    <span className="text-2xl">📄</span>
+                  </div>
                   No bills for today
+                </div>
+              </td>
+            </tr>
+          ) : (
+            todayBills.slice(0, 10).map((b, index) => (
+              <tr
+                key={index}
+                className="hover:bg-blue-50 transition-colors group"
+              >
+                <td className="py-4 px-4 font-medium text-gray-900 group-hover:text-blue-600">
+                  {b.bill_id}
+                </td>
+                <td className="py-4 px-4  text-gray-700">
+                  {b.cashier?.first_name
+                    ? `${b.cashier.first_name} `
+                    : "—"}
+                </td>
+                <td className="py-4 px-4 text-gray-700">
+                  {b.customer_name || "Walk-in"}
+                </td>
+                <td className="py-4 px-4 text-right font-bold text-emerald-600">
+                   ₹{Number(b.total).toLocaleString()}
                 </td>
               </tr>
-            ) : (
-              todayBills.slice(0, 10).map((b, idx) => (
-                <tr key={idx} className="border-t border-gray-700">
-                  <td className="py-3 text-sm text-white">{b.bill_id}</td>
-                  <td className="py-3 text-sm text-gray-200">
-                    {b.cashier && b.cashier.first_name
-                      ? `${b.cashier.first_name} ${b.cashier.last_name || ""}`
-                      : "—"}
-                  </td>
-                  <td className="py-3 text-sm text-gray-200">
-                    {b.customer_name || "Walk-in"}
-                  </td>
-                  <td className="py-3 text-sm text-emerald-400">
-                    ₹{Number(b.total).toFixed(2)}
-                  </td>
-                  <td className="py-3 text-sm text-gray-400">
-                    {new Date(b.created_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };
