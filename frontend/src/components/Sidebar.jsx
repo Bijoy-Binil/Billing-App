@@ -55,7 +55,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* ✅ LOGO */}
-      <div className="px-6 py-6 border-b border-gray-200 text-center bg-[#84aaac]">
+      <div className="px-6 py-6 border-b border-gray-200 text-center bg-[#d3d8d8]">
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -85,8 +85,8 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all 
                     ${
                       active
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm"
+                        : "text-gray-700 hover:bg-emerald-100"
                     }`}
                 >
                   <Icon size={18} />
@@ -134,7 +134,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
       </div>
 
       {/* ✅ LOGOUT */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-[#84aaac]">
+      <div className="px-6 py-4 border-t border-gray-200 bg-[#d3d8d8]">
         <motion.button
           whileHover={{ scale: 1.05 }}
           onClick={handleLogout}
@@ -154,7 +154,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
     <>
       {/* ✅ DESKTOP SIDEBAR */}
       <motion.aside
-        className="hidden md:flex md:flex-col w-64 bg-[#84aaac] border-r border-gray-200 shadow-sm"
+        className="hidden md:flex md:flex-col w-64 bg-[#d3d8d8] border-r border-gray-200 shadow-sm"
         initial={{ x: -40, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
       >

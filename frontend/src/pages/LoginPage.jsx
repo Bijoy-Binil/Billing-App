@@ -1,11 +1,16 @@
+// src/pages/LoginPage.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
+import { Eye, EyeOff, LogIn, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import api from "../api";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,82 +40,104 @@ const LoginPage = () => {
       localStorage.setItem("userJoined", loginRes.data.joined);
       localStorage.setItem("isLoggedIn", loginRes.data.user_login);
 
-      window.location.href = "/";
+      toast.success("🎉 Login successful! Redirecting...", { theme: "light" });
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } catch (err) {
       console.error(err);
       setError("Invalid credentials. Please try again!");
+      toast.error("❌ Login failed. Please check your credentials.", { theme: "light" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 lg:p-6 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
+      <ToastContainer position="top-right" autoClose={3000} />
+      
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-gray-900/80 backdrop-blur-xl shadow-2xl shadow-emerald-500/10 rounded-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 border border-gray-800/50 relative z-10"
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-gradient-to-br from-white to-blue-50 backdrop-blur-xl shadow-2xl shadow-blue-500/20 rounded-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 border border-blue-200 relative z-10"
       >
         {/* Logo/Header */}
-        <div className="text-center mb-6 sm:mb-8">
+        <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-linear-to-r from-emerald-400 to-teal-400 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-2xl">🧾</span>
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <span className="text-2xl text-white">🧾</span>
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-linear-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent tracking-tight">
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight">
             SuperBill Login
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base mt-2">
+          <p className="text-gray-600 text-sm mt-3">
             Access your dashboard and manage your business
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
               Email Address
             </label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full px-4 py-3 rounded-lg bg-gray-800/60 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 placeholder-gray-500 text-sm sm:text-base"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full px-4 py-3.5 rounded-xl bg-white text-gray-800 border border-blue-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all duration-300 placeholder-gray-500 shadow-sm"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <CheckCircle2 className="text-blue-500" size={18} />
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
               Password
             </label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full px-4 py-3 rounded-lg bg-gray-800/60 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 placeholder-gray-500 text-sm sm:text-base"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                className="w-full px-4 py-3.5 rounded-xl bg-white text-gray-800 border border-blue-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all duration-300 placeholder-gray-500 shadow-sm pr-12"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {error && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-red-500/10 border border-red-500/20 rounded-lg p-3"
+              className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3"
             >
-              <p className="text-red-400 text-sm text-center font-medium">
-                ⚠️ {error}
+              <AlertCircle className="text-rose-500 flex-shrink-0" size={18} />
+              <p className="text-rose-700 text-sm font-medium">
+                {error}
               </p>
             </motion.div>
           )}
@@ -121,53 +148,59 @@ const LoginPage = () => {
             transition={{ type: "spring", stiffness: 300 }}
             type="submit"
             disabled={loading}
-            className="w-full py-3 sm:py-4 font-semibold rounded-lg bg-linear-to-r from-emerald-500 to-teal-400 hover:from-teal-400 hover:to-emerald-500 text-gray-900 shadow-lg shadow-emerald-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full py-4 font-bold rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 Signing In...
               </>
             ) : (
-              "Sign In to Dashboard"
+              <>
+                <LogIn size={18} />
+                Sign In to Dashboard
+              </>
             )}
           </motion.button>
         </form>
 
         {/* Register Link */}
-        <div className="mt-6 sm:mt-8 text-center">
-          <p className="text-gray-400 text-sm">
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 text-sm">
             Don't have an account?{" "}
             <a
               href="/register"
-              className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors duration-200 underline underline-offset-2"
+              className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200 underline underline-offset-2"
             >
               Create one here
             </a>
           </p>
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-800/50">
-          <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
+        {/* Feature Highlights */}
+        <div className="mt-8 pt-6 border-t border-blue-200/50">
+          <div className="grid grid-cols-3 gap-4 text-xs text-gray-600">
             <div className="text-center">
-              <div className="w-6 h-6 bg-emerald-500/20 rounded-lg flex items-center justify-center mx-auto mb-1">
-                <span className="text-emerald-400">📊</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
+                <span className="text-white text-xs">📊</span>
               </div>
-              <p>Analytics</p>
+              <p className="font-medium">Analytics</p>
             </div>
             <div className="text-center">
-              <div className="w-6 h-6 bg-emerald-500/20 rounded-lg flex items-center justify-center mx-auto mb-1">
-                <span className="text-emerald-400">💰</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
+                <span className="text-white text-xs">💰</span>
               </div>
-              <p>Billing</p>
+              <p className="font-medium">Billing</p>
+            </div>
+            <div className="text-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
+                <span className="text-white text-xs">📦</span>
+              </div>
+              <p className="font-medium">Inventory</p>
             </div>
           </div>
         </div>
       </motion.div>
-
-      {/* Mobile Optimized Background */}
-      <div className="fixed bottom-0 left-0 right-0 h-20 bg-linear-to-t from-gray-900 to-transparent pointer-events-none sm:hidden"></div>
     </div>
   );
 };
