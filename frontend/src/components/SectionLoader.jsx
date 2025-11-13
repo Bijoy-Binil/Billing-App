@@ -6,6 +6,7 @@ const SectionLoader = () => (
       loop
       muted
       playsInline
+      width={230}
       disablePictureInPicture
       disableRemotePlayback
       controlsList="nodownload noremoteplayback noplaybackrate"
