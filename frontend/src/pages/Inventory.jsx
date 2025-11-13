@@ -1,19 +1,11 @@
 // src/pages/Inventory.jsx
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Package,
-  PlusCircle,
-  Edit2,
-  Trash2,
-  Boxes,
-  AlertTriangle,
-  Search,
-  Eye,
-} from "lucide-react";
+import { Package, PlusCircle, Edit2, Trash2, Boxes, AlertTriangle, Search, Eye } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../api";
+import SectionLoader from "../components/SectionLoader";
 
 const Inventory = () => {
   const token = localStorage.getItem("accessToken");
@@ -44,6 +36,7 @@ const Inventory = () => {
   const fetchData = async () => {
     await Promise.all([fetchCategories(), fetchProducts(), fetchSuppliers()]);
   };
+
 
   const fetchCategories = async () => {
     try {
@@ -85,8 +78,7 @@ const Inventory = () => {
     }
   };
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -198,17 +190,14 @@ const Inventory = () => {
         >
           <AlertTriangle className="h-5 w-5" />
           <span className="text-sm font-semibold">
-            Low Stock Alert:{" "}
-            <span className="font-bold">
-              {lowStock.map((i) => i.name).join(", ")}
-            </span>
+            Low Stock Alert: <span className="font-bold">{lowStock.map((i) => i.name).join(", ")}</span>
           </span>
         </motion.div>
       )}
 
       <div className="max-w-[1280px] mx-auto space-y-6">
         {/* Header */}
-        <motion.header 
+        <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
@@ -218,9 +207,7 @@ const Inventory = () => {
               <Boxes className="text-white" size={28} />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Inventory Management
-              </h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inventory Management</h1>
               <p className="text-gray-600 text-sm mt-1">Manage your products and stock levels</p>
             </div>
           </div>
@@ -266,9 +253,7 @@ const Inventory = () => {
                 <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 rounded-xl shadow-sm">
                   {editingId ? <Edit2 className="text-white" size={16} /> : <PlusCircle className="text-white" size={16} />}
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {editingId ? "Edit Product" : "Add New Product"}
-                </h2>
+                <h2 className="text-xl font-bold text-gray-900">{editingId ? "Edit Product" : "Add New Product"}</h2>
               </div>
               {!editingId ? (
                 <div className="text-sm text-gray-500 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
@@ -297,10 +282,7 @@ const Inventory = () => {
               )}
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-            >
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
@@ -429,53 +411,37 @@ const Inventory = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-sm">
-                <Package className="text-white" size={18} />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Product Inventory</h3>
-            </div>
-            {loading && (
-              <span className="text-sm bg-gradient-to-r from-amber-400 to-orange-400 text-white px-3 py-1.5 rounded-lg font-medium shadow-sm">
-                Loading Products...
-              </span>
-            )}
-          </div>
 
           <div className="overflow-x-auto rounded-xl border border-blue-200 shadow-sm">
             <table className="w-full text-sm min-w-[720px]">
               <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
                 <tr>
-                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
-                    Image
-                  </th>
-                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
-                    Product
-                  </th>
-                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
-                    Category
-                  </th>
-                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
-                    Price  ₹
-                  </th>
+                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Image</th>
+                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Product</th>
+                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Category</th>
+                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Price ₹</th>
                   <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
                     Quantity
                   </th>
                   <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
                     Stock Status
                   </th>
-                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
-                    Actions
-                  </th>
+                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Actions</th>
                 </tr>
+         {loading && (
+  <tr>
+    <td colSpan={7}>
+      <div className="flex justify-center items-center py-10">
+        <SectionLoader />
+      </div>
+    </td>
+  </tr>
+)}
+
               </thead>
               <tbody className="divide-y divide-blue-100">
                 {products.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="hover:bg-blue-50 transition-colors duration-200"
-                  >
+                  <tr key={p.id} className="hover:bg-blue-50 transition-colors duration-200">
                     <td className="px-4 py-3">
                       {p.image ? (
                         <img
@@ -491,24 +457,22 @@ const Inventory = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {p.manufacturer || "No manufacturer"}
-                      </div>
+                      <div className="text-xs text-gray-500 mt-1">{p.manufacturer || "No manufacturer"}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-200">
                         {p.category_detail?.name || "Uncategorized"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center font-bold text-gray-900 text-lg">
-                       ₹{Number(p.price).toFixed(2)}
-                    </td>
+                    <td className="px-4 py-3 text-center font-bold text-gray-900 text-lg">₹{Number(p.price).toFixed(2)}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
-                        Number(p.quantity) >= 10
-                          ? "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border-emerald-200"
-                          : "bg-gradient-to-r from-rose-50 to-pink-50 text-rose-700 border-rose-200"
-                      }`}>
+                      <span
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
+                          Number(p.quantity) >= 10
+                            ? "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border-emerald-200"
+                            : "bg-gradient-to-r from-rose-50 to-pink-50 text-rose-700 border-rose-200"
+                        }`}
+                      >
                         {p.quantity}
                       </span>
                     </td>

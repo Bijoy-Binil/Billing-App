@@ -6,6 +6,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../api";
+import SectionLoader from "../components/SectionLoader";
 
 const Billing = () => {
   const token = localStorage.getItem("accessToken");
@@ -27,10 +28,15 @@ const Billing = () => {
   const [isPaid, setIsPaid] = useState(false);
   const [paypalOrderId, setPaypalOrderId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+const [loadingBills, setLoadingBills] = useState(false);
+
   const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+
 
   // Voice confirmation function
   const speakAmount = (amount, billId = null) => {
@@ -57,24 +63,31 @@ const Billing = () => {
 
   // Fetch functions
   const fetchProducts = async () => {
-    try {
-      const res = await api.get("/products/");
-      setProducts(res.data.results || res.data || []);
-    } catch (err) {
-      console.error("Error fetching products:", err);
-      toast.error("Error loading products ❌");
-    }
-  };
+  try {
+    setLoadingProducts(true);
+    const res = await api.get("/products/");
+    setProducts(res.data.results || res.data || []);
+  } catch (err) {
+    console.error(err);
+    toast.error("Error loading products ❌");
+  } finally {
+    setLoadingProducts(false);
+  }
+};
+
 
   const fetchBills = async () => {
-    try {
-      const res = await api.get("/billings/");
-      setBills(res.data.results || res.data || []);
-    } catch (err) {
-      console.error("Error fetching bills:", err);
-      toast.error("Failed to fetch bills ❌");
-    }
-  };
+  try {
+    setLoadingBills(true);
+    const res = await api.get("/billings/");
+    setBills(res.data.results || res.data || []);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to fetch bills ❌");
+  } finally {
+    setLoadingBills(false);
+  }
+};
 
   useEffect(() => {
     if (!token) return;
@@ -660,41 +673,67 @@ const Billing = () => {
               </div>
 
               {/* Products Grid */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
-              >
-                {products.map((product) => (
-                  <motion.div
-                    key={product.id}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="bg-gradient-to-br from-white to-blue-50 rounded-xl p-3 sm:p-4 border border-blue-200 hover:shadow-lg cursor-pointer transition-all duration-200 group"
-                    onClick={() => addToCart(product)}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors text-sm sm:text-base line-clamp-2">
-                          {product.name}
-                        </h3>
-                        {product.image ? (
-                          <img width={70} className="rounded-lg object-cover shadow-sm" src={product.image} alt={product.name} />
-                        ) : null}
-                      </div>
-                      <p className="text-gray-500 text-xs sm:text-sm">{product?.category_detail?.name || ""}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-base sm:text-lg font-bold text-emerald-700">
-                           ₹{parseFloat(product.price).toFixed(2)}
-                        </span>
-                        <div className="px-2 py-1 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 rounded-lg shadow-sm transition-all">
-                          <span className="text-white text-xs sm:text-sm font-medium">Add +</span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
+             <motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
+>
+  {/* Loader */}
+  {loadingProducts && (
+    <div className="col-span-full">
+      <SectionLoader />
+    </div>
+  )}
+
+  {/* Product Cards */}
+  {!loadingProducts &&
+    products.map((product) => (
+      <motion.div
+        key={product.id}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        className="bg-gradient-to-br from-white to-blue-50 rounded-xl p-3 sm:p-4 border border-blue-200 hover:shadow-lg cursor-pointer transition-all duration-200 group"
+        onClick={() => addToCart(product)}
+      >
+        <div className="space-y-2">
+          
+          {/* Name + Image */}
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors text-sm sm:text-base line-clamp-2">
+              {product.name}
+            </h3>
+
+            {product.image && (
+              <img
+                width={70}
+                className="rounded-lg object-cover shadow-sm"
+                src={product.image}
+                alt={product.name}
+              />
+            )}
+          </div>
+
+          {/* Category */}
+          <p className="text-gray-500 text-xs sm:text-sm">
+            {product?.category_detail?.name || ""}
+          </p>
+
+          {/* Price + Add */}
+          <div className="flex justify-between items-center">
+            <span className="text-base sm:text-lg font-bold text-emerald-700">
+              ₹{parseFloat(product.price).toFixed(2)}
+            </span>
+
+            <div className="px-2 py-1 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 rounded-lg shadow-sm transition-all">
+              <span className="text-white text-xs sm:text-sm font-medium">Add +</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    ))
+  }
+</motion.div>
+
             </div>
 
             {/* Cart Section */}
@@ -885,61 +924,93 @@ const Billing = () => {
                   <th className="py-3 px-3 sm:px-4 text-center font-semibold text-gray-600 text-sm">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-blue-100">
-                {bills.map((bill) => (
-                  <tr key={bill.id} className="hover:bg-blue-50 transition-colors">
-                    <td className="py-3 px-3 sm:px-4 font-medium text-gray-900 text-sm">{bill.bill_id}</td>
-                    <td className="py-3 px-3 sm:px-4 text-gray-700 text-sm">{bill.customer_name || "Walk-in Customer"}</td>
-                    <td className="py-3 px-3 sm:px-4 text-right font-semibold text-gray-900 text-sm">
-                       ₹{parseFloat(bill.total).toFixed(2)}
-                    </td>
-                    <td className="py-3 px-3 sm:px-4 text-gray-600 text-sm">
-                      {new Date(bill.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-3 sm:px-4">
-                      <div className="flex justify-center">
-                        {bill.payment_status === "paid" ? (
-                          <span className="px-2 py-1 bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200 shadow-sm">
-                            🟢 Paid
-                          </span>
-                        ) : bill.payment_status === "failed" ? (
-                          <span className="px-2 py-1 bg-gradient-to-r from-rose-50 to-pink-50 text-rose-700 rounded-full text-xs font-medium border border-rose-200 shadow-sm">
-                            🔴 Failed
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 rounded-full text-xs font-medium border border-amber-200 shadow-sm">
-                            🟠 Pending
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 sm:px-4">
-                      <div className="flex justify-center gap-2">
-                        {bill.payment_status === "paid" ? (
-                          <button
-                            onClick={() => handleDownloadInvoice(bill.id)}
-                            disabled={downloadingId === bill.id}
-                            className="px-3 py-1 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 cursor-pointer text-white rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-1 text-xs font-medium shadow-sm"
-                          >
-                            <Download size={12} />
-                            {downloadingId === bill.id ? `${progress}%` : "Invoice"}
-                          </button>
-                        ) : bill.payment_status === "pending" ? (
-                          <button
-                            onClick={() => openPaymentModal(bill)}
-                            className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 cursor-pointer text-white rounded-lg transition-all duration-200 text-xs font-medium flex items-center gap-1 shadow-sm"
-                          >
-                            <Volume2 size={12} />
-                            Pay Now
-                          </button>
-                        ) : (
-                          <span className="text-rose-600 text-xs">Payment Failed</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+            <tbody className="divide-y divide-blue-100">
+
+  {/* Loader */}
+  {loadingBills && (
+    <tr>
+      <td colSpan={6}>
+        <SectionLoader />
+      </td>
+    </tr>
+  )}
+
+  {/* Bills */}
+  {!loadingBills &&
+    bills.map((bill) => (
+      <tr key={bill.id} className="hover:bg-blue-50 transition-colors">
+        
+        {/* Bill ID */}
+        <td className="py-3 px-3 sm:px-4 font-medium text-gray-900 text-sm">
+          {bill.bill_id}
+        </td>
+
+        {/* Customer */}
+        <td className="py-3 px-3 sm:px-4 text-gray-700 text-sm">
+          {bill.customer_name || "Walk-in Customer"}
+        </td>
+
+        {/* Total */}
+        <td className="py-3 px-3 sm:px-4 text-right font-semibold text-gray-900 text-sm">
+          ₹{parseFloat(bill.total).toFixed(2)}
+        </td>
+
+        {/* Date */}
+        <td className="py-3 px-3 sm:px-4 text-gray-600 text-sm">
+          {new Date(bill.created_at).toLocaleDateString()}
+        </td>
+
+        {/* Status */}
+        <td className="py-3 px-3 sm:px-4">
+          <div className="flex justify-center">
+            {bill.payment_status === "paid" ? (
+              <span className="px-2 py-1 bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200 shadow-sm">
+                🟢 Paid
+              </span>
+            ) : bill.payment_status === "failed" ? (
+              <span className="px-2 py-1 bg-gradient-to-r from-rose-50 to-pink-50 text-rose-700 rounded-full text-xs font-medium border border-rose-200 shadow-sm">
+                🔴 Failed
+              </span>
+            ) : (
+              <span className="px-2 py-1 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 rounded-full text-xs font-medium border border-amber-200 shadow-sm">
+                🟠 Pending
+              </span>
+            )}
+          </div>
+        </td>
+
+        {/* Actions */}
+        <td className="py-3 px-3 sm:px-4">
+          <div className="flex justify-center gap-2">
+            {bill.payment_status === "paid" ? (
+              <button
+                onClick={() => handleDownloadInvoice(bill.id)}
+                disabled={downloadingId === bill.id}
+                className="px-3 py-1 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 cursor-pointer text-white rounded-lg transition-all duration-200 disabled:opacity-50 flex items-center gap-1 text-xs font-medium shadow-sm"
+              >
+                <Download size={12} />
+                {downloadingId === bill.id ? `${progress}%` : "Invoice"}
+              </button>
+            ) : bill.payment_status === "pending" ? (
+              <button
+                onClick={() => openPaymentModal(bill)}
+                className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 cursor-pointer text-white rounded-lg transition-all duration-200 text-xs font-medium flex items-center gap-1 shadow-sm"
+              >
+                <Volume2 size={12} />
+                Pay Now
+              </button>
+            ) : (
+              <span className="text-rose-600 text-xs">Payment Failed</span>
+            )}
+          </div>
+        </td>
+
+      </tr>
+    ))
+  }
+
+</tbody>
+
             </table>
           </div>
 

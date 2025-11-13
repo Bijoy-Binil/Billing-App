@@ -19,19 +19,17 @@ import {
   Factory,
   Zap,
   ArrowRight,
-  Star,
-  Target,
 } from "lucide-react";
 
 /* -------------------------------------------------------------
- ✅ MASTER Quick Access Dashboard (NEW – Sidebar-matching)
+   ✅ QUICK ACCESS DASHBOARD
 -------------------------------------------------------------- */
 const QuickAccess = () => {
   return (
     <div className="min-h-screen bg-[#EEF3FF] text-gray-800 px-4 sm:px-8 py-10">
       <div className="max-w-7xl mx-auto space-y-10">
 
-        {/* ✅ HEADER */}
+        {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -51,9 +49,7 @@ const QuickAccess = () => {
           </div>
         </motion.div>
 
-        {/* ✅ QUICK STATS VIBRANT CARDS */}
-
-        {/* ✅ TOP HIGHLIGHT ACTIONS */}
+        {/* TOP ACTIONS */}
         <h2 className="text-xl font-semibold text-gray-800 mt-8">Top Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <HighlightCard
@@ -64,6 +60,7 @@ const QuickAccess = () => {
             color="from-blue-500 to-blue-600"
             badge="Popular"
           />
+
           <HighlightCard
             title="Add Product"
             desc="Add new items to inventory"
@@ -72,6 +69,7 @@ const QuickAccess = () => {
             color="from-indigo-500 to-purple-600"
             badge="Frequent"
           />
+
           <HighlightCard
             title="Purchase Entry"
             desc="Record purchase orders"
@@ -82,7 +80,7 @@ const QuickAccess = () => {
           />
         </div>
 
-        {/* ✅ MAIN GRID (Synced with Sidebar categories) */}
+        {/* ALL PAGES GRID */}
         <div className="mt-10">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
@@ -112,39 +110,14 @@ const QuickAccess = () => {
             <ShortcutCard title="All Reports" to="/reports" icon={<FileText className="text-blue-600 w-6 h-6" />} />
           </div>
         </div>
-
-        {/* ✅ CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-14"
-        >
-
-        </motion.div>
       </div>
     </div>
   );
 };
 
 /* -------------------------------------------------------------
- ✅ REUSABLE COMPONENTS
+   Reusable Highlight Card
 -------------------------------------------------------------- */
-
-const StatCard = ({ title, value, icon, color }) => (
-  <motion.div
-    whileHover={{ scale: 1.03 }}
-    className={`bg-gradient-to-br ${color} rounded-2xl p-5 text-white shadow-md`}
-  >
-    <div className="flex justify-between items-center">
-      <div>
-        <p className="text-xs text-white/80">{title}</p>
-        <p className="text-3xl font-bold mt-1">{value}</p>
-      </div>
-      {icon}
-    </div>
-  </motion.div>
-);
-
 const HighlightCard = ({ title, desc, to, icon, color, badge }) => (
   <Link to={to}>
     <motion.div
@@ -152,13 +125,14 @@ const HighlightCard = ({ title, desc, to, icon, color, badge }) => (
       className={`bg-gradient-to-br ${color} p-6 rounded-2xl shadow-lg text-white relative cursor-pointer`}
     >
       {badge && (
-        <span className="absolute top-3 right-3 bg-white/30 px-2 py-1 rounded-full text-xs">
+        <span className="absolute top-3 right-3 bg-white/30 px-2 py-1 rounded-full text-xs font-semibold">
           {badge}
         </span>
       )}
 
       <div className="flex items-center gap-4">
         <div className="bg-white/20 p-3 rounded-xl">{icon}</div>
+
         <div>
           <h3 className="font-semibold text-lg">{title}</h3>
           <p className="text-white/80 text-sm">{desc}</p>
@@ -168,14 +142,19 @@ const HighlightCard = ({ title, desc, to, icon, color, badge }) => (
   </Link>
 );
 
+/* -------------------------------------------------------------
+   Reusable Shortcut Card
+-------------------------------------------------------------- */
 const ShortcutCard = ({ title, icon, to }) => (
   <Link to={to}>
     <motion.div
       whileHover={{ scale: 1.05, y: -2 }}
-      className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all flex flex-col items-center gap-3"
+      className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all flex flex-col items-center gap-3 group"
     >
       <div className="p-3 bg-gray-50 rounded-xl shadow">{icon}</div>
+
       <p className="text-sm font-semibold text-gray-700">{title}</p>
+
       <ArrowRight className="w-4 h-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-all" />
     </motion.div>
   </Link>

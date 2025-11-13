@@ -4,6 +4,7 @@ import { PlusCircle, Edit2, Trash2, Users, Search } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../api";
+import SectionLoader from "../components/SectionLoader";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -19,6 +20,7 @@ const Suppliers = () => {
     address: "",
     gst_number: "",
   });
+
 
   const userRole = localStorage.getItem("role");
   const token = localStorage.getItem("accessToken");
@@ -181,16 +183,14 @@ const Suppliers = () => {
       </thead>
 
       <tbody className="divide-y divide-blue-100">
-        {loading ? (
-          <tr>
-            <td colSpan={userRole === "manager" ? "6" : "5"} className="text-center py-8">
-              <div className="flex flex-col items-center justify-center">
-                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
-                <p className="text-gray-500 text-sm">Loading suppliers...</p>
-              </div>
-            </td>
-          </tr>
-        ) : filteredSuppliers.length === 0 ? (
+       {loading ? (
+  <tr>
+    <td colSpan={userRole === "manager" ? "6" : "5"}>
+      <SectionLoader />
+    </td>
+  </tr>
+) : filteredSuppliers.length === 0 ? (
+
           <tr>
             <td colSpan={userRole === "manager" ? "6" : "5"} className="text-center py-12">
               <div className="flex flex-col items-center justify-center">

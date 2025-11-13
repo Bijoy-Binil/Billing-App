@@ -5,14 +5,18 @@ import { ShoppingBag, PlusCircle, Search, Download } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../api";
+import SectionLoader from "../components/SectionLoader";
 
 const PurchaseOrders = () => {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
+
   const [open, setOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const [loading, setLoading] = useState(true);     // Page loading
+  const [creating, setCreating] = useState(false);  // Modal submit loading
 
   const [progress, setProgress] = useState(0);
   const [downloadingId, setDownloadingId] = useState(null);
@@ -22,39 +26,38 @@ const PurchaseOrders = () => {
     products: [{ product: "", quantity: 1, cost_price: 0 }],
   });
 
+  // ---------------- FETCH ALL DATA ----------------
   useEffect(() => {
-    fetchPurchaseOrders();
-    fetchSuppliers();
-    fetchProducts();
+    setLoading(true);
+    Promise.all([
+      fetchPurchaseOrders(),
+      fetchSuppliers(),
+      fetchProducts(),
+    ]).finally(() => setLoading(false));
   }, []);
 
-  const fetchPurchaseOrders = async () => {
-    try {
-      const res = await api.get("/purchase-orders/");
-      setPurchaseOrders(res.data.results || []);
-    } catch (err) {
-      toast.error("Failed to fetch purchase orders");
-    }
+  const fetchPurchaseOrders = () => {
+    return api
+      .get("/purchase-orders/")
+      .then((res) => setPurchaseOrders(res.data.results || []))
+      .catch(() => toast.error("Failed to fetch purchase orders"));
   };
 
-  const fetchSuppliers = async () => {
-    try {
-      const res = await api.get("/suppliers/");
-      setSuppliers(res.data.results || []);
-    } catch {
-      toast.error("Failed to fetch suppliers");
-    }
+  const fetchSuppliers = () => {
+    return api
+      .get("/suppliers/")
+      .then((res) => setSuppliers(res.data.results || []))
+      .catch(() => toast.error("Failed to fetch suppliers"));
   };
 
-  const fetchProducts = async () => {
-    try {
-      const res = await api.get("/products/");
-      setProducts(res.data.results || []);
-    } catch {
-      toast.error("Failed to fetch products");
-    }
+  const fetchProducts = () => {
+    return api
+      .get("/products/")
+      .then((res) => setProducts(res.data.results || []))
+      .catch(() => toast.error("Failed to fetch products"));
   };
 
+  // ---------------- FORM HANDLERS ----------------
   const handleProductChange = (index, field, value) => {
     const updated = [...formData.products];
     updated[index][field] =
@@ -76,7 +79,7 @@ const PurchaseOrders = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setCreating(true);
 
     try {
       for (const p of formData.products) {
@@ -97,16 +100,17 @@ const PurchaseOrders = () => {
     } catch {
       toast.error("Failed to create purchase order");
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
 
+  // ---------------- INVOICE DOWNLOAD ----------------
   const handleDownloadInvoice = async (id) => {
     setDownloadingId(id);
     setProgress(0);
 
     try {
-      // Simulate generating...
+      // Simulate generating loading
       await new Promise((resolve) => {
         let p = 0;
         const i = setInterval(() => {
@@ -137,10 +141,10 @@ const PurchaseOrders = () => {
       a.href = url;
       a.download = `invoice_${id}.pdf`;
       a.click();
-
       window.URL.revokeObjectURL(url);
+
       toast.success("Invoice downloaded");
-    } catch (err) {
+    } catch {
       toast.error("Failed to download invoice");
     } finally {
       setTimeout(() => {
@@ -154,6 +158,7 @@ const PurchaseOrders = () => {
     po.supplier_name?.toLowerCase().includes(searchText.toLowerCase())
   );
 
+  // ---------------- UI ----------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 p-4 sm:p-6">
       <ToastContainer position="top-right" />
@@ -189,7 +194,7 @@ const PurchaseOrders = () => {
       </motion.div>
 
       {/* Search */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative mb-6 sm:mb-8"
@@ -206,56 +211,66 @@ const PurchaseOrders = () => {
         />
       </motion.div>
 
-      {/* Table */}
+      {/* TABLE */}
       <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl shadow-lg overflow-hidden"
->
-  <div className="overflow-x-auto">
-    <table className="w-full text-sm">
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl shadow-lg overflow-hidden"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
             <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
               <tr>
-                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">ID</th>
-                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Supplier</th>
-                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Product</th>
-                <th className="px-4 sm:px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Image</th>
-                <th className="px-4 sm:px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Qty</th>
-                <th className="px-4 sm:px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Cost</th>
-                <th className="px-4 sm:px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Total</th>
-                <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wide">Date</th>
-                <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wide">Invoice</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">ID</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Supplier</th>
+                <th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Product</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Image</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Qty</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Cost</th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Total</th>
+                <th className="px-4 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wide">Date</th>
+                <th className="px-4 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wide">Invoice</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-blue-100">
-              {filteredOrders.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="9">
+                    <SectionLoader />
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <ShoppingBag className="w-12 h-12 text-gray-400 mb-3" />
-                      <p className="text-gray-500 text-lg font-medium">No purchase orders found</p>
-                      <p className="text-gray-400 text-sm mt-1">Create your first purchase order to get started</p>
+                      <p className="text-gray-500 text-lg font-medium">
+                        No purchase orders found
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        Create your first purchase order to get started
+                      </p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((po) => (
                   <tr key={po.id} className="hover:bg-blue-50 transition-colors duration-200">
-                    <td className="px-4 sm:px-6 py-4 font-semibold text-gray-900">
-                      #{po.id}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4">
+                    <td className="px-4 py-4 font-semibold text-gray-900">#{po.id}</td>
+
+                    <td className="px-4 py-4">
                       <span className="bg-gradient-to-r flex from-amber-50 to-orange-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-200">
                         {po.supplier_name}
                       </span>
                     </td>
-                    <td className="px-4 sm:px-6 py-4 font-medium text-gray-900">
+
+                    <td className="px-4 py-4 font-medium text-gray-900">
                       {po.product_name}
                     </td>
 
                     {/* Product Image */}
-                    <td className="px-4 sm:px-6 py-4 text-center">
+                    <td className="px-4 py-4 text-center">
                       <img
                         src={po.product?.image || "/placeholder.png"}
                         className="w-12 h-12 object-cover rounded-xl border border-blue-200 shadow-sm mx-auto"
@@ -263,22 +278,25 @@ const PurchaseOrders = () => {
                       />
                     </td>
 
-                    <td className="px-4 sm:px-6 py-4 text-center">
+                    <td className="px-4 py-4 text-center">
                       <span className="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-semibold border border-blue-200">
                         {po.quantity}
                       </span>
                     </td>
-                    <td className="px-4 sm:px-6 py-4 text-center font-semibold text-gray-900">
-                       ₹{po.cost_price}
+
+                    <td className="px-4 py-4 text-center font-semibold text-gray-900">
+                      ₹{po.cost_price}
                     </td>
-                    <td className="px-4 sm:px-6 py-4 text-center font-bold text-emerald-600 text-lg">
-                       ₹{po.total}
+
+                    <td className="px-4 py-4 text-center font-bold text-emerald-600 text-lg">
+                      ₹{po.total}
                     </td>
-                    <td className="px-4 sm:px-6 py-4 text-right text-gray-600 font-medium">
+
+                    <td className="px-4 py-4 text-right text-gray-600 font-medium">
                       {moment(po.created_at).format("DD MMM YYYY")}
                     </td>
 
-                    <td className="px-4 sm:px-6 py-4 text-right">
+                    <td className="px-4 py-4 text-right">
                       <div className="flex flex-col items-end gap-2">
                         <button
                           onClick={() => handleDownloadInvoice(po.id)}
@@ -303,11 +321,11 @@ const PurchaseOrders = () => {
                 ))
               )}
             </tbody>
-             </table>
-  </div>
-</motion.div>
+          </table>
+        </div>
+      </motion.div>
 
-      {/* Modal */}
+      {/* ---------------------- MODAL ---------------------- */}
       {open && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center p-4 z-50">
           <motion.div
@@ -324,10 +342,14 @@ const PurchaseOrders = () => {
               </h3>
             </div>
 
+            {/* FORM */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Supplier */}
+
+              {/* SUPPLIER DROPDOWN */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Supplier
+                </label>
                 <select
                   value={formData.supplier}
                   onChange={(e) =>
@@ -345,10 +367,12 @@ const PurchaseOrders = () => {
                 </select>
               </div>
 
-              {/* Products */}
+              {/* PRODUCT LIST */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Products</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Products
+                  </label>
                   <span className="text-xs text-gray-500 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
                     {formData.products.length} item(s)
                   </span>
@@ -359,6 +383,7 @@ const PurchaseOrders = () => {
                     key={index}
                     className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-4 p-4 bg-gradient-to-r from-white to-amber-50 rounded-xl border border-amber-200"
                   >
+                    {/* PRODUCT NAME */}
                     <div className="sm:col-span-5">
                       <select
                         value={p.product}
@@ -377,6 +402,7 @@ const PurchaseOrders = () => {
                       </select>
                     </div>
 
+                    {/* QUANTITY */}
                     <div className="sm:col-span-3">
                       <input
                         type="number"
@@ -390,6 +416,7 @@ const PurchaseOrders = () => {
                       />
                     </div>
 
+                    {/* COST */}
                     <div className="sm:col-span-3">
                       <input
                         type="number"
@@ -404,6 +431,7 @@ const PurchaseOrders = () => {
                       />
                     </div>
 
+                    {/* ADD / REMOVE BUTTONS */}
                     <div className="sm:col-span-1 flex gap-2 justify-end">
                       {index === formData.products.length - 1 && (
                         <button
@@ -414,6 +442,7 @@ const PurchaseOrders = () => {
                           +
                         </button>
                       )}
+
                       {formData.products.length > 1 && (
                         <button
                           type="button"
@@ -428,7 +457,9 @@ const PurchaseOrders = () => {
                 ))}
               </div>
 
+              {/* FORM FOOTER */}
               <div className="flex justify-end gap-3 pt-4 border-t border-blue-200">
+
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
@@ -439,10 +470,10 @@ const PurchaseOrders = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={creating}
                   className="px-6 py-2.5 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl font-semibold shadow-lg transition-all disabled:opacity-50"
                 >
-                  {loading ? (
+                  {creating ? (
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       Creating...
@@ -451,6 +482,7 @@ const PurchaseOrders = () => {
                     "Create Order"
                   )}
                 </button>
+
               </div>
             </form>
           </motion.div>

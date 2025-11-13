@@ -5,6 +5,7 @@ import { PlusCircle, Edit2, Trash2, Users, Search, Eye } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../api";
+import SectionLoader from "../components/SectionLoader";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -34,18 +35,17 @@ const Customers = () => {
   useEffect(() => {
     fetchCustomers();
   }, []);
-
-  const fetchCustomers = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/customers/`);
-      setCustomers(Array.isArray(res.data) ? res.data : res.data.results || []);
-    } catch (error) {
-      toast.error("Failed to fetch customers");
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchCustomers = async () => {
+  setLoading(true);
+  try {
+    const res = await api.get(`/customers/`);
+    setCustomers(Array.isArray(res.data) ? res.data : res.data.results || []);
+  } catch (error) {
+    toast.error("Failed to fetch customers");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchCustomerDetails = async (id) => {
     try {
@@ -120,9 +120,7 @@ const Customers = () => {
   };
 
   const filteredCustomers = customers.filter(
-    (c) =>
-      c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.contact_number?.includes(searchTerm)
+    (c) => c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.contact_number?.includes(searchTerm)
   );
 
   return (
@@ -140,12 +138,8 @@ const Customers = () => {
             <Users className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Customer Management
-            </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Manage customer profiles, loyalty, and analytics
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Customer Management</h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage customer profiles, loyalty, and analytics</p>
           </div>
         </div>
 
@@ -161,11 +155,7 @@ const Customers = () => {
       </motion.div>
 
       {/* Search */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative mb-6 sm:mb-8"
-      >
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative mb-6 sm:mb-8">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" />
         </div>
@@ -205,11 +195,8 @@ const Customers = () => {
             <tbody className="divide-y divide-blue-100">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-8">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
-                      <p className="text-gray-500 text-sm">Loading customers...</p>
-                    </div>
+                  <td colSpan="4">
+                    <SectionLoader />
                   </td>
                 </tr>
               ) : filteredCustomers.length === 0 ? (
@@ -225,37 +212,28 @@ const Customers = () => {
               ) : (
                 filteredCustomers.map((c) => (
                   <tr key={c.id} className="hover:bg-blue-50 transition-colors duration-200">
-                    <td className="px-4 sm:px-6 py-4 font-semibold text-gray-900">
-                      {c.name}
-                    </td>
+                    <td className="px-4 sm:px-6 py-4 font-semibold text-gray-900">{c.name}</td>
+                    <td className="px-4 sm:px-6 py-4 text-gray-700">{c.contact_number}</td>
                     <td className="px-4 sm:px-6 py-4 text-gray-700">
-                      {c.contact_number}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-gray-700">
-                      {c.email || (
-                        <span className="text-gray-400 italic">—</span>
-                      )}
+                      {c.email || <span className="text-gray-400 italic">—</span>}
                     </td>
                     <td className="px-4 sm:px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleView(c)}
                           className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all shadow-sm"
-                          title="View details"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => openEditModal(c)}
                           className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl transition-all shadow-sm"
-                          title="Edit"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(c.id)}
                           className="p-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl transition-all shadow-sm"
-                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -279,30 +257,20 @@ const Customers = () => {
           >
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 rounded-xl shadow-sm">
-                {editingCustomer ? (
-                  <Edit2 className="h-5 w-5 text-white" />
-                ) : (
-                  <PlusCircle className="h-5 w-5 text-white" />
-                )}
+                {editingCustomer ? <Edit2 className="h-5 w-5 text-white" /> : <PlusCircle className="h-5 w-5 text-white" />}
               </div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {editingCustomer ? "Edit Customer" : "Add New Customer"}
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900">{editingCustomer ? "Edit Customer" : "Add New Customer"}</h2>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {Object.keys(formData).map((key) => (
                 <div key={key}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
-                    {key.replace("_", " ")}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{key.replace("_", " ")}</label>
                   <input
                     type="text"
                     name={key}
                     value={formData[key] || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [key]: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
                     className="w-full px-4 py-3 bg-white border border-blue-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-sm shadow-sm transition-all"
                     placeholder={`Enter ${key.replace("_", " ")}`}
                   />
@@ -339,9 +307,7 @@ const Customers = () => {
             className="bg-gradient-to-b from-white to-blue-50 border-l border-blue-200 w-full max-w-xs sm:max-w-md h-full p-6 overflow-y-auto shadow-xl"
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">
-                Customer Details
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900">Customer Details</h2>
               <button
                 onClick={() => setDetailsOpen(false)}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
@@ -358,12 +324,8 @@ const Customers = () => {
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {selectedCustomer.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    {selectedCustomer.email || "No email provided"}
-                  </p>
+                  <h3 className="text-lg font-bold text-gray-900">{selectedCustomer.name}</h3>
+                  <p className="text-gray-600 text-sm">{selectedCustomer.email || "No email provided"}</p>
                 </div>
               </div>
               <div className="space-y-2 text-sm">
@@ -383,15 +345,11 @@ const Customers = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-amber-800 text-sm font-medium">Loyalty Tier</p>
-                  <p className="text-xl font-bold text-amber-900">
-                    {customerLoyalty?.tier || "Bronze"}
-                  </p>
+                  <p className="text-xl font-bold text-amber-900">{customerLoyalty?.tier || "Bronze"}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-amber-800 text-sm font-medium">Points</p>
-                  <p className="text-xl font-bold text-amber-900">
-                    {customerLoyalty?.available_points || 0}
-                  </p>
+                  <p className="text-xl font-bold text-amber-900">{customerLoyalty?.available_points || 0}</p>
                 </div>
               </div>
             </div>
@@ -401,15 +359,11 @@ const Customers = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Total Spent</p>
-                  <p className="text-2xl font-bold text-white">
-                     ₹{purchaseHistory?.total_spent || 0}
-                  </p>
+                  <p className="text-2xl font-bold text-white">₹{purchaseHistory?.total_spent || 0}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-blue-100 text-sm font-medium">Total Bills</p>
-                  <p className="text-2xl font-bold text-white">
-                    {purchaseHistory?.total_bills || 0}
-                  </p>
+                  <p className="text-2xl font-bold text-white">{purchaseHistory?.total_bills || 0}</p>
                 </div>
               </div>
             </div>
