@@ -6,8 +6,8 @@ import {
   Download,
   RefreshCw,
   FileText,
-  TrendingUp,
 } from "lucide-react";
+import SectionLoader from "../../components/SectionLoader";
 
 const API_URL = "http://127.0.0.1:8000/api/reports/stock-statement/";
 
@@ -16,13 +16,13 @@ const StockStatementReport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const token = localStorage.getItem("accessToken");
+
   useEffect(() => {
     fetchStockStatement();
   }, []);
 
   const fetchStockStatement = async () => {
-    const token = localStorage.getItem("accessToken");
-
     if (!token) {
       setError("Authentication required");
       setLoading(false);
@@ -37,7 +37,7 @@ const StockStatementReport = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setData(res.data);
+      setData(res.data || []);
     } catch (err) {
       console.error("Error fetching stock statement:", err);
       setError("Unable to load stock statement data");
@@ -47,7 +47,7 @@ const StockStatementReport = () => {
   };
 
   /* ---------------------------------------------------
-     ✅ CSV Export
+     CSV Export
   --------------------------------------------------- */
   const exportCSV = () => {
     if (!data.length) return;
@@ -76,7 +76,7 @@ const StockStatementReport = () => {
   };
 
   /* ---------------------------------------------------
-     ✅ PDF Export
+     PDF Export
   --------------------------------------------------- */
   const exportPDF = useCallback(async () => {
     if (!data.length) return;
@@ -102,15 +102,25 @@ const StockStatementReport = () => {
       head: [["Product", "Opening", "Sold", "Closing"]],
       body: table,
       styles: { fontSize: 10 },
-      headStyles: { fillColor: [59, 130, 246] }, // Indigo/Blue
+      headStyles: { fillColor: [59, 130, 246] },
     });
 
     doc.save("stock_statement.pdf");
   }, [data]);
 
   /* ---------------------------------------------------
-     ✅ UI
+     UI
   --------------------------------------------------- */
+
+  // GLOBAL PAGE LOADER
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <SectionLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -141,7 +151,7 @@ const StockStatementReport = () => {
             <button
               disabled={!data.length}
               onClick={exportCSV}
-              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 font-semibold disabled:opacity-50 text-xs sm:text-sm"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl shadow flex items-center gap-2 text-xs sm:text-sm disabled:opacity-40"
             >
               <Download className="w-3 h-3 sm:w-4 sm:h-4" />
               CSV
@@ -150,7 +160,7 @@ const StockStatementReport = () => {
             <button
               disabled={!data.length}
               onClick={exportPDF}
-              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 font-semibold disabled:opacity-50 text-xs sm:text-sm"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg sm:rounded-xl shadow flex items-center gap-2 text-xs sm:text-sm disabled:opacity-40"
             >
               <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
               PDF
@@ -159,11 +169,9 @@ const StockStatementReport = () => {
             <button
               onClick={fetchStockStatement}
               disabled={loading}
-              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 rounded-lg sm:rounded-xl border border-gray-300 shadow flex items-center justify-center gap-2 text-gray-700 text-xs sm:text-sm"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 rounded-lg sm:rounded-xl border border-gray-300 shadow flex items-center gap-2 text-gray-700 text-xs sm:text-sm"
             >
-              <RefreshCw
-                className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? "animate-spin" : ""}`}
-              />
+              <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
               Refresh
             </button>
           </div>
@@ -208,63 +216,46 @@ const StockStatementReport = () => {
           </div>
         )}
 
-        {/* MAIN TABLE WITH MOBILE CARDS */}
+        {/* MAIN TABLE */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6"
         >
-          {loading ? (
-            <LoadingView />
-          ) : error ? (
+          {/* ERROR */}
+          {error ? (
             <ErrorView message={error} retry={fetchStockStatement} />
           ) : data.length === 0 ? (
             <EmptyView />
           ) : (
             <>
-              {/* Desktop Table */}
-              <div className="hidden lg:block overflow-x-auto rounded-lg sm:rounded-xl border border-blue-200 shadow-sm">
+              {/* Desktop */}
+              <div className="hidden lg:block overflow-x-auto rounded-lg border border-blue-200 shadow-sm">
                 <table className="w-full text-xs sm:text-sm">
                   <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                     <tr>
-                      <th className="py-3 px-3 sm:py-3 sm:px-4 text-left text-xs font-bold text-gray-700">
-                        #
-                      </th>
-                      <th className="py-3 px-3 sm:py-3 sm:px-4 text-left text-xs font-bold text-gray-700">
-                        Product
-                      </th>
-                      <th className="py-3 px-3 sm:py-3 sm:px-4 text-center text-xs font-bold text-gray-700">
-                        Opening
-                      </th>
-                      <th className="py-3 px-3 sm:py-3 sm:px-4 text-center text-xs font-bold text-gray-700">
-                        Sold
-                      </th>
-                      <th className="py-3 px-3 sm:py-3 sm:px-4 text-center text-xs font-bold text-gray-700">
-                        Closing
-                      </th>
-                      <th className="py-3 px-3 sm:py-3 sm:px-4 text-center text-xs font-bold text-gray-700">
-                        Status
-                      </th>
+                      <th className="py-3 px-4 text-left font-bold text-gray-700">#</th>
+                      <th className="py-3 px-4 text-left font-bold text-gray-700">Product</th>
+                      <th className="py-3 px-4 text-center font-bold text-gray-700">Opening</th>
+                      <th className="py-3 px-4 text-center font-bold text-gray-700">Sold</th>
+                      <th className="py-3 px-4 text-center font-bold text-gray-700">Closing</th>
+                      <th className="py-3 px-4 text-center font-bold text-gray-700">Status</th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-blue-100">
                     {data.map((r, i) => (
                       <tr key={i} className="hover:bg-blue-50">
-                        <td className="py-3 px-3 sm:py-4 sm:px-4">{i + 1}</td>
-                        <td className="py-3 px-3 sm:py-4 sm:px-4 font-semibold text-gray-900">
-                          {r.product}
-                        </td>
-                        <td className="py-3 px-3 sm:py-4 sm:px-4 text-center text-gray-700">
-                          {r.opening_stock}
-                        </td>
-                        <td className="py-3 px-3 sm:py-4 sm:px-4 text-center text-blue-700 font-semibold">
+                        <td className="py-3 px-4">{i + 1}</td>
+                        <td className="py-3 px-4 font-semibold text-gray-900">{r.product}</td>
+                        <td className="py-3 px-4 text-center">{r.opening_stock}</td>
+                        <td className="py-3 px-4 text-center text-blue-700 font-semibold">
                           {r.total_sold}
                         </td>
-                        <td className="py-3 px-3 sm:py-4 sm:px-4 text-center text-emerald-700 font-semibold">
+                        <td className="py-3 px-4 text-center text-emerald-600 font-semibold">
                           {r.closing_stock}
                         </td>
-                        <td className="py-3 px-3 sm:py-4 sm:px-4 text-center">
+                        <td className="py-3 px-4 text-center">
                           <StatusChip value={r.closing_stock} />
                         </td>
                       </tr>
@@ -273,7 +264,7 @@ const StockStatementReport = () => {
                 </table>
               </div>
 
-              {/* Mobile View */}
+              {/* Mobile */}
               <div className="lg:hidden space-y-3 sm:space-y-4">
                 {data.map((row, i) => (
                   <MobileCard key={i} row={row} index={i} />
@@ -287,9 +278,7 @@ const StockStatementReport = () => {
   );
 };
 
-/* ---------------------------------------------------
-   COMPONENTS
---------------------------------------------------- */
+/* COMPONENTS */
 
 const KpiCard = ({ title, value, gradient, icon }) => (
   <motion.div
@@ -309,46 +298,39 @@ const KpiCard = ({ title, value, gradient, icon }) => (
 const StatusChip = ({ value }) => {
   if (value == 0)
     return (
-      <span className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-500 text-white">
+      <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-500 to-pink-500 text-white">
         Out
       </span>
     );
 
   if (value <= 10)
     return (
-      <span className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-400 text-white">
+      <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-400 text-white">
         Low
       </span>
     );
 
   return (
-    <span className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+    <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-500 to-blue-600 text-white">
       Good
     </span>
   );
 };
 
-const LoadingView = () => (
-  <div className="flex flex-col items-center py-8 sm:py-10">
-    <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-blue-500 border-t-transparent animate-spin rounded-full"></div>
-    <p className="mt-2 sm:mt-3 text-gray-600 text-xs sm:text-sm">Loading stock statement...</p>
-  </div>
-);
-
 const EmptyView = () => (
-  <div className="text-center py-8 sm:py-10">
-    <Package className="w-10 h-10 sm:w-14 sm:h-14 text-gray-400 mx-auto mb-2 sm:mb-3" />
-    <p className="text-gray-600 font-medium text-sm sm:text-base">No data available</p>
-    <p className="text-gray-500 text-xs sm:text-sm">Stock data will appear when sales occur</p>
+  <div className="py-12 text-center">
+    <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+    <p className="text-gray-600 font-medium text-sm">No data available</p>
+    <p className="text-gray-500 text-xs">Stock data will appear when sales occur</p>
   </div>
 );
 
 const ErrorView = ({ message, retry }) => (
-  <div className="text-center py-8 sm:py-10">
-    <p className="text-red-600 font-semibold mb-2 sm:mb-3 text-sm sm:text-base">{message}</p>
+  <div className="py-12 text-center">
+    <p className="text-red-600 font-semibold mb-3">{message}</p>
     <button
       onClick={retry}
-      className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl shadow text-sm sm:text-base"
+      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow text-sm"
     >
       Retry
     </button>
@@ -356,23 +338,25 @@ const ErrorView = ({ message, retry }) => (
 );
 
 const MobileCard = ({ row, index }) => (
-  <div className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow border border-blue-200 space-y-2 sm:space-y-3">
+  <div className="bg-white p-4 rounded-xl shadow border border-blue-200 space-y-3">
     <div className="flex justify-between">
-      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+      <h3 className="font-semibold text-gray-900">
         {index + 1}. {row.product}
       </h3>
       <StatusChip value={row.closing_stock} />
     </div>
 
-    <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center text-xs sm:text-sm">
+    <div className="grid grid-cols-3 gap-3 text-center text-sm">
       <div>
         <p className="text-gray-500 text-xs">Open</p>
         <p className="font-bold">{row.opening_stock}</p>
       </div>
+
       <div>
         <p className="text-gray-500 text-xs">Sold</p>
         <p className="font-bold text-blue-600">{row.total_sold}</p>
       </div>
+
       <div>
         <p className="text-gray-500 text-xs">Close</p>
         <p className="font-bold text-emerald-600">{row.closing_stock}</p>

@@ -1,3 +1,4 @@
+// src/pages/PurchaseReport.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -25,28 +26,18 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// 💥 Import your video loader
+import SectionLoader from "../../components/SectionLoader";
+
 /* ---------------------------------------------------------
-   ✅ API ROUTES
+   API ROUTES
 --------------------------------------------------------- */
 const API_PURCHASES = "http://127.0.0.1:8000/api/reports/purchases/";
 const API_SUPPLIERS = "http://127.0.0.1:8000/api/suppliers/";
 const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
 
-/* ---------------------------------------------------------
-   ✅ SAFE COLORS FOR CHARTS
---------------------------------------------------------- */
-const COLORS = [
-  "#10B981",
-  "#3B82F6",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#EC4899",
-];
+const COLORS = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
 
-/* ---------------------------------------------------------
-   ✅ MAIN COMPONENT
---------------------------------------------------------- */
 const PurchaseReport = () => {
   const [purchases, setPurchases] = useState([]);
   const [summary, setSummary] = useState({
@@ -68,7 +59,7 @@ const PurchaseReport = () => {
   const token = localStorage.getItem("accessToken");
 
   /* ---------------------------------------------------------
-     ✅ INITIAL LOAD
+     INITIAL LOAD
   --------------------------------------------------------- */
   useEffect(() => {
     fetchSuppliers();
@@ -76,9 +67,6 @@ const PurchaseReport = () => {
     fetchPurchases();
   }, []);
 
-  /* ---------------------------------------------------------
-     ✅ FETCH SUPPLIERS
-  --------------------------------------------------------- */
   const fetchSuppliers = async () => {
     try {
       const res = await axios.get(API_SUPPLIERS, {
@@ -90,9 +78,6 @@ const PurchaseReport = () => {
     }
   };
 
-  /* ---------------------------------------------------------
-     ✅ FETCH PRODUCTS
-  --------------------------------------------------------- */
   const fetchProducts = async () => {
     try {
       const res = await axios.get(API_PRODUCTS, {
@@ -104,9 +89,6 @@ const PurchaseReport = () => {
     }
   };
 
-  /* ---------------------------------------------------------
-     ✅ FETCH PURCHASE DATA
-  --------------------------------------------------------- */
   const fetchPurchases = async () => {
     setLoading(true);
     try {
@@ -117,7 +99,6 @@ const PurchaseReport = () => {
         params.append("start_date", fromDate);
         params.append("end_date", toDate);
       }
-
       if (selectedSupplier) params.append("supplier_id", selectedSupplier);
       if (selectedProduct) params.append("product_id", selectedProduct);
 
@@ -129,8 +110,7 @@ const PurchaseReport = () => {
 
       setPurchases(res.data.purchases || []);
       setSummary(res.data.summary || summary);
-    } catch (err) {
-      console.error("Error fetching purchase data:", err);
+    } catch {
       setPurchases([]);
     } finally {
       setLoading(false);
@@ -145,7 +125,7 @@ const PurchaseReport = () => {
   };
 
   /* ---------------------------------------------------------
-     ✅ SUPPLIER PIE CHART DATA
+     CHART DATA
   --------------------------------------------------------- */
   const supplierChartData = useMemo(() => {
     const map = {};
@@ -158,9 +138,6 @@ const PurchaseReport = () => {
     return Object.values(map);
   }, [purchases]);
 
-  /* ---------------------------------------------------------
-     ✅ PRODUCT BAR CHART DATA
-  --------------------------------------------------------- */
   const productChartData = useMemo(() => {
     const map = {};
     purchases.forEach((p) => {
@@ -174,20 +151,12 @@ const PurchaseReport = () => {
   }, [purchases]);
 
   /* ---------------------------------------------------------
-     ✅ CSV EXPORT (FILTERED)
+     CSV EXPORT
   --------------------------------------------------------- */
   const downloadCSV = useCallback(() => {
     if (!purchases.length) return;
 
-    const headers = [
-      "ID",
-      "Date",
-      "Supplier",
-      "Product",
-      "Quantity",
-      "Cost",
-      "Total",
-    ];
+    const headers = ["ID", "Date", "Supplier", "Product", "Quantity", "Cost", "Total"];
 
     const rows = purchases.map((p) => [
       p.purchase_id,
@@ -200,21 +169,20 @@ const PurchaseReport = () => {
     ]);
 
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
 
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+
     a.href = url;
-    a.download = `purchase_report_${fromDate || "all"}_${toDate ||
-      "all"}.csv`;
+    a.download = `purchase_report_${fromDate || "all"}_${toDate || "all"}.csv`;
     a.click();
 
     URL.revokeObjectURL(url);
   }, [purchases, fromDate, toDate]);
 
   /* ---------------------------------------------------------
-     ✅ PDF EXPORT (FILTERED)
+     PDF EXPORT
   --------------------------------------------------------- */
   const downloadPDF = useCallback(() => {
     if (!purchases.length) return;
@@ -225,11 +193,7 @@ const PurchaseReport = () => {
     doc.text("Purchase Report", 14, 15);
 
     doc.setFontSize(10);
-    doc.text(
-      `Date Range: ${fromDate || "Start"} → ${toDate || "Now"}`,
-      14,
-      22
-    );
+    doc.text(`Date Range: ${fromDate || "Start"} → ${toDate || "Now"}`, 14, 22);
 
     const tableRows = purchases.map((p) => [
       p.purchase_id,
@@ -243,27 +207,34 @@ const PurchaseReport = () => {
 
     autoTable(doc, {
       startY: 30,
-      head: [
-        ["ID", "Date", "Supplier", "Product", "Qty", "Cost", "Total"],
-      ],
+      head: [["ID", "Date", "Supplier", "Product", "Qty", "Cost", "Total"]],
       body: tableRows,
       headStyles: { fillColor: [59, 130, 246] },
       styles: { fontSize: 9 },
     });
 
-    doc.save(
-      `purchase_report_${fromDate || "all"}_${toDate || "all"}.pdf`
-    );
+    doc.save(`purchase_report_${fromDate || "all"}_${toDate || "all"}.pdf`);
   }, [purchases, fromDate, toDate]);
-  
+
   /* ---------------------------------------------------------
-     ✅ UI
+     GLOBAL LOADER
+  --------------------------------------------------------- */
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <SectionLoader />
+      </div>
+    );
+  }
+
+  /* ---------------------------------------------------------
+     UI START
   --------------------------------------------------------- */
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
-        {/* ✅ HEADER */}
+        {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -288,25 +259,29 @@ const PurchaseReport = () => {
           </div>
         </motion.div>
 
-        {/* ✅ FILTERS + EXPORT BUTTONS */}
+        {/* FILTER SECTION */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
         >
-          {/* Title */}
           <div className="flex items-center gap-3 mb-3 sm:mb-4">
             <div className="p-2 bg-blue-600 rounded-lg sm:rounded-xl shadow-sm">
               <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
+
             <span className="text-gray-700 font-medium text-lg sm:text-xl">
               Filters
             </span>
           </div>
 
-          {/* Inputs */}
+          {/* Filter Inputs */}
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-start lg:items-end">
+
+            {/* GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
+
+              {/* From */}
               <div>
                 <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
                   From Date
@@ -315,10 +290,11 @@ const PurchaseReport = () => {
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-sm sm:text-base"
+                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm text-sm sm:text-base"
                 />
               </div>
 
+              {/* To */}
               <div>
                 <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
                   To Date
@@ -327,10 +303,11 @@ const PurchaseReport = () => {
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-sm sm:text-base"
+                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm text-sm sm:text-base"
                 />
               </div>
 
+              {/* Supplier */}
               <div>
                 <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
                   Supplier
@@ -349,6 +326,7 @@ const PurchaseReport = () => {
                 </select>
               </div>
 
+              {/* Product */}
               <div>
                 <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
                   Product
@@ -370,36 +348,40 @@ const PurchaseReport = () => {
 
             {/* Buttons */}
             <div className="flex flex-col xs:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
+
+              {/* Apply */}
               <button
                 onClick={fetchPurchases}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-50"
                 disabled={loading}
+                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base"
               >
-                <Filter className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? "animate-spin" : ""}`} />
+                <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
                 Apply
               </button>
 
+              {/* Clear */}
               <button
                 onClick={clearFilters}
                 className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg sm:rounded-xl shadow border border-gray-300 text-sm sm:text-base"
-                disabled={loading}
               >
                 Clear
               </button>
 
+              {/* CSV */}
               <button
                 onClick={downloadCSV}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-60"
                 disabled={!purchases.length}
+                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                 CSV
               </button>
 
+              {/* PDF */}
               <button
                 onClick={downloadPDF}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-60"
                 disabled={!purchases.length}
+                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                 PDF
@@ -408,134 +390,119 @@ const PurchaseReport = () => {
           </div>
         </motion.div>
 
-        {/* ✅ KPI CARDS */}
+        {/* KPI CARDS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
         >
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs sm:text-sm opacity-90">Total Purchase Value</div>
-                <div className="text-xl sm:text-2xl font-bold">
-                  ₹{summary.total_purchases.toFixed(2)}
-                </div>
-              </div>
-              <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-          </div>
+          {/* Total value */}
+          <KpiCard
+            title="Total Purchase Value"
+            value={`₹${summary.total_purchases.toFixed(2)}`}
+            gradient="from-blue-500 to-indigo-600"
+            icon={<DollarSign className="w-6 h-6 text-white" />}
+          />
 
-          <div className="bg-gradient-to-r from-emerald-400 to-green-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs sm:text-sm opacity-90">Total Quantity</div>
-                <div className="text-xl sm:text-2xl font-bold">{summary.total_quantity}</div>
-              </div>
-              <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-          </div>
+          <KpiCard
+            title="Total Quantity"
+            value={summary.total_quantity}
+            gradient="from-emerald-400 to-green-500"
+            icon={<Package className="w-6 h-6 text-white" />}
+          />
 
-          <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs sm:text-sm opacity-90">Purchase Orders</div>
-                <div className="text-xl sm:text-2xl font-bold">{summary.purchase_count}</div>
-              </div>
-              <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-          </div>
+          <KpiCard
+            title="Purchase Orders"
+            value={summary.purchase_count}
+            gradient="from-amber-400 to-orange-500"
+            icon={<Truck className="w-6 h-6 text-white" />}
+          />
         </motion.div>
 
-        {/* ✅ CHARTS */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+        {/* ---------- CHART SECTION ---------- */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-          {/* Supplier Pie */}
+          {/* Supplier Pie Chart */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
           >
-            <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg sm:rounded-xl">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                Purchase by Supplier
-              </h2>
-            </div>
+            <ChartHeader
+              icon={
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              }
+              title="Purchase by Supplier"
+              gradient="from-purple-500 to-purple-600"
+            />
 
             <div className="h-64 sm:h-72">
-              {loading ? (
-                <LoadingShimmer />
-              ) : supplierChartData.length ? (
+              {!supplierChartData.length ? (
+                <ChartEmpty />
+              ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={supplierChartData}
+                      dataKey="value"
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ₹${value.toFixed(2)}`}
+                      outerRadius={85}
+                      label={({ name, value }) =>
+                        `${name}: ₹${value.toFixed(2)}`
+                      }
                     >
                       {supplierChartData.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value) => [`₹${Number(value).toFixed(2)}`, "Value"]}
+                      formatter={(v) => [`₹${Number(v).toFixed(2)}`, "Value"]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400">
-                  No supplier data available
-                </div>
               )}
             </div>
           </motion.div>
 
-          {/* Product Bar */}
+          {/* Product Bar Chart */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
           >
-            <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div className="p-2 bg-gradient-to-r from-amber-400 to-orange-500 rounded-lg sm:rounded-xl">
-                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                Purchase by Product
-              </h2>
-            </div>
+            <ChartHeader
+              icon={<Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
+              title="Purchase by Product"
+              gradient="from-amber-400 to-orange-500"
+            />
 
             <div className="h-64 sm:h-72">
-              {loading ? (
-                <LoadingShimmer />
-              ) : productChartData.length ? (
+              {!productChartData.length ? (
+                <ChartEmpty />
+              ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={productChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis
                       dataKey="product"
-                      fontSize={12}
                       angle={-40}
                       textAnchor="end"
+                      height={60}
+                      fontSize={11}
                     />
                     <YAxis fontSize={12} />
+
                     <Tooltip
-                      formatter={(value, name) => [
-                        name === "quantity"
-                          ? value
-                          : `₹${Number(value).toFixed(2)}`,
-                        name === "quantity" ? "Quantity" : "Total",
-                      ]}
+                      formatter={(v, n) =>
+                        n === "quantity"
+                          ? [v, "Qty"]
+                          : [`₹${v.toFixed(2)}`, "Total"]
+                      }
                     />
 
                     <defs>
-                      <linearGradient id="quantityBar" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="prodQtyBar" x1="0" x2="0" y1="0" y2="1">
                         <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.85} />
                         <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.25} />
                       </linearGradient>
@@ -543,122 +510,88 @@ const PurchaseReport = () => {
 
                     <Bar
                       dataKey="quantity"
-                      fill="url(#quantityBar)"
+                      fill="url(#prodQtyBar)"
                       radius={[6, 6, 0, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400">
-                  No product data available
-                </div>
               )}
             </div>
           </motion.div>
         </div>
-        
-        {/* ✅ PURCHASE TABLE */}
+
+        {/* ---------- PURCHASE TABLE ---------- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-500 rounded-lg sm:rounded-xl">
-                <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                Purchase Orders
-              </h2>
-            </div>
+          <div className="flex flex-col sm:flex-row justify-between mb-6">
+            <ChartHeader
+              icon={<Truck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
+              title="Purchase Orders"
+              gradient="from-emerald-400 to-green-500"
+            />
 
-            <div className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-lg font-semibold text-sm sm:text-base">
+            <div className="bg-gradient-to-r from-indigo-500 to-blue-600 px-4 py-2 rounded-lg text-white font-semibold shadow">
               Total: {purchases.length} orders
             </div>
           </div>
 
-          {loading ? (
-            <LoadingShimmer />
-          ) : purchases.length > 0 ? (
-            <div className="overflow-x-auto rounded-lg sm:rounded-xl border border-blue-200 shadow-sm">
-              <table className="w-full min-w-[900px] text-xs sm:text-sm">
-                <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+          {!purchases.length ? (
+            <ChartEmpty />
+          ) : (
+            <div className="overflow-x-auto border border-blue-200 rounded-lg">
+              <table className="min-w-[900px] w-full text-sm">
+                <thead className="bg-blue-50">
                   <tr>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      ID
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      Date
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      Supplier
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      Product
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 text-xs">
-                      Qty
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 text-xs">
-                      Cost
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 text-xs">
-                      Total
-                    </th>
+                    <Th>ID</Th>
+                    <Th>Date</Th>
+                    <Th>Supplier</Th>
+                    <Th>Product</Th>
+                    <Th align="right">Qty</Th>
+                    <Th align="right">Cost</Th>
+                    <Th align="right">Total</Th>
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-blue-100">
                   {purchases.map((p) => (
                     <tr key={p.purchase_id} className="hover:bg-blue-50">
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 font-semibold text-gray-900">
-                        #{p.purchase_id}
-                      </td>
+                      <Td>#{p.purchase_id}</Td>
+                      <Td>{new Date(p.created_at).toLocaleDateString()}</Td>
 
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-gray-700">
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </td>
-
-                      <td className="py-3 px-3 sm:py-4 sm:px-4">
-                        <span className="bg-blue-50 text-blue-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs border border-blue-200">
+                      <Td>
+                        <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">
                           {p.supplier}
                         </span>
-                      </td>
+                      </Td>
 
-                      <td className="py-3 px-3 sm:py-4 sm:px-4">{p.product}</td>
+                      <Td>{p.product}</Td>
 
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-blue-700">
+                      <Td align="right" className="font-bold text-blue-700">
                         {p.quantity}
-                      </td>
+                      </Td>
 
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right text-gray-700">
+                      <Td align="right">
                         ₹{Number(p.cost_price).toFixed(2)}
-                      </td>
+                      </Td>
 
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-emerald-600">
+                      <Td align="right" className="font-bold text-emerald-600">
                         ₹{Number(p.total).toFixed(2)}
-                      </td>
+                      </Td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              {/* ✅ FOOTER TOTAL */}
-              <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-t border-emerald-200 p-3 sm:p-4">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                    Grand Total
-                  </span>
-                  <span className="text-lg sm:text-xl font-bold text-emerald-600">
-                    ₹{summary.total_purchases.toFixed(2)}
-                  </span>
-                </div>
+              {/* Total Footer */}
+              <div className="bg-green-50 border-t border-green-200 p-4 flex justify-between">
+                <span className="font-semibold text-gray-900">Grand Total</span>
+                <span className="font-bold text-emerald-700 text-lg">
+                  ₹{summary.total_purchases.toFixed(2)}
+                </span>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 sm:py-12 text-gray-500">
-              No purchase data available.
             </div>
           )}
         </motion.div>
@@ -667,13 +600,50 @@ const PurchaseReport = () => {
   );
 };
 
-/* ✅ Loading Spinner */
-const LoadingShimmer = () => (
-  <div className="w-full h-full flex items-center justify-center py-8 sm:py-10">
-    <div className="flex flex-col items-center">
-      <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
-      <p className="text-gray-500 mt-2 text-sm">Loading...</p>
+/* ---------- EXTRA COMPONENTS ---------- */
+
+// KPI
+const KpiCard = ({ title, value, gradient, icon }) => (
+  <motion.div
+    whileHover={{ scale: 1.02 }}
+    className={`bg-gradient-to-r ${gradient} rounded-xl p-5 shadow-lg text-white flex items-center justify-between`}
+  >
+    <div>
+      <p className="text-xs opacity-90">{title}</p>
+      <h2 className="text-2xl font-bold mt-1">{value}</h2>
     </div>
+    {icon}
+  </motion.div>
+);
+
+// Table Header Cell
+const Th = ({ children, align = "left" }) => (
+  <th
+    className={`py-3 px-4 text-${align} font-bold text-gray-700 uppercase text-xs`}
+  >
+    {children}
+  </th>
+);
+
+// Table Data Cell
+const Td = ({ children, align = "left", className = "" }) => (
+  <td className={`py-3 px-4 text-${align} ${className}`}>{children}</td>
+);
+
+// Chart Header
+const ChartHeader = ({ icon, title, gradient }) => (
+  <div className="flex items-center gap-3 mb-4">
+    <div className={`p-2 bg-gradient-to-r ${gradient} rounded-lg shadow`}>
+      {icon}
+    </div>
+    <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+  </div>
+);
+
+// Empty State with SectionLoader
+const ChartEmpty = () => (
+  <div className="h-full flex items-center justify-center">
+    <SectionLoader />
   </div>
 );
 

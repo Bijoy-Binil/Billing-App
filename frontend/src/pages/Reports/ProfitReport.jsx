@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+// src/pages/ProfitReport.jsx
+import React, { useEffect, useMemo, useCallback, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import {
@@ -11,6 +12,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, Calendar, Filter, DollarSign, FileText } from "lucide-react";
+import SectionLoader from "../../components/SectionLoader";
+
+
 
 const API_SALES = "http://127.0.0.1:8000/api/billings/";
 const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
@@ -37,7 +41,8 @@ const ProfitReport = () => {
           setBills(bRes.data.results || bRes.data || []);
           setProducts(pRes.data.results || pRes.data || []);
         }
-      } catch {
+      } catch (err) {
+        console.error("ProfitReport fetch error:", err);
         if (mounted) {
           setBills([]);
           setProducts([]);
@@ -46,6 +51,7 @@ const ProfitReport = () => {
         if (mounted) setLoading(false);
       }
     };
+
     fetchAll();
     return () => {
       mounted = false;
@@ -56,12 +62,12 @@ const ProfitReport = () => {
   const productLookup = useMemo(() => {
     const map = {};
     products.forEach((p) => {
-      map[p.id] = Number(p.cost_price || p.cost || 0);
+      map[p.id] = Number(p.cost_price ?? p.cost ?? 0);
     });
     return map;
   }, [products]);
 
-  // Apply date filters
+  // Apply date filters to bills
   const filteredBills = useMemo(() => {
     return bills.filter((b) => {
       const d = new Date(b.created_at);
@@ -74,7 +80,7 @@ const ProfitReport = () => {
   // Compute daily profit data
   const dailyData = useMemo(() => {
     const daily = {};
-    filteredBills.forEach((b) => {
+    (filteredBills || []).forEach((b) => {
       const dateStr = new Date(b.created_at).toLocaleDateString("en-GB"); // dd/mm/yyyy
       let profit = 0;
 
@@ -85,12 +91,12 @@ const ProfitReport = () => {
         // Cost resolution (object or id)
         let cost = 0;
         if (item.product && typeof item.product === "object") {
-          cost = Number(item.product.cost_price || item.product.cost || 0);
+          cost = Number(item.product.cost_price ?? item.product.cost ?? 0);
         } else {
           cost = Number(productLookup[item.product] || 0);
         }
-        if (!cost) cost = price * 0.8; // conservative fallback
 
+        if (!cost) cost = price * 0.8; // conservative fallback
         profit += qty * (price - cost);
       });
 
@@ -106,21 +112,21 @@ const ProfitReport = () => {
       })
       .map((d) => ({
         date: d,
-        profit: Number(daily[d].toFixed(2)),
+        profit: Number((daily[d] || 0).toFixed(2)),
       }));
   }, [filteredBills, productLookup]);
 
   // Compute monthly profit summary from dailyData
   const monthlyData = useMemo(() => {
     const m = {};
-    dailyData.forEach((row) => {
+    (dailyData || []).forEach((row) => {
       // row.date is dd/mm/yyyy → monthKey = yyyy-mm
       const [dd, mm, yyyy] = row.date.split("/").map(Number);
       const key = `${yyyy}-${String(mm).padStart(2, "0")}`;
       m[key] = (m[key] || 0) + (row.profit || 0);
     });
     return Object.keys(m)
-      .sort() // yyyy-mm lexicographic sort works
+      .sort()
       .map((k) => ({
         month: k, // yyyy-mm
         profit: Number(m[k].toFixed(2)),
@@ -128,18 +134,17 @@ const ProfitReport = () => {
   }, [dailyData]);
 
   const totalProfit = useMemo(
-    () => dailyData.reduce((s, d) => s + d.profit, 0),
+    () => (dailyData || []).reduce((s, d) => s + (d.profit || 0), 0),
     [dailyData]
   );
 
-  /* ----------------------- EXPORTS ----------------------- */
-  // Helpers
+  /* ----------------------- EXPORT HELPERS ----------------------- */
   const safeNumber = (n) => Number(n || 0);
   const fmtINR = (n) => `₹${safeNumber(n).toFixed(2)}`;
 
   // DAILY CSV
   const downloadDailyCSV = useCallback(() => {
-    if (!dailyData.length) return;
+    if (!dailyData || !dailyData.length) return;
     const headers = ["Date", "Profit (INR)"];
     const rows = dailyData.map((r) => [r.date, safeNumber(r.profit).toFixed(2)]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
@@ -154,7 +159,7 @@ const ProfitReport = () => {
 
   // MONTHLY CSV
   const downloadMonthlyCSV = useCallback(() => {
-    if (!monthlyData.length) return;
+    if (!monthlyData || !monthlyData.length) return;
     const headers = ["Month (YYYY-MM)", "Profit (INR)"];
     const rows = monthlyData.map((r) => [r.month, safeNumber(r.profit).toFixed(2)]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
@@ -169,12 +174,11 @@ const ProfitReport = () => {
 
   // DAILY PDF
   const downloadDailyPDF = useCallback(async () => {
-    if (!dailyData.length) return;
+    if (!dailyData || !dailyData.length) return;
     const { jsPDF } = await import("jspdf");
     const autoTable = (await import("jspdf-autotable")).default;
 
     const doc = new jsPDF();
-    // Use core font to avoid glyph/spacing issues (use "INR " text instead of "₹")
     doc.setFont("helvetica", "normal");
     doc.setFontSize(16);
     doc.text("Daily Profit Report", 14, 15);
@@ -193,10 +197,9 @@ const ProfitReport = () => {
       head: [["Date", "Profit"]],
       body,
       styles: { font: "helvetica", fontSize: 10 },
-      headStyles: { fillColor: [59, 130, 246] }, // blue
+      headStyles: { fillColor: [59, 130, 246] },
     });
 
-    // Total
     const finalY = doc.lastAutoTable?.finalY || 28;
     doc.setFontSize(12);
     doc.text(`Total: INR ${safeNumber(totalProfit).toFixed(2)}`, 14, finalY + 10);
@@ -206,7 +209,7 @@ const ProfitReport = () => {
 
   // MONTHLY PDF
   const downloadMonthlyPDF = useCallback(async () => {
-    if (!monthlyData.length) return;
+    if (!monthlyData || !monthlyData.length) return;
     const { jsPDF } = await import("jspdf");
     const autoTable = (await import("jspdf-autotable")).default;
 
@@ -241,6 +244,16 @@ const ProfitReport = () => {
   }, [monthlyData, startDate, endDate]);
 
   /* ----------------------- UI ----------------------- */
+
+  // Show global loader while initial fetch is running
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <SectionLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -265,7 +278,7 @@ const ProfitReport = () => {
           </div>
 
           <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-lg font-semibold text-sm sm:text-base">
-            {filteredBills.length} bills analyzed
+            {(filteredBills || []).length} bills analyzed
           </div>
         </motion.div>
 
@@ -318,7 +331,6 @@ const ProfitReport = () => {
 
           {/* Export Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {/* Daily */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <span className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" /> Daily Exports
@@ -343,7 +355,6 @@ const ProfitReport = () => {
               </div>
             </div>
 
-            {/* Monthly */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <span className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" /> Monthly Exports
@@ -372,24 +383,9 @@ const ProfitReport = () => {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <KpiCard
-            title="Total Profit"
-            value={` ${fmtINR(totalProfit)}`}
-            gradient="from-blue-500 to-indigo-600"
-            icon="💰"
-          />
-          <KpiCard
-            title="Daily Average"
-            value={` ${fmtINR(totalProfit / (dailyData.length || 1))}`}
-            gradient="from-indigo-500 to-purple-600"
-            icon="📊"
-          />
-          <KpiCard
-            title="Days Counted"
-            value={dailyData.length}
-            gradient="from-amber-400 to-orange-400"
-            icon="📅"
-          />
+          <KpiCard title="Total Profit" value={`${fmtINR(totalProfit)}`} gradient="from-blue-500 to-indigo-600" icon="💰" />
+          <KpiCard title="Daily Average" value={`${fmtINR(totalProfit / (dailyData.length || 1))}`} gradient="from-indigo-500 to-purple-600" icon="📊" />
+          <KpiCard title="Days Counted" value={dailyData.length} gradient="from-amber-400 to-orange-400" icon="📅" />
         </div>
 
         {/* Profit Chart (Daily) */}
@@ -402,20 +398,11 @@ const ProfitReport = () => {
             <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg sm:rounded-xl shadow-sm">
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              Profit Trend (Daily)
-            </h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Profit Trend (Daily)</h2>
           </div>
 
           <div className="h-64 sm:h-72">
-            {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="flex flex-col items-center">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
-                  <p className="text-gray-500 text-xs sm:text-sm">Loading profit data...</p>
-                </div>
-              </div>
-            ) : dailyData.length === 0 ? (
+            {dailyData.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <div className="text-center">
                   <DollarSign className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-2" />
@@ -437,32 +424,10 @@ const ProfitReport = () => {
                   </defs>
 
                   <CartesianGrid stroke="#E5E7EB" strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                    axisLine={{ stroke: "#E5E7EB" }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                    axisLine={{ stroke: "#E5E7EB" }}
-                  />
-                  <Tooltip
-                    formatter={(v) => [fmtINR(v), "Profit"]}
-                    contentStyle={{
-                      backgroundColor: "white",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
-
-                  <Area
-                    type="monotone"
-                    dataKey="profit"
-                    fill="url(#profitArea)"
-                    stroke="url(#profitLine)"
-                    strokeWidth={3}
-                  />
+                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#6B7280" }} axisLine={{ stroke: "#E5E7EB" }} />
+                  <YAxis tick={{ fontSize: 12, fill: "#6B7280" }} axisLine={{ stroke: "#E5E7EB" }} />
+                  <Tooltip formatter={(v) => [fmtINR(v), "Profit"]} contentStyle={{ backgroundColor: "white", border: "1px solid #E5E7EB", borderRadius: 12 }} />
+                  <Area type="monotone" dataKey="profit" fill="url(#profitArea)" stroke="url(#profitLine)" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -486,12 +451,8 @@ const ProfitReport = () => {
             <table className="w-full text-xs sm:text-sm">
               <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <tr>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 uppercase tracking-wide text-xs">
-                    Month (YYYY-MM)
-                  </th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 uppercase tracking-wide text-xs">
-                    Profit
-                  </th>
+                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 uppercase tracking-wide text-xs">Month (YYYY-MM)</th>
+                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 uppercase tracking-wide text-xs">Profit</th>
                 </tr>
               </thead>
 
@@ -509,9 +470,7 @@ const ProfitReport = () => {
                   monthlyData.map((row) => (
                     <tr key={row.month} className="hover:bg-blue-50 transition-colors duration-200">
                       <td className="py-3 px-3 sm:py-4 sm:px-4 font-medium text-gray-900">{row.month}</td>
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-blue-700 text-sm sm:text-lg">
-                        {fmtINR(row.profit)}
-                      </td>
+                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-blue-700 text-sm sm:text-lg">{fmtINR(row.profit)}</td>
                     </tr>
                   ))
                 )}

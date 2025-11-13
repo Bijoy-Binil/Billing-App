@@ -1,3 +1,4 @@
+// src/pages/StockReport.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import axios from "axios";
 import {
@@ -10,13 +11,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { motion } from "framer-motion";
-import {
-  Package,
-  AlertTriangle,
-  TrendingUp,
-  Box,
-  FileText,
-} from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Box, FileText } from "lucide-react";
+import SectionLoader from "../../components/SectionLoader";
 
 const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
 
@@ -48,7 +44,7 @@ const StockReport = () => {
     return () => (mounted = false);
   }, [token]);
 
-  // Top 10 chart data
+  /* ---------------------- CHART & TABLE DATA ---------------------- */
   const chartData = useMemo(() => {
     return [...products]
       .map((p) => ({
@@ -129,6 +125,15 @@ const StockReport = () => {
 
     doc.save("stock_report.pdf");
   }, [products]);
+
+  /* ---------------------- GLOBAL LOADER ---------------------- */
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <SectionLoader />
+      </div>
+    );
+  }
 
   /* ---------------------- UI START ------------------------- */
   return (
@@ -220,11 +225,7 @@ const StockReport = () => {
           </div>
 
           <div className="h-64 sm:h-72">
-            {loading ? (
-              <div className="flex items-center justify-center h-full text-gray-400">
-                Loading chart...
-              </div>
-            ) : chartData.length === 0 ? (
+            {chartData.length === 0 ? (
               <div className="flex items-center justify-center text-gray-400 h-full">
                 No chart data
               </div>
@@ -233,13 +234,9 @@ const StockReport = () => {
                 <BarChart data={chartData} layout="vertical" margin={{ left: 30 }}>
                   <CartesianGrid stroke="#E2E8F0" />
                   <XAxis type="number" />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={120}
-                    tick={{ fontSize: 12 }}
-                  />
+                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
                   <Tooltip />
+
                   <defs>
                     <linearGradient id="qtyBar" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="0%" stopColor="#3B82F6" />
@@ -254,7 +251,7 @@ const StockReport = () => {
           </div>
         </motion.div>
 
-        {/* FULL INVENTORY TABLE */}
+        {/* FULL TABLE */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -273,11 +270,21 @@ const StockReport = () => {
             <table className="min-w-[600px] w-full text-xs sm:text-sm">
               <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <tr>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">Name</th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">Manufacturer</th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">Cost</th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">Sell</th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">Qty</th>
+                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">
+                    Name
+                  </th>
+                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">
+                    Manufacturer
+                  </th>
+                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">
+                    Cost
+                  </th>
+                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">
+                    Sell
+                  </th>
+                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left text-gray-700 font-bold text-xs">
+                    Qty
+                  </th>
                 </tr>
               </thead>
 
@@ -285,19 +292,24 @@ const StockReport = () => {
                 {products.length ? (
                   products.map((p) => (
                     <tr className="hover:bg-blue-50" key={p.id}>
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 font-semibold text-gray-900">{p.name}</td>
-                     
-                      <td className="py-3 px-3 sm:py-4 sm:px-4"> 
+                      <td className="py-3 px-3 sm:py-4 sm:px-4 font-semibold text-gray-900">
+                        {p.name}
+                      </td>
+
+                      <td className="py-3 px-3 sm:py-4 sm:px-4">
                         <span className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium border border-amber-200">
-                          {p.manufacturer || "-"} 
+                          {p.manufacturer || "-"}
                         </span>
                       </td>
+
                       <td className="py-3 px-3 sm:py-4 sm:px-4 text-gray-700">
                         {fmtINR(p.cost_price)}
                       </td>
+
                       <td className="py-3 px-3 sm:py-4 sm:px-4 text-indigo-600 font-bold">
                         {fmtINR(p.price || p.sell_price)}
                       </td>
+
                       <td className="py-3 px-3 sm:py-4 sm:px-4">
                         <span
                           className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold ${
@@ -313,7 +325,10 @@ const StockReport = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 sm:py-12 text-gray-500">
+                    <td
+                      colSpan={5}
+                      className="text-center py-8 sm:py-12 text-gray-500"
+                    >
                       No products found.
                     </td>
                   </tr>

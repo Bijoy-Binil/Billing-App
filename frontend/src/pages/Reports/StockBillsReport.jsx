@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -8,130 +7,46 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  PieChart,
-  Pie,
-  Cell,
   ResponsiveContainer,
 } from "recharts";
-
-import {
-  Truck,
-  Filter,
-  Download,
-  Package,
-  DollarSign,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { FileText, Calendar, Filter, Download } from "lucide-react";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import SectionLoader from "../../components/SectionLoader";
 
-/* ---------------------------------------------------------
-   ✅ API ROUTES
---------------------------------------------------------- */
-const API_PURCHASES = "http://127.0.0.1:8000/api/reports/purchases/";
-const API_SUPPLIERS = "http://127.0.0.1:8000/api/suppliers/";
-const API_PRODUCTS = "http://127.0.0.1:8000/api/products/";
+const API_STOCK_BILLS = "http://127.0.0.1:8000/api/reports/stock-bills/";
 
-/* ---------------------------------------------------------
-   ✅ SAFE COLORS FOR CHARTS
---------------------------------------------------------- */
-const COLORS = [
-  "#10B981",
-  "#3B82F6",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#EC4899",
-];
-
-/* ---------------------------------------------------------
-   ✅ MAIN COMPONENT
---------------------------------------------------------- */
-const PurchaseReport = () => {
-  const [purchases, setPurchases] = useState([]);
-  const [summary, setSummary] = useState({
-    total_purchases: 0,
-    total_quantity: 0,
-    purchase_count: 0,
-  });
-
-  const [suppliers, setSuppliers] = useState([]);
-  const [products, setProducts] = useState([]);
-
+const StockBillsReport = () => {
+  const [stockBills, setStockBills] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [selectedSupplier, setSelectedSupplier] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState("");
 
   const token = localStorage.getItem("accessToken");
 
-  /* ---------------------------------------------------------
-     ✅ INITIAL LOAD
-  --------------------------------------------------------- */
   useEffect(() => {
-    fetchSuppliers();
-    fetchProducts();
-    fetchPurchases();
+    fetchStockBills();
   }, []);
 
-  /* ---------------------------------------------------------
-     ✅ FETCH SUPPLIERS
-  --------------------------------------------------------- */
-  const fetchSuppliers = async () => {
-    try {
-      const res = await axios.get(API_SUPPLIERS, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSuppliers(res.data.results || res.data || []);
-    } catch {
-      setSuppliers([]);
-    }
-  };
-
-  /* ---------------------------------------------------------
-     ✅ FETCH PRODUCTS
-  --------------------------------------------------------- */
-  const fetchProducts = async () => {
-    try {
-      const res = await axios.get(API_PRODUCTS, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setProducts(res.data.results || res.data || []);
-    } catch {
-      setProducts([]);
-    }
-  };
-
-  /* ---------------------------------------------------------
-     ✅ FETCH PURCHASE DATA
-  --------------------------------------------------------- */
-  const fetchPurchases = async () => {
+  const fetchStockBills = async () => {
     setLoading(true);
+
     try {
-      let url = API_PURCHASES;
-      const params = new URLSearchParams();
-
+      let url = API_STOCK_BILLS;
       if (fromDate && toDate) {
-        params.append("start_date", fromDate);
-        params.append("end_date", toDate);
+        url += `?start_date=${fromDate}&end_date=${toDate}`;
       }
-
-      if (selectedSupplier) params.append("supplier_id", selectedSupplier);
-      if (selectedProduct) params.append("product_id", selectedProduct);
-
-      if (params.toString()) url += `?${params.toString()}`;
 
       const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setPurchases(res.data.purchases || []);
-      setSummary(res.data.summary || summary);
+      setStockBills(res.data || []);
     } catch (err) {
-      console.error("Error fetching purchase data:", err);
-      setPurchases([]);
+      console.error("Error fetching stock bills:", err);
+      setStockBills([]);
     } finally {
       setLoading(false);
     }
@@ -140,525 +55,327 @@ const PurchaseReport = () => {
   const clearFilters = () => {
     setFromDate("");
     setToDate("");
-    setSelectedSupplier("");
-    setSelectedProduct("");
   };
 
-  /* ---------------------------------------------------------
-     ✅ SUPPLIER PIE CHART DATA
-  --------------------------------------------------------- */
-  const supplierChartData = useMemo(() => {
-    const map = {};
-    purchases.forEach((p) => {
-      if (!map[p.supplier]) {
-        map[p.supplier] = { name: p.supplier, value: 0 };
+  /** ---------------- Chart Data ---------------- */
+  const chartData = useMemo(() => {
+    const productMap = {};
+
+    stockBills.forEach((item) => {
+      if (!productMap[item.product]) {
+        productMap[item.product] = { product: item.product, totalSold: 0 };
       }
-      map[p.supplier].value += Number(p.total);
+      productMap[item.product].totalSold += item.quantity_sold;
     });
-    return Object.values(map);
-  }, [purchases]);
 
-  /* ---------------------------------------------------------
-     ✅ PRODUCT BAR CHART DATA
-  --------------------------------------------------------- */
-  const productChartData = useMemo(() => {
-    const map = {};
-    purchases.forEach((p) => {
-      if (!map[p.product]) {
-        map[p.product] = { product: p.product, quantity: 0, total: 0 };
-      }
-      map[p.product].quantity += Number(p.quantity);
-      map[p.product].total += Number(p.total);
-    });
-    return Object.values(map);
-  }, [purchases]);
+    return Object.values(productMap).slice(0, 10);
+  }, [stockBills]);
 
-  /* ---------------------------------------------------------
-     ✅ CSV EXPORT (FILTERED)
-  --------------------------------------------------------- */
-  const downloadCSV = useCallback(() => {
-    if (!purchases.length) return;
-
+  /** ---------------- CSV Export ---------------- */
+  const exportToCSV = () => {
     const headers = [
-      "ID",
+      "Bill ID",
       "Date",
-      "Supplier",
       "Product",
-      "Quantity",
-      "Cost",
-      "Total",
+      "Qty Sold",
+      "Stock Before",
+      "Stock After",
     ];
 
-    const rows = purchases.map((p) => [
-      p.purchase_id,
-      new Date(p.created_at).toLocaleDateString(),
-      p.supplier,
-      p.product,
-      p.quantity,
-      p.cost_price,
-      p.total,
+    const rows = stockBills.map((item) => [
+      item.bill_id,
+      new Date(item.bill_date).toLocaleDateString(),
+      item.product,
+      item.quantity_sold,
+      item.stock_before,
+      item.stock_after,
     ]);
 
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const csv = [
+      `Date Range: ${fromDate || "All"} to ${toDate || "All"}`,
+      "",
+      headers.join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "stock-bills-report.csv";
+    link.click();
+  };
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `purchase_report_${fromDate || "all"}_${toDate ||
-      "all"}.csv`;
-    a.click();
-
-    URL.revokeObjectURL(url);
-  }, [purchases, fromDate, toDate]);
-
-  /* ---------------------------------------------------------
-     ✅ PDF EXPORT (FILTERED)
-  --------------------------------------------------------- */
-  const downloadPDF = useCallback(() => {
-    if (!purchases.length) return;
-
+  /** ---------------- PDF Export ---------------- */
+  const exportToPDF = () => {
     const doc = new jsPDF();
-
     doc.setFontSize(16);
-    doc.text("Purchase Report", 14, 15);
+    doc.text("Stock Bills Reconciliation Report", 14, 16);
 
     doc.setFontSize(10);
-    doc.text(
-      `Date Range: ${fromDate || "Start"} → ${toDate || "Now"}`,
-      14,
-      22
-    );
+    doc.text(`From: ${fromDate || "All"}`, 14, 26);
+    doc.text(`To: ${toDate || "All"}`, 14, 31);
+    doc.text(`Total Records: ${stockBills.length}`, 14, 36);
 
-    const tableRows = purchases.map((p) => [
-      p.purchase_id,
-      new Date(p.created_at).toLocaleDateString(),
-      p.supplier,
-      p.product,
-      p.quantity,
-      Number(p.cost_price).toFixed(2),
-      Number(p.total).toFixed(2),
+    const headers = [
+      "Bill ID",
+      "Date",
+      "Product",
+      "Qty Sold",
+      "Stock Before",
+      "Stock After",
+    ];
+
+    const rows = stockBills.map((item) => [
+      item.bill_id,
+      new Date(item.bill_date).toLocaleDateString(),
+      item.product,
+      item.quantity_sold,
+      item.stock_before,
+      item.stock_after,
     ]);
 
     autoTable(doc, {
-      startY: 30,
-      head: [
-        ["ID", "Date", "Supplier", "Product", "Qty", "Cost", "Total"],
-      ],
-      body: tableRows,
-      headStyles: { fillColor: [59, 130, 246] },
+      startY: 42,
+      head: [headers],
+      body: rows,
       styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
     });
 
-    doc.save(
-      `purchase_report_${fromDate || "all"}_${toDate || "all"}.pdf`
-    );
-  }, [purchases, fromDate, toDate]);
-  
-  /* ---------------------------------------------------------
-     ✅ UI
-  --------------------------------------------------------- */
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+    doc.save("stock-bills-report.pdf");
+  };
 
-        {/* ✅ HEADER */}
+  /** ---------------- FULLSCREEN LOADER ---------------- */
+  if (loading && !stockBills.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-blue-50">
+        <SectionLoader />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-blue-50 p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* ---------------- HEADER ---------------- */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3"
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl shadow-lg">
-              <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
+              <FileText className="text-white w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-                Purchase Report
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Stock Bills Reconciliation
               </h1>
-              <p className="text-gray-600 text-xs sm:text-sm mt-1">
-                Track purchase orders, suppliers, and product spend
+              <p className="text-gray-600 text-sm">
+                Track product sales & stock movement
               </p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-lg font-semibold text-sm sm:text-base">
-            {purchases.length} records
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={exportToCSV}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 shadow"
+            >
+              <Download className="w-4 h-4" /> CSV
+            </button>
+
+            <button
+              onClick={exportToPDF}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center gap-2 shadow"
+            >
+              <Download className="w-4 h-4" /> PDF
+            </button>
           </div>
         </motion.div>
 
-        {/* ✅ FILTERS + EXPORT BUTTONS */}
+        {/* ---------------- FILTER BLOCK ---------------- */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
+          className="bg-white rounded-xl p-6 shadow border"
         >
-          {/* Title */}
-          <div className="flex items-center gap-3 mb-3 sm:mb-4">
-            <div className="p-2 bg-blue-600 rounded-lg sm:rounded-xl shadow-sm">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <span className="text-gray-700 font-medium text-lg sm:text-xl">
-              Filters
-            </span>
+          <div className="flex items-center gap-2 mb-4">
+            <Calendar className="text-blue-600 w-5 h-5" />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Date Range Filter
+            </h2>
           </div>
 
-          {/* Inputs */}
-          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-start lg:items-end">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
-              <div>
-                <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
-                  From Date
-                </label>
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-sm sm:text-base"
-                />
-              </div>
-
-              <div>
-                <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
-                  To Date
-                </label>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm focus:ring-2 focus:ring-blue-300 text-sm sm:text-base"
-                />
-              </div>
-
-              <div>
-                <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
-                  Supplier
-                </label>
-                <select
-                  value={selectedSupplier}
-                  onChange={(e) => setSelectedSupplier(e.target.value)}
-                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm text-sm sm:text-base"
-                >
-                  <option value="">All Suppliers</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-gray-700 text-xs sm:text-sm font-medium mb-1 block">
-                  Product
-                </label>
-                <select
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
-                  className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm text-sm sm:text-base"
-                >
-                  <option value="">All Products</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-end gap-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium">From Date</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full border px-3 py-2 rounded-lg"
+              />
             </div>
 
-            {/* Buttons */}
-            <div className="flex flex-col xs:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
+            <div className="flex-1">
+              <label className="text-sm font-medium">To Date</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full border px-3 py-2 rounded-lg"
+              />
+            </div>
+
+            <div className="flex gap-3 w-full md:w-auto">
               <button
-                onClick={fetchPurchases}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-50"
-                disabled={loading}
+                onClick={fetchStockBills}
+                className="flex-1 md:flex-none px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center justify-center gap-2"
               >
-                <Filter className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? "animate-spin" : ""}`} />
-                Apply
+                <Filter className="w-4 h-4" /> Apply
               </button>
 
               <button
                 onClick={clearFilters}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg sm:rounded-xl shadow border border-gray-300 text-sm sm:text-base"
-                disabled={loading}
+                className="flex-1 md:flex-none px-6 py-2 bg-gray-200 text-gray-700 rounded-lg"
               >
                 Clear
               </button>
-
-              <button
-                onClick={downloadCSV}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-60"
-                disabled={!purchases.length}
-              >
-                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                CSV
-              </button>
-
-              <button
-                onClick={downloadPDF}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg sm:rounded-xl shadow flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-60"
-                disabled={!purchases.length}
-              >
-                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                PDF
-              </button>
             </div>
           </div>
         </motion.div>
 
-        {/* ✅ KPI CARDS */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+        {/* ---------------- CHART ---------------- */}
+  {/* Chart */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
+>
+  <div className="flex items-center gap-3 mb-6">
+    <FileText className="w-5 h-5 text-blue-600" />
+    <h2 className="text-xl font-bold text-gray-900">
+      Products Sold Quantity
+    </h2>
+  </div>
+
+  <div className="h-72 sm:h-80 md:h-[350px] lg:h-[400px]">
+    {loading ? (
+      <SectionLoader />
+    ) : chartData.length > 0 ? (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart 
+          data={chartData}
+          margin={{ top: 10, right: 10, left: -10, bottom: 40 }}
         >
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs sm:text-sm opacity-90">Total Purchase Value</div>
-                <div className="text-xl sm:text-2xl font-bold">
-                  ₹{summary.total_purchases.toFixed(2)}
-                </div>
-              </div>
-              <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-          </div>
+          <CartesianGrid stroke="#E2E8F0" />
 
-          <div className="bg-gradient-to-r from-emerald-400 to-green-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs sm:text-sm opacity-90">Total Quantity</div>
-                <div className="text-xl sm:text-2xl font-bold">{summary.total_quantity}</div>
-              </div>
-              <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-          </div>
+          <XAxis
+            dataKey="product"
+            fontSize={12}
+            angle={-35}
+            textAnchor="end"
+            interval={0}
+            height={65}
+          />
 
-          <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs sm:text-sm opacity-90">Purchase Orders</div>
-                <div className="text-xl sm:text-2xl font-bold">{summary.purchase_count}</div>
-              </div>
-              <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-          </div>
-        </motion.div>
+          <YAxis fontSize={12} />
 
-        {/* ✅ CHARTS */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+          <Tooltip 
+            contentStyle={{
+              background: "white",
+              borderRadius: "10px",
+              border: "1px solid #e5e7eb",
+            }}
+          />
 
-          {/* Supplier Pie */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
-          >
-            <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg sm:rounded-xl">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                Purchase by Supplier
-              </h2>
-            </div>
+          {/* 🔥 Stunning Gradient */}
+          <defs>
+            <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3B82F6" stopOpacity={1} />
+              <stop offset="50%" stopColor="#6366F1" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.4} />
+            </linearGradient>
+          </defs>
 
-            <div className="h-64 sm:h-72">
-              {loading ? (
-                <LoadingShimmer />
-              ) : supplierChartData.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={supplierChartData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ₹${value.toFixed(2)}`}
-                    >
-                      {supplierChartData.map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => [`₹${Number(value).toFixed(2)}`, "Value"]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400">
-                  No supplier data available
-                </div>
-              )}
-            </div>
-          </motion.div>
+          <Bar
+            dataKey="totalSold"
+            fill="url(#blueGradient)"
+            barSize={32}
+            radius={[8, 8, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    ) : (
+      <div className="flex justify-center items-center text-gray-400 h-full">
+        <p>No chart data available</p>
+      </div>
+    )}
+  </div>
+</motion.div>
 
-          {/* Product Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
-          >
-            <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div className="p-2 bg-gradient-to-r from-amber-400 to-orange-500 rounded-lg sm:rounded-xl">
-                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                Purchase by Product
-              </h2>
-            </div>
 
-            <div className="h-64 sm:h-72">
-              {loading ? (
-                <LoadingShimmer />
-              ) : productChartData.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={productChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="product"
-                      fontSize={12}
-                      angle={-40}
-                      textAnchor="end"
-                    />
-                    <YAxis fontSize={12} />
-                    <Tooltip
-                      formatter={(value, name) => [
-                        name === "quantity"
-                          ? value
-                          : `₹${Number(value).toFixed(2)}`,
-                        name === "quantity" ? "Quantity" : "Total",
-                      ]}
-                    />
-
-                    <defs>
-                      <linearGradient id="quantityBar" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.85} />
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.25} />
-                      </linearGradient>
-                    </defs>
-
-                    <Bar
-                      dataKey="quantity"
-                      fill="url(#quantityBar)"
-                      radius={[6, 6, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400">
-                  No product data available
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-        
-        {/* ✅ PURCHASE TABLE */}
+        {/* ---------------- TABLE ---------------- */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-blue-200 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6"
+          className="bg-white rounded-xl p-6 shadow border"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-500 rounded-lg sm:rounded-xl">
-                <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                Purchase Orders
-              </h2>
-            </div>
-
-            <div className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-lg font-semibold text-sm sm:text-base">
-              Total: {purchases.length} orders
-            </div>
+          <div className="flex items-center gap-2 mb-6">
+            <FileText className="w-5 h-5 text-green-600" />
+            <h2 className="text-xl font-bold text-gray-900">
+              Stock Reconciliation Details
+            </h2>
           </div>
 
           {loading ? (
-            <LoadingShimmer />
-          ) : purchases.length > 0 ? (
-            <div className="overflow-x-auto rounded-lg sm:rounded-xl border border-blue-200 shadow-sm">
-              <table className="w-full min-w-[900px] text-xs sm:text-sm">
-                <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+            <SectionLoader />
+          ) : stockBills.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border">
+              <table className="w-full min-w-[750px] text-sm">
+                <thead className="bg-blue-100 text-gray-700">
                   <tr>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      ID
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      Date
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      Supplier
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 text-xs">
-                      Product
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 text-xs">
-                      Qty
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 text-xs">
-                      Cost
-                    </th>
-                    <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 text-xs">
-                      Total
-                    </th>
+                    <th className="px-4 py-3 text-left">Bill ID</th>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Product</th>
+                    <th className="px-4 py-3 text-right">Qty Sold</th>
+                    <th className="px-4 py-3 text-right">Stock Before</th>
+                    <th className="px-4 py-3 text-right">Stock After</th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-blue-100">
-                  {purchases.map((p) => (
-                    <tr key={p.purchase_id} className="hover:bg-blue-50">
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 font-semibold text-gray-900">
-                        #{p.purchase_id}
+                <tbody>
+                  {stockBills.map((item, index) => (
+                    <tr
+                      key={index}
+                      className="border-t hover:bg-gray-50 transition"
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        #{item.bill_id}
                       </td>
-
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-gray-700">
-                        {new Date(p.created_at).toLocaleDateString()}
+                      <td className="px-4 py-3">
+                        {new Date(item.bill_date).toLocaleDateString()}
                       </td>
-
-                      <td className="py-3 px-3 sm:py-4 sm:px-4">
-                        <span className="bg-blue-50 text-blue-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs border border-blue-200">
-                          {p.supplier}
-                        </span>
+                      <td className="px-4 py-3">{item.product}</td>
+                      <td className="px-4 py-3 text-right text-green-600 font-semibold">
+                        {item.quantity_sold}
                       </td>
-
-                      <td className="py-3 px-3 sm:py-4 sm:px-4">{p.product}</td>
-
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-blue-700">
-                        {p.quantity}
+                      <td className="px-4 py-3 text-right">
+                        {item.stock_before}
                       </td>
-
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right text-gray-700">
-                        ₹{Number(p.cost_price).toFixed(2)}
-                      </td>
-
-                      <td className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-emerald-600">
-                        ₹{Number(p.total).toFixed(2)}
+                      <td className="px-4 py-3 text-right font-semibold">
+                        {item.stock_after}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-
-              {/* ✅ FOOTER TOTAL */}
-              <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-t border-emerald-200 p-3 sm:p-4">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                    Grand Total
-                  </span>
-                  <span className="text-lg sm:text-xl font-bold text-emerald-600">
-                    ₹{summary.total_purchases.toFixed(2)}
-                  </span>
-                </div>
-              </div>
             </div>
           ) : (
-            <div className="text-center py-8 sm:py-12 text-gray-500">
-              No purchase data available.
+            <div className="text-center py-12 text-gray-500">
+              No stock data available.
             </div>
           )}
         </motion.div>
@@ -667,14 +384,4 @@ const PurchaseReport = () => {
   );
 };
 
-/* ✅ Loading Spinner */
-const LoadingShimmer = () => (
-  <div className="w-full h-full flex items-center justify-center py-8 sm:py-10">
-    <div className="flex flex-col items-center">
-      <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
-      <p className="text-gray-500 mt-2 text-sm">Loading...</p>
-    </div>
-  </div>
-);
-
-export default PurchaseReport;
+export default StockBillsReport;

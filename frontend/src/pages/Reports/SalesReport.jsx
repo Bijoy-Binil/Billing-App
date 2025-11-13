@@ -1,3 +1,4 @@
+// src/pages/SalesReport.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -12,6 +13,10 @@ import {
   Area,
 } from "recharts";
 import { Calendar, Filter, TrendingUp, FileText } from "lucide-react";
+import SectionLoader from "../../components/SectionLoader";
+
+// ⬅️ Import your custom video loader
+
 
 const API_SALES = "http://127.0.0.1:8000/api/billings/";
 
@@ -52,6 +57,7 @@ const SalesReport = () => {
       const billDate = new Date(b.created_at);
       const f = fromDate ? new Date(fromDate) : new Date("2000-01-01");
       const t = toDate ? new Date(toDate) : new Date();
+
       return billDate >= f && billDate <= t;
     });
   }, [bills, fromDate, toDate]);
@@ -102,30 +108,25 @@ const SalesReport = () => {
     const tableData = filteredBills.map((b) => [
       b.bill_id || b.id,
       b.customer_name || "Walk-in Customer",
-     + Number(b.total).toFixed(2),
+      Number(b.total).toFixed(2),
       new Date(b.created_at).toLocaleDateString(),
     ]);
 
-autoTable(doc, {
-  startY: 28,
-  head: [["Bill ID", "Customer", "Total ", "Date"]],
-  body: tableData,
-  styles: {
-    fontSize: 10,
-  },
-  columnStyles: {
-    2: { halign: "right" }, // Align totals right
-  }
-});
+    autoTable(doc, {
+      startY: 28,
+      head: [["Bill ID", "Customer", "Total", "Date"]],
+      body: tableData,
+      styles: { fontSize: 10 },
+      columnStyles: { 2: { halign: "right" } },
+    });
 
-    doc.save(
-      `sales_report_${fromDate || "all"}_${toDate || "all"}.pdf`
-    );
+    doc.save(`sales_report_${fromDate || "all"}_${toDate || "all"}.pdf`);
   };
 
   /* ---------------- CHART DATA ---------------- */
   const chartData = useMemo(() => {
     const map = {};
+
     filteredBills.forEach((b) => {
       const date = new Date(b.created_at).toLocaleDateString("en-GB");
       const total = Number(b.total) || 0;
@@ -147,6 +148,7 @@ autoTable(doc, {
   /* ---------------- KPIs ---------------- */
   const todayTotal = useMemo(() => {
     const today = new Date().toLocaleDateString("en-GB");
+
     return filteredBills
       .filter(
         (b) => new Date(b.created_at).toLocaleDateString("en-GB") === today
@@ -171,8 +173,8 @@ autoTable(doc, {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
-        {/* ✅ HEADER */}
-        <motion.div 
+        {/* HEADER */}
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-4"
@@ -196,79 +198,88 @@ autoTable(doc, {
           </div>
         </motion.div>
 
-        {/* ✅ FILTERS + EXPORT BUTTONS */}
-        <motion.div 
+        {/* FILTERS + EXPORT */}
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col gap-4 bg-white/70 border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
         >
-          {/* Date filters */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="sm:col-span-1">
+
+            <div>
               <label className="text-gray-700 text-xs sm:text-sm font-medium">From Date</label>
-              <input type="date" value={fromDate}
-                onChange={(e)=>setFromDate(e.target.value)}
-                className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mt-1 shadow-sm text-sm sm:text-base"
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full bg-white border border-blue-300 rounded-lg px-3 py-2.5 mt-1 shadow-sm"
               />
             </div>
 
-            <div className="sm:col-span-1">
+            <div>
               <label className="text-gray-700 text-xs sm:text-sm font-medium">To Date</label>
-              <input type="date" value={toDate}
-                onChange={(e)=>setToDate(e.target.value)}
-                className="w-full bg-white border border-blue-300 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mt-1 shadow-sm text-sm sm:text-base"
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full bg-white border border-blue-300 rounded-lg px-3 py-2.5 mt-1 shadow-sm"
               />
             </div>
 
-            <div className="sm:col-span-2 lg:col-span-1 flex items-end">
+            <div className="flex items-end">
               <button
-                onClick={()=>{ setFromDate(""); setToDate(""); }}
-                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg sm:rounded-xl border shadow-sm text-sm sm:text-base"
+                onClick={() => {
+                  setFromDate("");
+                  setToDate("");
+                }}
+                className="w-full px-4 py-3 bg-gray-200 text-gray-700 rounded-lg border shadow-sm"
               >
                 Clear Filters
               </button>
             </div>
 
-            {/* ✅ EXPORT BUTTONS */}
-            <div className="sm:col-span-2 lg:col-span-1 flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={downloadCSV}
-                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg sm:rounded-xl shadow hover:bg-blue-700 text-sm sm:text-base flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg shadow flex items-center justify-center gap-2"
               >
-                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                Download CSV
+                <FileText className="w-4 h-4" />
+                CSV
               </button>
 
               <button
                 onClick={downloadPDF}
-                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-indigo-600 text-white rounded-lg sm:rounded-xl shadow hover:bg-indigo-700 text-sm sm:text-base flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg shadow flex items-center justify-center gap-2"
               >
-                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                Download PDF
+                <FileText className="w-4 h-4" />
+                PDF
               </button>
             </div>
           </div>
         </motion.div>
 
-        {/* ✅ KPI CARDS */}
+        {/* KPI CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <KpiCard title="Today's Sales" value={`₹${todayTotal.toFixed(2)}`} gradient="from-indigo-500 to-blue-600" icon="💰" />
           <KpiCard title="This Month" value={`₹${monthTotal.toFixed(2)}`} gradient="from-blue-500 to-indigo-600" icon="📅" />
           <KpiCard title="Total Bills" value={filteredBills.length} gradient="from-purple-500 to-indigo-600" icon="📊" />
         </div>
 
-        {/* ✅ SALES CHART */}
-        <motion.div 
+        {/* SALES CHART */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/70 border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
+          className="bg-white/70 border border-blue-200 rounded-xl p-4 sm:p-6 shadow-lg"
         >
-          <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-900">Sales Trend</h2>
+          <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-900">
+            Sales Trend
+          </h2>
 
           <div className="h-64 sm:h-72">
+
             {loading ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="w-6 h-6 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="h-full flex items-center justify-center">
+                <SectionLoader />
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -277,57 +288,66 @@ autoTable(doc, {
                   <XAxis dataKey="date" stroke="#6B7280" fontSize={12} />
                   <YAxis stroke="#6B7280" fontSize={12} />
                   <Tooltip />
-                  <Area type="monotone" dataKey="total" fill="#bfdbfe" stroke="#2563EB" />
-                  <Line type="monotone" dataKey="total" stroke="#2563EB" strokeWidth={3} />
+                  <Area
+                    type="monotone"
+                    dataKey="total"
+                    fill="#bfdbfe"
+                    stroke="#2563EB"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#2563EB"
+                    strokeWidth={3}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             )}
+
           </div>
         </motion.div>
 
-        {/* Recent Bills */}
-        <motion.div 
+        {/* RECENT BILLS */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6"
+          className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6 shadow-lg"
         >
-          <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 rounded-lg sm:rounded-xl shadow-sm">
-              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 rounded-lg shadow-sm">
+              <FileText className="w-5 h-5 text-white" />
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               Recent Bills ({filteredBills.length})
             </h3>
           </div>
 
-          <div className="overflow-x-auto rounded-lg sm:rounded-xl border border-blue-200 shadow-sm">
+          <div className="overflow-x-auto rounded-lg border border-blue-200 shadow-sm">
             <table className="w-full text-xs sm:text-sm">
               <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                 <tr>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 uppercase tracking-wide text-xs">Bill ID</th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 uppercase tracking-wide text-xs">Customer</th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-gray-700 uppercase tracking-wide text-xs">Total</th>
-                  <th className="py-3 px-3 sm:py-4 sm:px-4 text-left font-bold text-gray-700 uppercase tracking-wide text-xs">Date</th>
+                  <th className="py-3 px-4 font-bold">Bill ID</th>
+                  <th className="py-3 px-4 font-bold">Customer</th>
+                  <th className="py-3 px-4 text-right font-bold">Total</th>
+                  <th className="py-3 px-4 font-bold">Date</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-blue-100">
                 {filteredBills.slice(0, 10).map((b) => (
-                  <tr
-                    key={b.id}
-                    className="hover:bg-blue-50 transition-colors duration-200"
-                  >
-                    <td className="py-3 px-3 sm:py-4 sm:px-4 font-medium text-gray-900">
+                  <tr key={b.id} className="hover:bg-blue-50 transition-colors">
+                    <td className="py-3 px-4 font-medium text-gray-900">
                       {b.bill_id || b.id}
                     </td>
-                    <td className="py-3 px-3 sm:py-4 sm:px-4">
-                      <span className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium border border-amber-200">
+                    <td className="py-3 px-4">
+                      <span className="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg text-xs border border-orange-200">
                         {b.customer_name || "Walk-in Customer"}
                       </span>
                     </td>
-                    <td className="py-3 px-3 sm:py-4 sm:px-4 text-right font-bold text-emerald-600 text-sm sm:text-lg">
-                       ₹{Number(b.total).toFixed(2)}
+                    <td className="py-3 px-4 text-right font-bold text-emerald-600">
+                      ₹{Number(b.total).toFixed(2)}
                     </td>
-                    <td className="py-3 px-3 sm:py-4 sm:px-4 text-gray-600 font-medium text-xs sm:text-sm">
+                    <td className="py-3 px-4 text-gray-600">
                       {new Date(b.created_at).toLocaleDateString()}
                     </td>
                   </tr>
@@ -337,10 +357,9 @@ autoTable(doc, {
           </div>
 
           {filteredBills.length === 0 && !loading && (
-            <div className="text-center py-8 sm:py-12">
-              <FileText className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2 sm:mb-3" />
-              <p className="text-gray-500 text-base sm:text-lg font-medium">No bills found</p>
-              <p className="text-gray-400 text-xs sm:text-sm mt-1">No sales data available for the selected period</p>
+            <div className="text-center py-10">
+              <FileText className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 font-medium">No bills found</p>
             </div>
           )}
         </motion.div>
@@ -352,12 +371,12 @@ autoTable(doc, {
 const KpiCard = ({ title, value, gradient, icon }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
-    className={`bg-gradient-to-r ${gradient} rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg text-white`}
+    className={`bg-gradient-to-r ${gradient} rounded-xl p-4 sm:p-6 shadow-lg text-white`}
   >
     <div className="flex items-center justify-between">
       <div>
-        <div className="text-xs sm:text-sm opacity-90">{title}</div>
-        <div className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{value}</div>
+        <div className="text-xs opacity-90">{title}</div>
+        <div className="text-xl sm:text-2xl font-bold mt-1">{value}</div>
       </div>
       <div className="text-xl sm:text-2xl">{icon}</div>
     </div>
