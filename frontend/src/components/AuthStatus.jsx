@@ -2,9 +2,13 @@ import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AuthContext } from "../AuthProvider";
+import { ThemeContext } from "../pages/context/ThemeContext";
+import { Sun, Moon } from "lucide-react";
 
 const AuthStatus = () => {
   const { userName, handleLogout, isLoggedIn } = useContext(AuthContext);
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
   const navigate = useNavigate();
   const role = localStorage.getItem("role");
 
@@ -35,9 +39,7 @@ const AuthStatus = () => {
             whileHover={{ scale: 1.1 }}
             className="relative group cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full bg-linear-to-br lineartext-lg from-blue-500/30 to-purple-500/30 flex items-center justify-center text-white font-bold  shadow-[0_0_10px_rgba(59,130,246,0.4)] transition">
-              {userName.charAt(0).toUpperCase()}
-            </div>
+           
 
             <div className="absolute -inset-[3px] rounded-full bg-linear-to-tr from-blue-400/40 to-purple-400/40 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </motion.div>
@@ -68,6 +70,17 @@ const AuthStatus = () => {
           </Link>
         </>
       )}
+      {/* <button
+        onClick={toggleTheme}
+        className="px-3 py-1.5 rounded-lg border transition-colors duration-200 flex items-center gap-2
+                   bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200
+                   dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+        aria-label="Toggle theme"
+        title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {isDark ? <Sun size={16} /> : <Moon size={16} />}<span className="text-sm font-medium">{isDark ? "Light" : "Dark"}</span>
+      </button> */}
+
     </div>
   );
 };

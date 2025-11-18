@@ -23,7 +23,7 @@ const Customers = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const token = localStorage.getItem("accessToken");
-  const userRole = localStorage.getItem("role"); // "manager" or "cashier"
+  const userRole = localStorage.getItem("role"); 
 
   const [formData, setFormData] = useState({
     name: "",

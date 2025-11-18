@@ -32,7 +32,7 @@ const Inventory = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
+console.log("categoreis==>",categories);
   const fetchData = async () => {
     await Promise.all([fetchCategories(), fetchProducts(), fetchSuppliers()]);
   };
@@ -162,23 +162,27 @@ const Inventory = () => {
     fetchProducts();
   };
 
-  const handleEdit = (product) => {
-    setEditingId(product.id);
-    setForm({
-      name: product.name || "",
-      category: product.category || product.category_detail?.id || "",
-      image: null, // keep null; only set if user uploads new file
-      manufacturer: product.manufacturer || "",
-      supplier: product.supplier || product.supplier_detail?.id || "",
-      cost_price: product.cost_price || "",
-      price: product.price || "",
-      quantity: product.quantity || "",
-    });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+const handleEdit = (product) => {
+  setEditingId(product.id);
+
+  setForm({
+    name: product.name || "",
+    category: product.category_detail?.id || "",  // FIXED
+    image: null, // keep null unless user uploads new
+    manufacturer: product.manufacturer || "",
+    supplier: product.supplier_detail?.id || "",  // FIXED
+    cost_price: product.cost_price || "",
+    price: product.price || "",
+    quantity: product.quantity || "",
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 p-4 sm:p-6">
+    <div className="min-h-screen p-4 sm:p-6 
+      bg-white text-gray-900 
+      dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:text-gray-100">
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Top Low-stock stripe */}
@@ -207,21 +211,22 @@ const Inventory = () => {
               <Boxes className="text-white" size={28} />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inventory Management</h1>
-              <p className="text-gray-600 text-sm mt-1">Manage your products and stock levels</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Inventory Management</h1>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Manage your products and stock levels</p>
             </div>
           </div>
 
           {/* Search */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex items-center gap-3 bg-white border border-blue-300 rounded-2xl px-4 py-3 shadow-sm">
-              <Search className="text-gray-500" size={18} />
+            <div className="flex items-center gap-3 bg-white border border-blue-300 rounded-2xl px-4 py-3 shadow-sm
+                            dark:bg-gray-900 dark:border-gray-700">
+              <Search className="text-gray-500 dark:text-gray-400" size={18} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search products, category, supplier…"
-                className="w-64 sm:w-72 outline-none text-sm bg-transparent"
+                className="w-64 sm:w-72 outline-none text-sm bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500"
               />
             </div>
             <div className="flex gap-2">
@@ -233,7 +238,8 @@ const Inventory = () => {
               </button>
               <button
                 onClick={handleReset}
-                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 text-sm font-semibold transition-all border border-gray-300 shadow-sm"
+                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 text-sm font-semibold transition-all border border-gray-300 shadow-sm
+                           dark:from-gray-700 dark:to-gray-700 dark:hover:from-gray-600 dark:hover:to-gray-600 dark:text-gray-200 dark:border-gray-600"
               >
                 Reset
               </button>
@@ -246,17 +252,19 @@ const Inventory = () => {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg"
+            className="bg-gradient-to-br from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg
+                       dark:bg-gray-800 dark:border-gray-700"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-emerald-400 to-green-400 rounded-xl shadow-sm">
                   {editingId ? <Edit2 className="text-white" size={16} /> : <PlusCircle className="text-white" size={16} />}
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">{editingId ? "Edit Product" : "Add New Product"}</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{editingId ? "Edit Product" : "Add New Product"}</h2>
               </div>
               {!editingId ? (
-                <div className="text-sm text-gray-500 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
+                <div className="text-sm text-gray-500 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200
+                                dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-400/30">
                   Fill required fields & click <span className="font-semibold text-amber-700">Add Product</span>
                 </div>
               ) : (
@@ -275,7 +283,8 @@ const Inventory = () => {
                       quantity: "",
                     });
                   }}
-                  className="text-sm px-4 py-2 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border border-gray-300 text-gray-700 font-medium shadow-sm"
+                  className="text-sm px-4 py-2 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border border-gray-300 text-gray-700 font-medium shadow-sm
+                             dark:from-gray-700 dark:to-gray-700 dark:hover:from-gray-600 dark:hover:to-gray-600 dark:text-gray-200 dark:border-gray-600"
                 >
                   Cancel Edit
                 </button>
@@ -285,38 +294,41 @@ const Inventory = () => {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name *</label>
                 <input
                   type="text"
                   name="name"
                   value={form.name}
                   onChange={handleChange}
                   placeholder="e.g., Parle-G 200g"
-                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all"
+                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all
+                             dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500"
                 />
               </div>
 
               {/* Manufacturer */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Manufacturer</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Manufacturer</label>
                 <input
                   type="text"
                   name="manufacturer"
                   value={form.manufacturer}
                   onChange={handleChange}
                   placeholder="e.g., Parle"
-                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all"
+                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all
+                             dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                 <select
                   name="category"
                   value={form.category}
                   onChange={handleChange}
-                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all"
+                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all
+                             dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 >
                   <option value="">Select Category</option>
                   {categories.map((c) => (
@@ -329,12 +341,13 @@ const Inventory = () => {
 
               {/* Supplier */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Supplier</label>
                 <select
                   name="supplier"
                   value={form.supplier}
                   onChange={handleChange}
-                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all"
+                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all
+                             dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                 >
                   <option value="">Select Supplier</option>
                   {suppliers.map((s) => (
@@ -347,7 +360,7 @@ const Inventory = () => {
 
               {/* Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Product Image</label>
                 <input
                   type="file"
                   name="image"
@@ -358,10 +371,11 @@ const Inventory = () => {
                       image: e.target.files?.[0] || null,
                     })
                   }
-                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all
+                             dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
                 {editingId && (
-                  <p className="text-xs text-gray-500 mt-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
+                  <p className="text-xs text-gray-500 mt-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 dark:text-gray-300 dark:bg-blue-500/10 dark:border-blue-400/30">
                     Leave empty to keep existing image.
                   </p>
                 )}
@@ -370,7 +384,7 @@ const Inventory = () => {
               {/* Prices & Qty */}
               {["cost_price", "price", "quantity"].map((f) => (
                 <div key={f}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
                     {f.replace("_", " ")} {f !== "quantity" ? " ₹" : ""} *
                   </label>
                   <input
@@ -379,7 +393,8 @@ const Inventory = () => {
                     value={form[f]}
                     onChange={handleChange}
                     placeholder={f === "quantity" ? "e.g., 25" : "e.g., 49.00"}
-                    className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all"
+                    className="w-full bg-white border border-blue-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-500 shadow-sm transition-all
+                               dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500"
                   />
                 </div>
               ))}
@@ -409,24 +424,26 @@ const Inventory = () => {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg"
+          className="bg-gradient-to-r from-white to-blue-50 border border-blue-200 rounded-2xl p-6 shadow-lg
+                     dark:bg-gray-800 dark:border-gray-700"
         >
 
-          <div className="overflow-x-auto rounded-xl border border-blue-200 shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-blue-200 shadow-sm dark:border-gray-700">
             <table className="w-full text-sm min-w-[720px]">
-              <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
+              <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200
+                              dark:bg-gray-900 dark:border-gray-700">
                 <tr>
-                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Image</th>
-                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Product</th>
-                  <th className="text-left py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Category</th>
-                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Price ₹</th>
-                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
+                  <th className="text-left py-4 px-4 text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wide">Image</th>
+                  <th className="text-left py-4 px-4 text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wide">Product</th>
+                  <th className="text-left py-4 px-4 text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wide">Category</th>
+                  <th className="text-center py-4 px-4 text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wide">Price ₹</th>
+                  <th className="text-center py-4 px-4 text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wide">
                     Quantity
                   </th>
-                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">
+                  <th className="text-center py-4 px-4 text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wide">
                     Stock Status
                   </th>
-                  <th className="text-center py-4 px-4 text-gray-700 font-bold text-sm uppercase tracking-wide">Actions</th>
+                  <th className="text-center py-4 px-4 text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wide">Actions</th>
                 </tr>
          {loading && (
   <tr>
@@ -439,32 +456,34 @@ const Inventory = () => {
 )}
 
               </thead>
-              <tbody className="divide-y divide-blue-100">
+              <tbody className="divide-y divide-blue-100 dark:divide-gray-700">
                 {products.map((p) => (
-                  <tr key={p.id} className="hover:bg-blue-50 transition-colors duration-200">
+                  <tr key={p.id} className="hover:bg-blue-50 dark:hover:bg-gray-800/60 transition-colors duration-200">
                     <td className="px-4 py-3">
                       {p.image ? (
                         <img
                           src={p.image}
                           alt={p.name}
-                          className="w-14 h-14 object-cover rounded-xl border border-blue-200 shadow-sm"
+                          className="w-14 h-14 object-cover rounded-xl border border-blue-200 dark:border-gray-700 shadow-sm"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center">
-                          <Package className="text-gray-400" size={20} />
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center
+                                        dark:from-gray-700 dark:to-gray-800 dark:border-gray-600">
+                          <Package className="text-gray-400 dark:text-gray-500" size={20} />
                         </div>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">{p.manufacturer || "No manufacturer"}</div>
+                      <div className="font-semibold text-gray-900 dark:text-gray-100">{p.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{p.manufacturer || "No manufacturer"}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-200">
+                      <span className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-200
+                                     dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-400/30">
                         {p.category_detail?.name || "Uncategorized"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center font-bold text-gray-900 text-lg">₹{Number(p.price).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-center font-bold text-gray-900 dark:text-gray-100 text-lg">₹{Number(p.price).toFixed(2)}</td>
                     <td className="px-4 py-3 text-center">
                       <span
                         className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
@@ -507,7 +526,8 @@ const Inventory = () => {
                             </button>
                           </>
                         ) : (
-                          <span className="flex items-center gap-2 text-gray-500 bg-gradient-to-r from-gray-100 to-gray-200 px-3 py-2 rounded-xl border border-gray-300">
+                          <span className="flex items-center gap-2 text-gray-500 bg-gradient-to-r from-gray-100 to-gray-200 px-3 py-2 rounded-xl border border-gray-300
+                                         dark:text-gray-300 dark:from-gray-700 dark:to-gray-800 dark:border-gray-600">
                             <Eye size={14} /> View Only
                           </span>
                         )}

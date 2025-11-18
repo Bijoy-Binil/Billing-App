@@ -8,11 +8,10 @@ import {
   Package,
   ClipboardList,
   ShoppingCart,
+  FileSpreadsheet ,
   FileText,
-  Users,
-  Settings,
-  TrendingUp,
   ReceiptIndianRupee,
+  TrendingUp,
   Building2,
   Truck,
   Layers,
@@ -28,13 +27,8 @@ const QuickAccess = () => {
   return (
     <div className="min-h-screen bg-[#EEF3FF] text-gray-800 px-4 sm:px-8 py-10">
       <div className="max-w-7xl mx-auto space-y-10">
-
         {/* HEADER */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4"
-        >
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4">
           <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl shadow-lg flex items-center justify-center">
             <Zap className="w-7 h-7 text-white" />
           </div>
@@ -43,9 +37,7 @@ const QuickAccess = () => {
             <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
               Quick Access
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base">
-              Navigate faster. Work smarter. Everything in one place.
-            </p>
+            <p className="text-gray-600 text-sm sm:text-base">Navigate faster. Work smarter. Everything in one place.</p>
           </div>
         </motion.div>
 
@@ -90,9 +82,7 @@ const QuickAccess = () => {
               All Pages & Tools
             </h2>
 
-            <div className="text-xs bg-white px-4 py-2 rounded-full shadow border border-gray-200">
-              12 Shortcuts
-            </div>
+            <div className="text-xs bg-white px-4 py-2 rounded-full shadow border border-gray-200">12 Shortcuts</div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -101,12 +91,36 @@ const QuickAccess = () => {
             <ShortcutCard title="Suppliers" to="/suppliers" icon={<Building2 className="text-purple-600 w-6 h-6" />} />
             <ShortcutCard title="Stock Report" to="/stock-report" icon={<Layers className="text-emerald-600 w-6 h-6" />} />
             <ShortcutCard title="Sales Report" to="/sales-report" icon={<LineChart className="text-rose-600 w-6 h-6" />} />
-            <ShortcutCard title="Purchase Report" to="/purchase-report" icon={<ClipboardList className="text-orange-600 w-6 h-6" />} />
-            <ShortcutCard title="Profit Report" to="/profit-report" icon={<TrendingUp className="text-green-600 w-6 h-6" />} />
-            <ShortcutCard title="Margin Report" to="/margin-report" icon={<BarChart3 className="text-cyan-600 w-6 h-6" />} />
-            <ShortcutCard title="Manufacturer Stock" to="/stock-manufacturer-report" icon={<Factory className="text-indigo-600 w-6 h-6" />} />
-            <ShortcutCard title="Users" to="/users" icon={<Users className="text-pink-600 w-6 h-6" />} />
-            <ShortcutCard title="Settings" to="/settings" icon={<Settings className="text-gray-600 w-6 h-6" />} />
+            <ShortcutCard
+              title="Purchase Report"
+              to="/purchase-report"
+              icon={<ClipboardList className="text-orange-600 w-6 h-6" />}
+            />
+            <ShortcutCard
+              title="Profit Report"
+              to="/profit-report"
+              icon={<TrendingUp className="text-green-600 w-6 h-6" />}
+            />
+            <ShortcutCard
+              title="Margin Report"
+              to="/margin-report"
+              icon={<BarChart3 className="text-cyan-600 w-6 h-6" />}
+            />
+            <ShortcutCard
+              title="Manufacturer Stock"
+              to="/stock-manufacturer-report"
+              icon={<Factory className="text-indigo-600 w-6 h-6" />}
+            />
+            <ShortcutCard
+              title="Stock Statement"
+              to="/stock-statement-report"
+              icon={<FileSpreadsheet className="text-pink-600 w-6 h-6" />}
+            />
+            <ShortcutCard
+              title="Stock Bill Report"
+              to="/stock-bills-report"
+              icon={<ReceiptIndianRupee className="text-gray-600 w-6 h-6" />}
+            />
             <ShortcutCard title="All Reports" to="/reports" icon={<FileText className="text-blue-600 w-6 h-6" />} />
           </div>
         </div>
@@ -125,9 +139,7 @@ const HighlightCard = ({ title, desc, to, icon, color, badge }) => (
       className={`bg-gradient-to-br ${color} p-6 rounded-2xl shadow-lg text-white relative cursor-pointer`}
     >
       {badge && (
-        <span className="absolute top-3 right-3 bg-white/30 px-2 py-1 rounded-full text-xs font-semibold">
-          {badge}
-        </span>
+        <span className="absolute top-3 right-3 bg-white/30 px-2 py-1 rounded-full text-xs font-semibold">{badge}</span>
       )}
 
       <div className="flex items-center gap-4">

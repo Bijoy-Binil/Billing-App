@@ -54,17 +54,18 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
   /* ✅ Sidebar Content Block */
   /* ---------------------------------------------------------- */
   const sidebarContent = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full text-gray-700 dark:text-gray-300">
       {/* ✅ LOGO */}
-      <div className="px-6 py-6 border-b border-gray-200 text-center bg-[#d3d8d8]">
+      <div className="px-6 py-6 text-center border-b bg-white border-gray-200 
+                      dark:bg-gray-900 dark:border-gray-700">
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-2xl font-extrabold text-emerald-600 tracking-wide"
+          className="text-2xl font-extrabold tracking-wide text-emerald-600 dark:text-emerald-400"
         >
           🧾 SuperBill
         </motion.h1>
-        <p className="text-xs text-gray-500 mt-1">Smart Billing System</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Smart Billing System</p>
       </div>
 
       {/* ✅ MAIN MENU */}
@@ -83,15 +84,22 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
               >
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all 
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all relative group
                     ${
                       active
-                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm"
-                        : "text-gray-700 hover:bg-emerald-100"
+                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm dark:bg-emerald-600/25 dark:text-emerald-400 dark:border-emerald-500/40"
+                        : "text-gray-700 hover:bg-emerald-100 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-emerald-400"
                     }`}
                 >
                   <Icon size={18} />
                   {item.name}
+                  {active && (
+                    <motion.div
+                      layoutId="activeGlow"
+                      className="absolute inset-0 rounded-lg border border-emerald-500/40 hidden dark:block"
+                      transition={{ duration: 0.25 }}
+                    />
+                  )}
                 </Link>
               </motion.div>
             );
@@ -100,7 +108,7 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
 
         {/* ✅ REPORTS SECTION */}
         <div className="mt-8 px-2">
-          <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-2">
+          <h3 className="text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wider mb-2">
             Reports
           </h3>
 
@@ -120,8 +128,8 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
                     className={`flex items-center gap-3 px-4 py-2.5 rounded-md text-sm transition-all
                       ${
                         active
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "text-gray-600 hover:bg-gray-100"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-600/25 dark:text-emerald-400 dark:border-emerald-500/40"
+                          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800/60"
                       }`}
                   >
                     <BarChart3 size={16} />
@@ -135,11 +143,11 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
       </div>
 
       {/* ✅ LOGOUT */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-[#d3d8d8]">
+      <div className="px-6 py-4 border-t bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
         <motion.button
           whileHover={{ scale: 1.05 }}
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full text-gray-600 hover:text-red-500 transition-all"
+          className="flex items-center gap-3 w-full text-gray-600 hover:text-red-500 transition-all dark:text-gray-400 dark:hover:text-red-400"
         >
           <LogOut size={18} />
           Logout
@@ -155,7 +163,8 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
     <>
       {/* ✅ DESKTOP SIDEBAR */}
       <motion.aside
-        className="hidden md:flex md:flex-col w-64 bg-[#d3d8d8] border-r border-gray-200 shadow-sm"
+        className="hidden md:flex md:flex-col w-64 bg-white border-r border-gray-200 shadow-sm 
+                   dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:border-gray-700"
         initial={{ x: -40, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
       >
@@ -181,7 +190,8 @@ const Sidebar = ({ open = false, onClose = () => {} }) => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-lg z-50"
+              className="fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-lg z-50 
+                         dark:bg-gray-900 dark:border-gray-700"
             >
               {sidebarContent}
             </motion.aside>
